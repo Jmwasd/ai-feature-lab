@@ -1,0 +1,220 @@
+:root {
+  --bg: #16171d;
+  --panel: #21232b;
+  --border: #33363f;
+  --text: #c8cbd4;
+  --text-dim: #7b808d;
+  --accent: #4c8dff;
+
+  font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+  color-scheme: dark;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body,
+#root {
+  margin: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * 정적 레이어와 활성 레이어를 같은 자리에 겹친다. z-index를 주지 않는 것은
+ * 의도다 — DOM 순서만으로 정적 < 활성 < TextEditor < PropertyPanel이 되므로,
+ * 한쪽에 z-index를 주는 순간 나머지도 전부 따라 매겨야 한다.
+ */
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 포인터는 늘 활성 레이어가 받는다. 정적 레이어는 그림일 뿐이다 */
+.canvas-static {
+  pointer-events: none;
+}
+
+.canvas-active {
+  touch-action: none; /* 브라우저 기본 팬/줌 제스처를 넘겨받는다 */
+  cursor: crosshair;
+}
+
+/* 캔버스 위에 겹치는 진짜 textarea. 도형과 같은 자리에 같은 크기로 놓인다 */
+.text-editor {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  transform-origin: center;
+  caret-color: var(--accent);
+}
+
+/* 캔버스 위에 떠 있는 속성 패널 */
+.panel {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 208px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.panel-title {
+  color: var(--text-dim);
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+}
+
+.panel-label {
+  flex: none;
+  width: 60px;
+  color: var(--text-dim);
+}
+
+.panel-mixed {
+  color: var(--text-dim);
+}
+
+.panel input[type='color'] {
+  width: 32px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.panel input[type='number'],
+.panel select {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.panel-choice {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+}
+
+.panel-choice button {
+  flex: 1;
+  padding: 3px 0;
+  font: inherit;
+  color: var(--text-dim);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.panel-choice button.active {
+  color: #fff;
+  border-color: var(--accent);
+  background: rgba(76, 141, 255, 0.15);
+}
+
+.panel-hint {
+  margin: 0;
+  color: var(--text-dim);
+  line-height: 1.35;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+
+.group {
+  display: flex;
+  gap: 4px;
+}
+
+.toolbar button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.toolbar button:hover:not(:disabled) {
+  background: #2b2e37;
+}
+
+.toolbar button.active {
+  border-color: var(--accent);
+  color: #fff;
+  background: rgba(76, 141, 255, 0.15);
+}
+
+.toolbar button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+kbd {
+  font: 11px var(--mono, ui-monospace, monospace);
+  color: var(--text-dim);
+}
+
+.status {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
