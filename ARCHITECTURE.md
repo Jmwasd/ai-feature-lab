@@ -75,8 +75,6 @@ PointerEvent ──▶ CanvasView.onPointerMove
 
 씬·카메라·선택을 React state나 context로 옮기면 도형 수에 비례해 리렌더 비용이 붙어 이 구조가 무의미해진다. React가 맡는 것은 툴바·속성 패널·텍스트 편집기 셸뿐이다.
 
-→ 구독 방법과 selector 규칙은 `src/store/CLAUDE.md`, 리렌더 0을 지키는 방법은 `src/ui/CLAUDE.md`
-
 ### 2. 조작 대상 상자는 `core/selection.ts`에서만 나온다
 
 리사이즈의 대상은 도형이 아니라 **상자**(`Box` = 사각형 + 회전각)다. 하나만 골랐으면 도형 자신이 상자이고(회전까지 물려받는다), 여럿이면 회전 없는 공통 바운딩 박스다.
@@ -94,8 +92,6 @@ PointerEvent ──▶ CanvasView.onPointerMove
 quadtree는 "이 근처에 뭐가 있나"까지고 최종 판정은 `hitTest`가 한다. 그래서 인덱스가 든 사각형은 **실제 판정 영역보다 넉넉하기만 하면 된다** — 모자라면 놓치고, 남으면 후보가 몇 개 늘 뿐이다. 이 비대칭이 여유 폭을 대충 크게 잡아도 되는 근거다.
 
 같은 비대칭이 컬링에도 적용된다(`shapes/`의 `renderPad`). **둘 다 실패 방식이 "느려짐"이 아니라 "조용히 틀림"이라, `npm run bench`가 숫자를 잴 때마다 정합성을 함께 검사한다.**
-
-→ 캐시 전략은 `src/core/CLAUDE.md`, 검증 방법은 `src/dev/CLAUDE.md`
 
 ### 5. 히스토리는 조작이 끝날 때 한 번만 쌓인다
 
@@ -115,19 +111,13 @@ quadtree는 "이 근처에 뭐가 있나"까지고 최종 판정은 `hitTest`가
 
 회전은 행렬이 아니라 각도 하나다. `core/geometry.ts`의 `toLocal`로 역회전한 좌표가 `shapes/`에 들어가므로 도형 모듈은 회전을 전혀 신경 쓰지 않는다.
 
-→ 정규화 규약과 한계는 `src/shapes/CLAUDE.md`, 좌표계 왕복은 `src/core/CLAUDE.md`
-
 ### 7. 그리는 순서가 바뀔 수 있다
 
 컬링(`render/`)이 도형을 건너뛰고 레이어 분리가 조작 중인 도형을 따로 빼내므로, 어떤 도형 뒤에 어떤 도형이 그려질지 고정되어 있지 않다. **Canvas 상태는 전역이라 각 `draw`는 자기가 쓰는 상태를 전부 지정해야 한다.** `rect.draw`가 `lineJoin`을 빠뜨려 펜 뒤에 그려질 때만 모서리가 둥글어진 버그가 실제로 있었다.
 
-→ 지정해야 하는 상태 목록은 `src/shapes/CLAUDE.md`
-
 ### 8. 텍스트 편집 확정은 스토어에 있다
 
 캔버스가 `mousedown` 기본 동작을 막아 textarea에서 blur가 발생하지 않는다. 그래서 편집을 끝내는 경로가 둘로 갈리고(`TextEditor`의 `Escape`/blur, `CanvasView.onPointerDown` 첫머리), 둘이 같은 처리를 공유해야 해서 `actions.commitTextEditing`이 스토어에 있다.
-
-→ 확정의 네 갈래는 `src/store/CLAUDE.md`, IME와 포커스 처리는 `src/ui/CLAUDE.md`
 
 ### 9. 활성 집합이 선언된 동안 바뀌는 도형은 그 집합뿐이다
 
@@ -147,8 +137,6 @@ quadtree는 "이 근처에 뭐가 있나"까지고 최종 판정은 `hitTest`가
 
 대가는 **조작 중인 도형이 z-order를 무시하고 맨 앞에 뜬다**는 것이다. 정확히 하려면 매 프레임 전체 순서를 다시 세워야 해서 분리한 이유가 사라지고, 어긋남은 포인터를 떼는 순간 사라진다.
 
-→ 무효화 규칙은 `src/render/CLAUDE.md`, 스토어 쪽 조립은 `src/store/CLAUDE.md`
-
 ## 어디를 고쳐야 하나
 
 | 바꾸려는 것 | 여는 파일 |
@@ -163,8 +151,6 @@ quadtree는 "이 근처에 뭐가 있나"까지고 최종 판정은 `hitTest`가
 | 정적 레이어를 언제 다시 그릴지 | `render/layers.ts` (+ `store/editorStore.ts`의 `staticEpoch`) |
 | 상태·히스토리 연결 | `store/editorStore.ts` |
 | 벤치마크 항목·정합성 검사 | `src/dev/bench.ts` (+ `scripts/bench.mjs`의 표) |
-
-도형·스타일·커맨드를 **추가**하는 절차는 각각 `src/shapes/CLAUDE.md`와 `src/core/CLAUDE.md`에 있다.
 
 ## 앞으로의 구조적 제약
 
