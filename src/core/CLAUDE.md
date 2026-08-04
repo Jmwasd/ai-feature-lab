@@ -10,22 +10,22 @@
 
 주입 말고 **제네릭으로 여는 방법**도 있다. `simplifyPath<T extends Point>`가 점을 새로 만들지 않고 원본 원소를 통과시키므로, 필압처럼 점에 실린 부가 정보가 저절로 살아남는다. 자료구조로 풀 수 있으면 주입점을 늘리지 않는다.
 
-## 내부 의존 그래프
+## 어느 파일을 여나 — 내부 의존 그래프
 
 ```
-types.ts ────────────────┐  (잎. 아무것도 import하지 않는다)
-   ├──▶ camera.ts        │  좌표 변환만. 다른 core 모듈과 무관
-   ├──▶ commands.ts ──▶ history.ts
-   └──▶ geometry.ts
+types.ts ────────────────┐  타입·상수. 잎이라 아무것도 import하지 않는다
+   ├──▶ camera.ts        │  화면↔월드 변환, 줌 한계
+   ├──▶ commands.ts ──▶ history.ts    편집 커맨드 / undo·redo 스택
+   └──▶ geometry.ts                   좌표계 왕복·바운딩 박스·핸들 위치
           ├──▶ transform.ts     리사이즈·회전
-          ├──▶ simplify.ts      RDP
-          ├──▶ selection.ts     선택 → Box
-          ├──▶ spatial/quadtree.ts ──▶ spatial/sceneIndex.ts
-          └──▶ picking.ts ──▶ spatial/sceneIndex.ts
+          ├──▶ simplify.ts      RDP (펜 획의 점 줄이기)
+          ├──▶ selection.ts     선택 → 조작 상자(Box)
+          ├──▶ spatial/quadtree.ts ──▶ spatial/sceneIndex.ts   후보 좁히기
+          └──▶ picking.ts ──▶ spatial/sceneIndex.ts            픽·마퀴
                     └──▶ shapes/registry.ts   ← 유일하게 폴더 밖으로 나가는 간선
 ```
 
-`picking.ts` → `shapes/registry.ts`는 경계 위반이 아니다. `registry.ts`는 순수한 쪽이고, 도형별 판정을 `core/`가 알 필요는 없다는 뜻이기도 하다. **반대 방향(`shapes/`가 `picking.ts`를 부르는 것)은 순환이므로 안 된다.**
+**반대 방향(`shapes/`가 `picking.ts`를 부르는 것)은 순환이므로 안 된다.** 도형별 판정을 `core/`가 알 필요는 없다는 뜻이기도 하다.
 
 ## 세 가지 사각형 타입
 

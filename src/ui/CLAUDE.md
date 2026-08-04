@@ -2,7 +2,7 @@
 
 React 컴포넌트. 입력을 받고 셸을 그린다. **캔버스 픽셀은 여기서 그리지 않는다.**
 
-레이어 전체의 그림은 root의 `ARCHITECTURE.md`를 본다.
+**어느 파일을 여나** (레이어 전체의 그림은 root의 `ARCHITECTURE.md`):
 
 | 파일 | 하는 일 |
 | --- | --- |
@@ -19,11 +19,11 @@ React 컴포넌트. 입력을 받고 셸을 그린다. **캔버스 픽셀은 여
 
 1. **포인터 이벤트는 늘 위쪽(`.canvas-active`)이 받는다.** 정적 레이어는 `pointer-events: none`이다. 좌표 계산이 한 요소 기준으로 고정되어야 `getBoundingClientRect` 결과가 갈리지 않는다.
 2. **`z-index`를 주지 않는다.** DOM 순서만으로 정적 < 활성 < `TextEditor` < `PropertyPanel`이 된다. 한쪽에 주는 순간 나머지도 전부 매겨야 한다.
-3. **`resize`에서 `layers.invalidate()`를 부른다.** `canvas.width = ...`는 같은 값을 넣어도 내용을 지우므로, 크기가 그대로인 `ResizeObserver` 호출에서도 정적 레이어가 빈 화면으로 남는다.
+3. **`resize`에서 `layers.invalidate()`를 부른다.** 크기가 그대로인 `ResizeObserver` 호출에서도 부른다 — 빠뜨리면 정적 레이어가 빈 화면으로 남는다(백버퍼가 왜 날아가는지는 `render/CLAUDE.md`).
 
 ## 드래그 중 React 리렌더는 0이어야 한다
 
-`CanvasView`는 마운트 시 rAF 루프를 한 번 열고, `subscribeRaw`로 **dirty 플래그만** 세운다. 도형을 옮기는 동안 컴포넌트는 다시 그려지지 않는다.
+`CanvasView`는 마운트 시 rAF 루프를 한 번 열고, `subscribeRaw`로 **dirty 플래그만** 세운다(`ARCHITECTURE.md`의 불변식 1).
 
 이 성질을 깨는 방법은 셋이고, 전부 피한다.
 

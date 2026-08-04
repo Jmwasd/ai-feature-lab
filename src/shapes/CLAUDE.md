@@ -2,7 +2,7 @@
 
 도형 종류별 모듈. **도형이 늘어날 때 바뀌어야 하는 유일한 폴더**다.
 
-레이어 전체의 그림은 root의 `ARCHITECTURE.md`를 본다.
+**어느 파일을 여나** — 도형 하나를 고치면 `<name>.ts` 하나만 연다(`rect`·`ellipse`·`path`·`line`·`text`는 서로를 import하지 않는다). 판정·스타일 등록은 `registry.ts`, 그리기 등록은 `render.ts`. 레이어 전체의 그림은 root의 `ARCHITECTURE.md`.
 
 ## 모듈 계약
 
@@ -30,7 +30,7 @@ export function draw(ctx, shape, zoom): void                  // 유일한 Canva
 
 `local`은 **회전이 이미 상쇄된 좌표**다. `core/picking.ts`의 `hitTest`가 `toLocal`을 한 번 걸어 넘긴다. 그래서 각 도형은 축 정렬 상태만 다루면 되고, 회전이 붙어도 판정 코드를 다시 짜지 않는다.
 
-`zoom`을 쓰는 것은 얇은 도형뿐이다(`path`, `line`). 안 쓰면 `_zoom`으로 받는다 — `noUnusedParameters`가 켜져 있어 이름을 그대로 두면 빌드가 깨진다.
+`zoom`을 쓰는 것은 얇은 도형뿐이다(`path`, `line`). 안 쓰면 `_zoom`으로 받는다(root `CLAUDE.md`의 「검증」).
 
 **여유 폭은 `HIT_PAD_PX`를 import해서 쓴다. 자체 상수를 만들지 말 것**(근거는 `ARCHITECTURE.md`의 불변식 3). 표준 형태는 이것이다.
 
@@ -62,7 +62,7 @@ const pad = Math.max(shape.strokeWidth / 2, HIT_PAD_PX / zoom)
 | `line` | 캡 + 화살촉 | 촉이 끝점에서 뒤로 벌어진다 |
 | `text` | `fontSize * 0.3` | 글리프가 줄 높이보다 위아래로 뻗는다 |
 
-**모자라면 도형이 사라지고, 남으면 몇 개 더 그릴 뿐이다.** 비대칭이므로 애매하면 크게 잡는다. 굵기·크기 규칙을 바꿨는데 `renderPad`를 안 고치면 `npm run bench`의 컬링 검사가 잡아낸다.
+**애매하면 크게 잡는다** — 모자라는 쪽만 조용히 틀리는 비대칭이다(`ARCHITECTURE.md`의 불변식 4). 굵기·크기 규칙을 바꿨는데 `renderPad`를 안 고치면 `npm run bench`의 컬링 검사가 잡아낸다.
 
 ## 정규화 규약
 
