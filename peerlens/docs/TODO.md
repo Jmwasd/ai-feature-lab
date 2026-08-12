@@ -1,57 +1,62 @@
-# TODO — M0 작업 인계
+# TODO — 초기 릴리스 작업 인계
 
 > 작업 시작 전에는 `CLAUDE.md` → `docs/PRD.md` → `docs/ARCHITECTURE.md` → `docs/ADR.md` → `docs/UI_GUIDE.md` 순으로 읽는다.
 
 ## 프로젝트 한 줄 요약
 
-초기 지원 50개 S&P 500 종목을 검색하면 관련주를 **최대 5개**와 사업 근거·매출 성장률 상관 지표로 보여주는 정적 서비스. M0는 결과 품질을 검증하며, 로그인·리포트·DB 운영을 하지 않는다.
+초기 지원 50개 S&P 500 종목을 검색하면 관련주 **최대 5개**와 그 사업 근거·매출 성장률 상관 지표, 최신 공시 재무 요약, 다음 실적 발표일을 보여주는 서비스. 공개 탐색을 먼저 완성하고, AI 리포트는 로그인 후에만 선택적으로 제공한다.
 
 ## 현재 결정
 
-- [x] M0 범위를 50개 종목, 최대 5개 관련주, 재무 지표 3개로 축소했다.
-- [x] 5년 재무 추이, 9개 선 차트, 전 종목쌍 상관계수, AI 리포트, OAuth, Supabase, Cron을 M1로 미뤘다.
-- [x] 정적 JSON 스냅샷을 M0의 유일한 읽기 모델로 결정했다.
+- [x] 비교표 범위를 50개 종목, 최대 5개 관련주, 재무 지표 3개로 제한했다. 개별 종목의 확장 재무제표는 PRD의 명시 필드만 제공한다.
+- [x] 공개 검색·상세는 정적 JSON 스냅샷만 읽고, 재무·실적일·관련주는 로그인 없이 제공하기로 했다.
+- [x] AI 리포트는 공개 탐색 뒤의 별도 섹션으로 두고, Google OAuth와 보호된 서버 API에서만 생성·조회하기로 했다.
+- [x] 로그인 전 생성 CTA를 누른 경우에만 OAuth 복귀 뒤 해당 종목·스냅샷의 리포트 요청을 재개하기로 했다.
+- [x] `dataVersion`은 종목 단위로 올리고, 이전 버전 리포트는 현재 리포트로 반환하지 않기로 했다.
 - [x] 법적·호스팅 조건을 “무료이므로 문제 없음”이라고 단정하지 않도록 문구를 수정했다.
 
 **애플리케이션 코드는 아직 없다.** `package.json`은 step 0에서 만든다.
 
 ## 다음 작업: harness step 파일 생성
 
-다음 분할로 `phases/index.json`, `phases/0-m0/index.json`, `step0.md`~`step5.md`를 만든다. 파일 형식은 `.claude/commands/harness.md`의 D-1, D-2, D-3을 따른다.
+다음 분할로 `phases/index.json`, `phases/0-initial-release/index.json`, `step0.md`~`step6.md`를 만든다. 파일 형식은 `.claude/commands/harness.md`의 D-1, D-2, D-3을 따른다. 각 단계는 앞 단계의 공개 사용자 여정을 깨지 않아야 한다.
 
 | # | name | 산출물 | AC 핵심 |
 |---|------|--------|---------|
 | 0 | `project-setup` | Next.js 15, TS strict, Tailwind, Vitest, Pretendard, `.env.example` | `npm run build && npm test` |
-| 1 | `core-data` | `src/types/peer.ts`, JSON fixture, `xbrl.ts`·`correlation.ts`·`format.ts` TDD | `npm test` |
-| 2 | `edgar-snapshot` | `edgar.ts`, `refresh-m0-data.ts`, 50개 스냅샷 생성 | 실제 CIK 1건 통합 테스트와 JSON 스키마 검증 |
-| 3 | `peer-generation` | `build-m0-peers.ts`, 후보 티커 검증, 후보 쌍 상관계수 계산 | 최대 5개, 지원 목록 밖 티커 0개 |
-| 4 | `static-ui` | 랜딩 검색, `/s/[ticker]` 정적 상세, `PeerTable` | `npm run build` |
-| 5 | `deploy` | 데이터 기준일·면책 고지·지원 외 티커 상태·Vercel 배포 설정 | `npm run build && npm test` |
+| 1 | `core-data` | `src/types/market.ts`, JSON fixture, `xbrl.ts`·`correlation.ts`·`format.ts`·`snapshot.ts` TDD | `npm test` |
+| 2 | `public-snapshot` | `edgar.ts`, `earnings-calendar.ts`, `refresh-market-data.ts`, `refresh-earnings-calendar.ts`, 재무 상태·실적일 계약을 포함한 스냅샷 | 실제 CIK 1건 통합 테스트와 JSON 스키마 검증 |
+| 3 | `peer-generation` | `build-peers.ts`, 후보 티커 검증, 후보 쌍 상관계수 계산 | 최대 5개, 지원 목록 밖 티커 0개 |
+| 4 | `public-journey-ui` | 랜딩 검색, `/s/[ticker]` 정적 상세, `PeerTable`, 재무·실적일·미지원 상태, 기준일·출처·면책 고지 | 로그인 없이 검색 → 상세 → 관련주 상세가 `npm run build`에서 동작 |
+| 5 | `authenticated-report` | Google OAuth, `report-intent.ts`, `report-prompt.ts`, 보호된 리포트 API·캐시·한도 | 비로그인 본문 미반환, 복귀 후 의도한 요청만 재개, `npm test` |
+| 6 | `deploy` | 오류·미설정 상태 점검, 배포 설정 | `npm run build && npm test` |
 
 ### step 작성 규칙
 
 - 각 step은 독립 세션에서도 실행 가능하도록 필요한 맥락을 파일 안에 넣는다.
 - 함수와 타입의 인터페이스는 제시하되, 요청되지 않은 추상화와 기능을 만들지 않는다.
-- AC는 실제 실행 커맨드로 쓴다.
-- 사용자 개입이 필요한 API 키, 비용 발생, 외부 계정, 50개 지원 종목 확정이 없으면 즉시 `blocked`로 처리하고 중단한다.
+- AC는 실제 실행 커맨드와 사람이 확인할 사용자 여정으로 쓴다.
+- 외부 계정·키·비용 결정이 없는 경우에도 공개 검색·상세 작업은 계속한다. 해당 설정이 필요한 갱신 또는 AI 리포트 단계만 보류하고, 화면에는 안전한 미설정 상태를 제공한다.
 - `src/lib/` 순수 로직은 테스트를 먼저 작성한다. UI 페이지 테스트는 요구하지 않는다.
 
 ## 아직 필요한 사용자 결정
 
 1. **초기 50개 티커 목록** — 목록을 한 번 확정해 JSON으로 커밋한다. 자동 수집이나 매일 갱신하지 않는다.
-2. **관련주 수동 배치 실행 승인** — Anthropic API 키와 실제 비용이 필요하다. step 3에서만 실행한다.
-3. **배포 용도** — Vercel Hobby는 개인·비상업 용도 조건을 확인한 후에만 사용한다. 공개 제품·사업 검증 성격이면 적합한 플랜을 별도로 판단한다.
+2. **관련주 후보 생성 방식** — 수동 검수만 할지, 어떤 LLM 배치를 사용할지와 실제 비용 승인을 step 3 전에 결정한다.
+3. **실적 일정 출처** — 계약한 일정 제공자, IR 수집 정책 또는 수동 관리 방식을 step 2 전에 결정한다. 결정 전에는 `발표일 미정` 상태를 유지한다.
+4. **AI 리포트 운영값** — Google OAuth 프로젝트, 저장소, OpenAI 월 예산, 사용자별·전역 한도, 보존 기간을 step 5 전에 확정한다.
+5. **배포 용도** — Vercel Hobby는 개인·비상업 용도 조건을 확인한 후에만 사용한다. 공개 제품·사업 검증 성격이면 적합한 플랜을 별도로 판단한다.
 
-## M0에서 절대 하지 말 것
+## 초기 릴리스에서 절대 하지 말 것
 
 - 주가·시세 데이터, 주가 차트, 주가 상관계수
-- 결제·구독·로그인·프로필·사용량 카운터·Supabase 스키마
-- 요청 경로의 SEC 또는 LLM 호출
+- 결제·구독·프로필
+- 공개 검색·상세 경로의 SEC·일정 제공자·LLM 호출과 공개 정보를 가리는 로그인 게이트
 - 5년 재무 추이, 8~10개 지표, 9개 선 성장률 차트
 - 모든 종목쌍 상관계수 사전 계산
 - 결손값을 대체 태그·0·대시로 채우기
 - 매수·매도 의견, 목표가, 수익 보장 표현
 
-## M1 진입 조건
+## 다음 릴리스 진입 조건
 
-초기 사용자가 관련주 결과를 유용하다고 평가하고, 50개 스냅샷을 넘어 전체 커버리지·더 깊은 분석을 원한다는 신호가 있을 때만 M1을 별도 설계한다. 그때 AI 리포트, 로그인, DB, Cron을 한 번에 되살리지 말고 각각의 비용·개인정보·동시성·운영 요건을 다시 검토한다.
+초기 사용자가 공개 탐색과 AI 리포트를 유용하다고 평가하고, 50개 스냅샷을 넘어 전체 커버리지·더 깊은 분석을 원한다는 신호가 있을 때만 다음 릴리스를 별도 설계한다. 전 종목 확대, 자동 갱신, 추가 지표는 각각의 데이터 품질·비용·운영 요건을 다시 검토한다.
