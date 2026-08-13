@@ -1,0 +1,30 @@
+{
+  "description": "PeerLens 가드레일 — .claude/settings.json의 hook을 Codex용으로 옮긴 것",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/peerlens/.codex/hooks/guard_command.py\"",
+            "timeout": 10,
+            "statusMessage": "명령어 검사 중"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/peerlens/.codex/hooks/verify.py\"",
+            "timeout": 900,
+            "statusMessage": "린트·빌드·테스트 검증 중"
+          }
+        ]
+      }
+    ]
+  }
+}

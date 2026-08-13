@@ -14,3 +14,7 @@ tsconfig.tsbuildinfo
 # phase execution outputs
 phases/**/phase*-output.json
 phases/**/step*-output.json
+
+# python
+__pycache__/
+.pytest_cache/
