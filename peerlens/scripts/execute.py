@@ -236,7 +236,8 @@ class StepExecutor:
 
         prompt = preamble + step_file.read_text()
         result = subprocess.run(
-            ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox", "--json", prompt],
+            ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox",
+             "--dangerously-bypass-hook-trust", "--json", prompt],
             cwd=self._root, capture_output=True, text=True, timeout=1800,
         )
 

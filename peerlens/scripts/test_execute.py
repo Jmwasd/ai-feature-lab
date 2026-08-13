@@ -436,6 +436,7 @@ class TestInvokeCodex:
         assert cmd[0] == "codex"
         assert cmd[1] == "exec"
         assert "--dangerously-bypass-approvals-and-sandbox" in cmd
+        assert "--dangerously-bypass-hook-trust" in cmd
         assert "--json" in cmd
         assert "PREAMBLE" in cmd[-1]
         assert "UI를 구현하세요" in cmd[-1]
