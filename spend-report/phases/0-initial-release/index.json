@@ -1,0 +1,18 @@
+{
+  "project": "spend-report",
+  "phase": "0-initial-release",
+  "steps": [
+    { "step": 0,  "name": "project-setup",  "status": "pending" },
+    { "step": 1,  "name": "core-types",     "status": "pending" },
+    { "step": 2,  "name": "csv-parse",      "status": "pending" },
+    { "step": 3,  "name": "cancel-pairs",   "status": "pending" },
+    { "step": 4,  "name": "categorize",     "status": "pending" },
+    { "step": 5,  "name": "events",         "status": "pending" },
+    { "step": 6,  "name": "analyze",        "status": "pending" },
+    { "step": 7,  "name": "openai-service", "status": "pending" },
+    { "step": 8,  "name": "api-route",      "status": "pending" },
+    { "step": 9,  "name": "report-ui",      "status": "pending" },
+    { "step": 10, "name": "user-override",  "status": "pending" },
+    { "step": 11, "name": "print-export",   "status": "pending" }
+  ]
+}
