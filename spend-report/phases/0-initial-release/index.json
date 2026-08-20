@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "core-types",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-08-20T15:18:10+0900",
+      "summary": "거래 원본·분류·리포트·사용자 보정 도메인 타입을 src/types에 정의",
+      "completed_at": "2026-08-20T15:19:30+0900"
     },
     {
       "step": 2,
