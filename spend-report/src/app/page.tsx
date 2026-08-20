@@ -11,6 +11,7 @@ import SummaryStrip from "../components/SummaryStrip";
 import { analyze } from "../lib/analyze";
 import type { Category, Override } from "../types/report";
 import type { Transaction } from "../types/transaction";
+import { formatPeriod } from "../components/format";
 
 interface AnalyzeResponse {
   transactions: Transaction[];
@@ -30,6 +31,7 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const queryPeriodRef = useRef<{ from: Date; to: Date } | null>(null);
   const llmCategoriesRef = useRef<Record<string, Category>>({});
+  const reportGeneratedAtRef = useRef<Date | null>(null);
   const report = useMemo(
     () =>
       transactions.length > 0
@@ -70,6 +72,7 @@ export default function Home() {
 
       queryPeriodRef.current = analyzed.queryPeriod;
       llmCategoriesRef.current = analyzed.llmCategories;
+      reportGeneratedAtRef.current = new Date();
       setTransactions(analyzed.transactions);
       setOverrides({});
       setSummary(analyzed.summary);
@@ -85,6 +88,7 @@ export default function Home() {
     setOverrides({});
     queryPeriodRef.current = null;
     llmCategoriesRef.current = {};
+    reportGeneratedAtRef.current = null;
     setSummary(null);
     setError(null);
   }
@@ -117,6 +121,9 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-[1000px] px-6 py-14 pb-24">
+      <p className="print-only mb-8 border-b border-line pb-4 text-[13px] text-text-body">
+        리포트 기간 · {formatPeriod(report.period.from, report.period.to)} · 생성 {formatPrintTimestamp(reportGeneratedAtRef.current ?? new Date())}
+      </p>
       <ReportHeader report={report} onReset={resetReport} onPrint={printReport} />
       <SummaryStrip report={report} />
       <FindingsSection report={report} overrides={overrides} onOverrideChange={updateOverride} />
@@ -137,6 +144,13 @@ export default function Home() {
       <FooterNote report={report} onPrint={printReport} />
     </main>
   );
+}
+
+function formatPrintTimestamp(value: Date): string {
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(value);
 }
 
 function parseAnalyzeResponse(value: unknown): AnalyzeResponse | null {

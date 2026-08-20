@@ -27,3 +27,43 @@ body {
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  section {
+    break-inside: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .surface-dark {
+    background-color: var(--color-bg) !important;
+    border: 1px solid var(--color-line);
+    color: var(--color-ink) !important;
+  }
+
+  .surface-dark .bg-surface-dark {
+    background-color: var(--color-fill-quiet) !important;
+  }
+
+  .surface-dark .text-bg {
+    color: var(--color-ink) !important;
+  }
+
+  .surface-dark .text-text-ondark {
+    color: var(--color-text-body) !important;
+  }
+
+  .surface-dark .border-ink {
+    border-color: var(--color-line) !important;
+  }
+}

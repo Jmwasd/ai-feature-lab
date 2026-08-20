@@ -36,7 +36,7 @@ export default function OverrideControl({ item, override, onChange }: OverrideCo
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    <div className="no-print flex flex-wrap items-center justify-end gap-2">
       <label className="sr-only" htmlFor={`category-${item.id}`}>
         {item.displayName} 카테고리
       </label>

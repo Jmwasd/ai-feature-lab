@@ -33,7 +33,7 @@ export default function ReportHeader({ report, onReset, onPrint }: ReportHeaderP
           다시 업로드
         </button>
         <button
-          className="rounded-full bg-ink px-5 py-3 text-[15px] font-semibold text-bg transition-colors hover:bg-surface-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
+          className="no-print rounded-full bg-ink px-5 py-3 text-[15px] font-semibold text-bg transition-colors hover:bg-surface-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue"
           type="button"
           onClick={onPrint}
         >

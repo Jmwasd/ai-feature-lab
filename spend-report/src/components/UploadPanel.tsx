@@ -43,7 +43,7 @@ export default function UploadPanel({
   return (
     <div
       id="upload"
-      className="rounded-3xl border-2 border-dashed border-line-dark bg-surface-dark p-7"
+      className="no-print rounded-3xl border-2 border-dashed border-line-dark bg-surface-dark p-7"
       onDragOver={(event) => event.preventDefault()}
       onDrop={handleDrop}
     >
