@@ -103,9 +103,22 @@ if (sampleCsv) {
       expectDateParts(result.queryPeriod!.from, { year: 2026, month: 8, day: 1 });
       expectDateParts(result.queryPeriod!.to, { year: 2026, month: 8, day: 15 });
 
+      // 실명·계좌번호를 테스트에 적지 않는다. 픽스처 헤더에서 뽑아 쓴다 (ADR-010)
+      const headerLines = sampleCsv.split(/\r?\n/).slice(0, 8);
+      const headerValue = (label: string): string => {
+        const line = headerLines.find((candidate) => candidate.includes(label));
+        return line!.split(",")[2];
+      };
+
+      const accountHolder = headerValue("성명");
+      const accountNumber = headerValue("계좌번호");
+
+      expect(accountHolder.length).toBeGreaterThan(0);
+      expect(accountNumber.length).toBeGreaterThan(0);
+
       const serializedResult = JSON.stringify(result);
-      expect(serializedResult).not.toContain("장민우 외 1인");
-      expect(serializedResult).not.toContain("****-****-8269");
+      expect(serializedResult).not.toContain(accountHolder);
+      expect(serializedResult).not.toContain(accountNumber);
     });
   });
 } else {

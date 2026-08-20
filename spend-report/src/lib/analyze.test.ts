@@ -83,11 +83,19 @@ if (sampleCsv) {
     });
 
     it("identifies both memo-less withdrawals and the high-value unclassified Coupang payment", () => {
-      expect(report.needsInput.map((item) => item.description).sort()).toEqual([
-        "박상은서울주민",
-        "여행비",
-        "쿠팡(쿠페이)",
-      ].sort());
+      // 실명이 든 적요를 테스트에 적지 않는다. 조건으로 픽스처에서 유도한다 (ADR-010)
+      const memolessWithdrawals = parsed.transactions.filter(
+        (candidate) => candidate.kind === "출금" && candidate.memo.trim() === "",
+      );
+      const topUnclassified = report.concentration.items.find(
+        (item) => item.category === "미분류",
+      );
+
+      expect(memolessWithdrawals).toHaveLength(2);
+      expect(topUnclassified?.description).toBe("쿠팡(쿠페이)");
+      expect(report.needsInput.map((item) => item.id).sort()).toEqual(
+        [...memolessWithdrawals.map((tx) => tx.id), topUnclassified!.id].sort(),
+      );
     });
 
     it("re-aggregates immediately when a user excludes the travel-settlement withdrawal", () => {
