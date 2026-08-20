@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @theme {
+  --color-bg: #ffffff;
   --color-blue: #0052ff;
   --color-blue-hover: #003ecc;
   --color-ink: #0a0b0d;
@@ -21,7 +22,7 @@
 }
 
 body {
-  background: var(--color-white);
+  background: var(--color-bg);
   color: var(--color-ink);
   font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
