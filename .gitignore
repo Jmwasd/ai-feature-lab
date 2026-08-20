@@ -1,2 +1,5 @@
 .DS_Store
 .fallow/
+
+# chat-logs 산출물. 대화 기록이라 커밋하지 않는다
+**/docs/logs/
