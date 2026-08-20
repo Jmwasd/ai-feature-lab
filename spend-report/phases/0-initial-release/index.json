@@ -2,17 +2,68 @@
   "project": "spend-report",
   "phase": "0-initial-release",
   "steps": [
-    { "step": 0,  "name": "project-setup",  "status": "pending" },
-    { "step": 1,  "name": "core-types",     "status": "pending" },
-    { "step": 2,  "name": "csv-parse",      "status": "pending" },
-    { "step": 3,  "name": "cancel-pairs",   "status": "pending" },
-    { "step": 4,  "name": "categorize",     "status": "pending" },
-    { "step": 5,  "name": "events",         "status": "pending" },
-    { "step": 6,  "name": "analyze",        "status": "pending" },
-    { "step": 7,  "name": "openai-service", "status": "pending" },
-    { "step": 8,  "name": "api-route",      "status": "pending" },
-    { "step": 9,  "name": "report-ui",      "status": "pending" },
-    { "step": 10, "name": "user-override",  "status": "pending" },
-    { "step": 11, "name": "print-export",   "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-08-20T15:12:42+0900",
+      "summary": "Next.js 15 + TS strict + Tailwind v4(@theme 색·폰트 토큰) + Vitest 초기화. Inter/JetBrains Mono 로드, 픽스처 로더 src/lib/__fixtures__/load.ts 추가"
+    },
+    {
+      "step": 1,
+      "name": "core-types",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "csv-parse",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "cancel-pairs",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "categorize",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "events",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "analyze",
+      "status": "pending"
+    },
+    {
+      "step": 7,
+      "name": "openai-service",
+      "status": "pending"
+    },
+    {
+      "step": 8,
+      "name": "api-route",
+      "status": "pending"
+    },
+    {
+      "step": 9,
+      "name": "report-ui",
+      "status": "pending"
+    },
+    {
+      "step": 10,
+      "name": "user-override",
+      "status": "pending"
+    },
+    {
+      "step": 11,
+      "name": "print-export",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-08-20T15:12:42+0900"
 }
