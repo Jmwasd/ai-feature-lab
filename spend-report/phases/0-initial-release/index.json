@@ -69,7 +69,10 @@
     {
       "step": 8,
       "name": "api-route",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-08-20T15:43:56+0900",
+      "summary": "CSV 업로드를 메모리에서 파싱·분류·집계·요약으로 연결하고, xlsx 거절 및 안전한 오류 응답을 추가",
+      "completed_at": "2026-08-20T15:46:41+0900"
     },
     {
       "step": 9,
