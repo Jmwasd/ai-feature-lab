@@ -37,7 +37,10 @@
     {
       "step": 4,
       "name": "categorize",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-08-20T15:26:17+0900",
+      "summary": "메모 우선·PG 보호·규칙 사전 기반의 순수 분류와 안전한 미분류 적요 수집을 TDD로 추가",
+      "completed_at": "2026-08-20T15:29:30+0900"
     },
     {
       "step": 5,
