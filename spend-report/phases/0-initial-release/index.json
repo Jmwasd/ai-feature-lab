@@ -53,7 +53,10 @@
     {
       "step": 6,
       "name": "analyze",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-08-20T15:34:48+0900",
+      "summary": "취소 제외부터 분류·이벤트·집계·사용자 보정까지 재계산하는 순수 analyze 파이프라인과 회귀 테스트를 추가",
+      "completed_at": "2026-08-20T15:39:37+0900"
     },
     {
       "step": 7,
