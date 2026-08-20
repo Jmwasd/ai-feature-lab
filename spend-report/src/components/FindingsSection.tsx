@@ -1,15 +1,22 @@
-import type { Report } from "../types/report";
+import OverrideControl from "./OverrideControl";
+import type { Override, Report } from "../types/report";
 import { formatCount, formatCurrency, formatPercent } from "./format";
 
 interface FindingsSectionProps {
   report: Report;
+  overrides: Record<string, Override>;
+  onOverrideChange: (id: string, override: Override) => void;
 }
 
 function widthFor(amount: number, total: number): string {
   return `${total === 0 ? 0 : Math.round((amount / total) * 100)}%`;
 }
 
-export default function FindingsSection({ report }: FindingsSectionProps) {
+export default function FindingsSection({
+  report,
+  overrides,
+  onOverrideChange,
+}: FindingsSectionProps) {
   const mainEvent = report.events[0];
 
   return (
@@ -134,14 +141,25 @@ export default function FindingsSection({ report }: FindingsSectionProps) {
           {report.needsInput.length > 0 ? (
             <div className="mt-4 overflow-hidden rounded-2xl border border-fill-subtle">
               {report.needsInput.map((item) => (
-                <div className="flex items-center justify-between gap-4 border-b border-fill-subtle px-5 py-4 last:border-b-0" key={item.id}>
+                <div className="flex flex-col gap-4 border-b border-fill-subtle px-5 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between" key={item.id}>
                   <div className="min-w-0">
                     <p className="truncate text-[15px] font-semibold text-ink">{item.displayName}</p>
-                    <p className="mt-1 text-[13px] text-text-body">{item.category === "미분류" ? "미분류" : "입력 필요"}</p>
+                    <p className="mt-1 text-[13px] text-text-body">
+                      {overrides[item.id]?.excluded
+                        ? "제외됨"
+                        : overrides[item.id]?.category ?? (item.category === "미분류" ? "미분류" : "입력 필요")}
+                    </p>
                   </div>
-                  <p className="shrink-0 font-mono text-[14px] font-medium tabular-nums text-ink">
-                    {formatCurrency(item.amount)}
-                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                    <p className="shrink-0 font-mono text-[14px] font-medium tabular-nums text-ink">
+                      {formatCurrency(item.amount)}
+                    </p>
+                    <OverrideControl
+                      item={item}
+                      override={overrides[item.id]}
+                      onChange={onOverrideChange}
+                    />
+                  </div>
                 </div>
               ))}
             </div>

@@ -36,7 +36,13 @@ export async function POST(req: Request): Promise<Response> {
     });
     const summary = await summarize(report);
 
-    return Response.json({ transactions: parsed.transactions, report, summary });
+    return Response.json({
+      transactions: parsed.transactions,
+      queryPeriod: parsed.queryPeriod,
+      llmCategories,
+      report,
+      summary,
+    });
   } catch {
     return badRequest(INVALID_CSV_MESSAGE);
   }

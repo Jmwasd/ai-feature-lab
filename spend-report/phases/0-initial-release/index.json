@@ -85,7 +85,10 @@
     {
       "step": 10,
       "name": "user-override",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-08-20T15:55:25+0900",
+      "summary": "클라이언트 메모리의 거래 배열과 사용자 보정값으로 서버 재요청 없이 리포트를 재집계하고, 카테고리·소비 아님 보정 컨트롤을 추가",
+      "completed_at": "2026-08-20T16:00:43+0900"
     },
     {
       "step": 11,
