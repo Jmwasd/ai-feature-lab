@@ -47,18 +47,27 @@
   --bg             #ffffff   페이지
 ```
 
-Tailwind에 이 이름 그대로 등록하고, 컴포넌트에서 임의 hex(`bg-[#0052ff]`)를 쓰지 마라.
+Tailwind에 이 이름 그대로 등록하고, 컴포넌트에서 임의 hex(`bg-[#0052ff]`)나 Tailwind 기본 팔레트(`text-neutral-400` 등)를 쓰지 마라.
 
-```ts
-// tailwind.config.ts
-colors: {
-  blue: { DEFAULT: '#0052ff', hover: '#003ecc' },
-  ink: '#0a0b0d',
-  surface: { dark: '#16181c' },
-  line: { dark: '#2a2d33', DEFAULT: '#dee1e6' },
-  fill: { subtle: '#eef0f3', quiet: '#f7f7f7' },
-  text: { body: '#5b616e', muted: '#7c828a', ondark: '#a8acb3' },
-  ramp: '#c9cdd3',
+**이 프로젝트는 Tailwind v4를 쓴다.** 색은 `tailwind.config.ts`가 아니라 `src/app/globals.css`의 `@theme` 블록에 등록한다.
+
+```css
+/* src/app/globals.css */
+@import "tailwindcss";
+
+@theme {
+  --color-blue:         #0052ff;   /* bg-blue, text-blue */
+  --color-blue-hover:   #003ecc;
+  --color-ink:          #0a0b0d;
+  --color-surface-dark: #16181c;
+  --color-line:         #dee1e6;   /* border-line */
+  --color-line-dark:    #2a2d33;
+  --color-fill-subtle:  #eef0f3;
+  --color-fill-quiet:   #f7f7f7;
+  --color-text-body:    #5b616e;
+  --color-text-muted:   #7c828a;
+  --color-text-ondark:  #a8acb3;
+  --color-ramp:         #c9cdd3;
 }
 ```
 
@@ -224,12 +233,18 @@ border 1.5px dashed #2a2d33 / border-radius 24px / padding 28px / bg #16181c
   2  이벤트 묶음  밝은 카드 · 총액 36px + 항목 리스트          ┐ 2열
   3  지출 집중도  밝은 카드 · 파란 비율 36px + 상위 3개 바     ┘
   4  미분류 비중  밝은 카드 전폭 · 좌 비율 44px / 우 보정 가능한 행 리스트
+AI 요약     발견 바로 아래. summary가 null이면(API 키 없음) 섹션 자체를 렌더하지 않는다
 분류 (h2 "카테고리별 소비")
   전폭 카드 · 카테고리 바 목록 + 하단 분류 규칙 각주
-푸터 노트   bg #f7f7f7 / radius 24px / "저장되지 않습니다" + Dark 버튼
+푸터 노트   bg #f7f7f7 / radius 24px
+  · 기간 한계 고지 (조회기간이 짧으면 반복 결제 탐지 불가)
+  · 데이터 처리 고지 ("저장되지 않습니다" + 미분류 가맹점명이 OpenAI로 전송된다는 사실)
+  · Dark 버튼
 ```
 
 발견이 카테고리별 지출보다 **위**에 온다. 순서를 바꾸지 마라.
+
+**이 배치가 리포트 구성의 정본이다.** `DESIGN.md` 5.3은 리포트에 들어가야 할 **내용 7가지**를 나열한 것이고, 그것들이 화면 어디에 놓이는지는 위 구조가 정한다. 특히 **이벤트 묶음은 발견 4개 카드 중 2번이다** — 별도 섹션으로 빼면 2열 그리드가 무너진다.
 
 ## 인터랙션
 
@@ -248,7 +263,25 @@ border 1.5px dashed #2a2d33 / border-radius 24px / padding 28px / bg #16181c
 `no-print` 대상: 상단 네비 전체, 헤더의 [다시 업로드]·[PDF로 내보내기], 미분류 행의 토글 버튼, 푸터의 인쇄 버튼.
 **사용자가 지정한 값 자체는 인쇄돼야 한다** — 태그(`미분류`/`제외됨`)는 남기고 버튼만 숨긴다.
 
-> **미결정 — 구현 전에 확인할 것:** 목업의 인쇄 규칙은 위 한 줄이 전부다. 그런데 랜딩 히어로와 반복 결제 카드는 `#0a0b0d` 배경에 흰 텍스트라, 브라우저 기본 동작(배경색 미인쇄)에서는 **흰 종이에 흰 글씨가 찍혀 내용이 사라진다.** `print-color-adjust: exact`를 켜거나 인쇄 시 라이트로 반전하는 규칙이 필요하다. 목업에 답이 없으므로 임의로 정하지 마라.
+### 다크 서피스 반전 — 결정됨 (2026-08-20)
+
+목업의 인쇄 규칙은 위 한 줄이 전부였다. 그런데 반복 결제 카드는 `#0a0b0d` 배경에 흰 텍스트라, 브라우저 기본 동작(배경색 미인쇄)에서는 **흰 종이에 흰 글씨가 찍혀 발견 1번 카드가 통째로 사라진다.**
+
+**결정: 인쇄 시 다크 서피스를 라이트로 반전한다.**
+
+```
+배경        #0a0b0d  →  #ffffff
+텍스트       #ffffff  →  #0a0b0d
+보조 텍스트   #a8acb3  →  #5b616e
+구분선       #2a2d33  →  #dee1e6
+테두리       없음     →  1px solid #dee1e6   ← 카드 경계가 사라지지 않게
+```
+
+다크 카드에 식별용 클래스 하나(예: `.surface-dark`)를 달고 `@media print`에서 그 클래스에만 반전을 적용한다. 요소마다 개별 오버라이드를 흩지 마라.
+
+**`print-color-adjust: exact`는 채택하지 않는다.** 이유: A4 한 면을 잉크로 채우고, 사용자가 브라우저 설정에서 배경 인쇄를 끄면 다시 흰 글씨가 된다. 반전은 그 설정과 무관하게 항상 읽힌다.
+
+다크는 테마가 아니라 강조 수단이므로(원칙 2), 인쇄물에서는 테두리가 그 강조를 대신한다.
 
 ## 애니메이션
 

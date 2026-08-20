@@ -26,7 +26,13 @@ export async function summarize(report: Report): Promise<string | null>
 - **`summarize`는 이미 계산된 집계치만 받는다.** LLM에게 덧셈·비율 계산을 시키지 마라. 프롬프트에 "숫자를 새로 계산하지 말고 주어진 값만 사용하라"를 명시한다
 - 응답이 `Category` 목록에 없는 값을 주면 `미분류`로 떨어뜨린다. LLM 출력을 그대로 믿지 마라
 - 네트워크 실패·타임아웃 시 예외를 밖으로 던지지 말고 빈 결과로 degrade한다. 리포트는 LLM 없이도 완성돼야 한다
-- 모델 ID는 이 파일 상단 상수 하나로 격리한다 (DESIGN.md 9절)
+- **`openai` SDK를 설치하지 마라. 전역 `fetch`로 HTTP를 직접 호출한다.** 이유: 이 파일이 쓰는 것은 chat completions 엔드포인트 하나뿐이라 SDK가 주는 이득이 없고, 의존성 0으로 유지하면 모델·엔드포인트 교체가 이 파일 안에서 끝난다
+- **모델 ID는 이 파일 상단 상수 하나로 격리한다** (DESIGN.md 9절):
+  ```ts
+  const MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini';
+  ```
+  `.env.example`에 `OPENAI_MODEL=` 한 줄을 추가한다. 다른 파일에서 모델 ID를 참조하지 마라
+- 타임아웃을 걸어라(`AbortSignal.timeout`). LLM이 응답하지 않아도 리포트는 나와야 한다
 
 ### 테스트 (`src/services/openai.test.ts`)
 
@@ -52,6 +58,8 @@ npm run test
    - `src/lib/` 안의 파일이 `services/openai.ts`를 import하지 않는가? (의존 방향은 lib ← services가 아니라 route ← 둘 다)
    - `NEXT_PUBLIC_` 접두사로 키를 읽지 않는가?
    - 프롬프트에 금액·계좌·성명이 들어가지 않는가?
+   - `openai` 패키지가 `package.json`에 추가되지 않았는가?
+   - 모델 ID가 이 파일의 상수 한 곳에만 있는가?
 3. `phases/0-initial-release/index.json`의 step 7을 업데이트한다.
 
 ## 금지사항

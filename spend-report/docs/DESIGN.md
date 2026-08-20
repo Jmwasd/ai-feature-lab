@@ -469,6 +469,8 @@ Harness의 `execute.py`가 매 step 프롬프트에 `CLAUDE.md` + `docs/*.md`를
 6. **기간 한계 고지** — 조회기간이 짧으면 반복 결제 탐지 불가를 명시
 7. **데이터 처리 고지** — 업로드 파일은 저장하지 않으며, **분류되지 않은 가맹점명은 OpenAI로 전송**된다. 금액·계좌·성명은 전송하지 않는다 (4.1, 4.4, 8.1)
 
+> **위 목록은 "무엇이 들어가야 하는가"이지 "어떤 순서의 섹션인가"가 아니다.** 화면 배치의 정본은 `UI_GUIDE.md`의 "화면 구성" 절이다. 거기서 **이벤트(4번)는 발견 섹션 안의 2번 카드**이고, **기간 한계(6번)와 데이터 처리 고지(7번)는 푸터 노트**에 들어간다. 7개 항목은 전부 배치되지만 7개의 독립 섹션이 되지는 않는다.
+
 ---
 
 ## 6. 프로젝트 구조
@@ -550,7 +552,9 @@ scripts/execute.py <phase> [--push]   순차 실행
 
 **TDD 대상은 `src/lib/`만.** 파싱·취소 탐지·분류·집계가 조용히 틀리면 리포트 전체가 틀린다. UI 컴포넌트와 페이지에는 테스트를 요구하지 않는다.
 
-`.claude/settings.json`의 Stop 훅이 매 세션 종료 시 `npm run lint && npm run build && npm run test`를 돌리므로, step이 테스트를 깨뜨린 채 끝날 수 없다.
+검증은 **각 step 파일의 Acceptance Criteria**가 강제한다. 모든 step이 `npm run lint && npm run build && npm run test`를 AC로 갖고, 실패 시 `execute.py`가 에러 메시지를 프롬프트에 넣어 최대 3회 재시도한다.
+
+> `.claude/settings.json`의 Stop 훅도 같은 커맨드를 돌리지만 **그것은 Claude Code 세션에만 걸린다.** `execute.py`의 러너는 `codex exec`이므로(6절 "Harness 실행 구조") harness 실행 중에는 이 훅이 발동하지 않는다. 안전망은 훅이 아니라 step AC다.
 
 ---
 
