@@ -2,17 +2,103 @@
   "project": "spend-report",
   "phase": "0-initial-release",
   "steps": [
-    { "step": 0,  "name": "project-setup",  "status": "pending" },
-    { "step": 1,  "name": "core-types",     "status": "pending" },
-    { "step": 2,  "name": "csv-parse",      "status": "pending" },
-    { "step": 3,  "name": "cancel-pairs",   "status": "pending" },
-    { "step": 4,  "name": "categorize",     "status": "pending" },
-    { "step": 5,  "name": "events",         "status": "pending" },
-    { "step": 6,  "name": "analyze",        "status": "pending" },
-    { "step": 7,  "name": "openai-service", "status": "pending" },
-    { "step": 8,  "name": "api-route",      "status": "pending" },
-    { "step": 9,  "name": "report-ui",      "status": "pending" },
-    { "step": 10, "name": "user-override",  "status": "pending" },
-    { "step": 11, "name": "print-export",   "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-08-20T15:12:42+0900",
+      "summary": "Next.js 15 + TS strict + Tailwind v4(@theme 색·폰트 토큰) + Vitest 초기화. Inter/JetBrains Mono 로드, 픽스처 로더 src/lib/__fixtures__/load.ts 추가",
+      "completed_at": "2026-08-20T15:18:10+0900"
+    },
+    {
+      "step": 1,
+      "name": "core-types",
+      "status": "completed",
+      "started_at": "2026-08-20T15:18:10+0900",
+      "summary": "거래 원본·분류·리포트·사용자 보정 도메인 타입을 src/types에 정의",
+      "completed_at": "2026-08-20T15:20:05+0900"
+    },
+    {
+      "step": 2,
+      "name": "csv-parse",
+      "status": "completed",
+      "started_at": "2026-08-20T15:20:06+0900",
+      "summary": "토스뱅크 CSV의 가변 헤더·날짜·금액·조회기간을 정규화하는 순수 파서와 TDD 테스트를 추가",
+      "completed_at": "2026-08-20T15:24:06+0900"
+    },
+    {
+      "step": 3,
+      "name": "cancel-pairs",
+      "status": "completed",
+      "started_at": "2026-08-20T15:24:06+0900",
+      "summary": "체크카드결제 취소 쌍을 시간 역전 없이 1:1로 매칭하는 순수 함수와 TDD 테스트를 추가",
+      "completed_at": "2026-08-20T15:26:17+0900"
+    },
+    {
+      "step": 4,
+      "name": "categorize",
+      "status": "completed",
+      "started_at": "2026-08-20T15:26:17+0900",
+      "summary": "메모 우선·PG 보호·규칙 사전 기반의 순수 분류와 안전한 미분류 적요 수집을 TDD로 추가",
+      "completed_at": "2026-08-20T15:30:37+0900"
+    },
+    {
+      "step": 5,
+      "name": "events",
+      "status": "completed",
+      "started_at": "2026-08-20T15:30:38+0900",
+      "summary": "반복 메모 부분문자열과 전후 5분 확장으로 이벤트를 묶는 순수 함수와 TDD 테스트를 추가",
+      "completed_at": "2026-08-20T15:34:48+0900"
+    },
+    {
+      "step": 6,
+      "name": "analyze",
+      "status": "completed",
+      "started_at": "2026-08-20T15:34:48+0900",
+      "summary": "취소 제외부터 분류·이벤트·집계·사용자 보정까지 재계산하는 순수 analyze 파이프라인과 회귀 테스트를 추가",
+      "completed_at": "2026-08-20T15:40:11+0900"
+    },
+    {
+      "step": 7,
+      "name": "openai-service",
+      "status": "completed",
+      "started_at": "2026-08-20T15:40:11+0900",
+      "summary": "전역 fetch 기반 OpenAI 분류·요약 서비스를 추가하고, 키 부재·네트워크 실패·잘못된 카테고리 응답을 안전하게 처리",
+      "completed_at": "2026-08-20T15:43:56+0900"
+    },
+    {
+      "step": 8,
+      "name": "api-route",
+      "status": "completed",
+      "started_at": "2026-08-20T15:43:56+0900",
+      "summary": "CSV 업로드를 메모리에서 파싱·분류·집계·요약으로 연결하고, xlsx 거절 및 안전한 오류 응답을 추가",
+      "completed_at": "2026-08-20T15:48:01+0900"
+    },
+    {
+      "step": 9,
+      "name": "report-ui",
+      "status": "completed",
+      "started_at": "2026-08-20T15:48:01+0900",
+      "summary": "CSV 업로드 랜딩과 발견 중심 리포트 UI를 구현하고 API 업로드 상태 전환을 연결",
+      "completed_at": "2026-08-20T15:55:24+0900"
+    },
+    {
+      "step": 10,
+      "name": "user-override",
+      "status": "completed",
+      "started_at": "2026-08-20T15:55:25+0900",
+      "summary": "클라이언트 메모리의 거래 배열과 사용자 보정값으로 서버 재요청 없이 리포트를 재집계하고, 카테고리·소비 아님 보정 컨트롤을 추가",
+      "completed_at": "2026-08-20T16:01:22+0900"
+    },
+    {
+      "step": 11,
+      "name": "print-export",
+      "status": "completed",
+      "started_at": "2026-08-20T16:01:22+0900",
+      "summary": "브라우저 인쇄용 섹션 분할 방지·UI 숨김·다크 반복 결제 카드 라이트 반전과 기간·생성 시각 헤더를 추가",
+      "completed_at": "2026-08-20T16:08:26+0900"
+    }
+  ],
+  "created_at": "2026-08-20T15:12:42+0900",
+  "completed_at": "2026-08-20T16:08:26+0900"
 }

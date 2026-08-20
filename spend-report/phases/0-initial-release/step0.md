@@ -21,22 +21,47 @@
 
 2. TypeScript **strict mode**. `tsconfig.json`에 `"strict": true`.
 
-3. Tailwind CSS 설정. `src/app/globals.css`에 Tailwind 지시문.
+3. **Tailwind CSS v4**로 설정한다. v3를 설치하지 마라.
+   `src/app/globals.css`에 `@import "tailwindcss";`를 넣고, **`@theme` 블록에 색·폰트 토큰을 등록한다.**
+   `/docs/UI_GUIDE.md`의 색상 절에 있는 `tailwind.config.ts` 예시는 v3 문법이므로 그대로 쓸 수 없다. 아래 표대로 옮겨라 — 유틸리티 클래스 이름은 v3 예시와 동일하게 나온다.
 
-4. Vitest 설정 (`vitest.config.ts`). `src/` 하위 `*.test.ts`를 찾도록 한다. 환경은 `node`로 충분하다 — `src/lib/`가 순수 함수라 DOM이 필요 없다.
+   ```css
+   @theme {
+     --color-blue:        #0052ff;   /* bg-blue,  text-blue  */
+     --color-blue-hover:  #003ecc;
+     --color-ink:         #0a0b0d;
+     --color-surface-dark:#16181c;
+     --color-line:        #dee1e6;   /* border-line */
+     --color-line-dark:   #2a2d33;
+     --color-fill-subtle: #eef0f3;
+     --color-fill-quiet:  #f7f7f7;
+     --color-text-body:   #5b616e;
+     --color-text-muted:  #7c828a;
+     --color-text-ondark: #a8acb3;
+     --color-ramp:        #c9cdd3;
+   }
+   ```
 
-5. `/docs/ARCHITECTURE.md`의 디렉토리 구조대로 빈 폴더를 만든다: `src/app/`, `src/components/`, `src/types/`, `src/lib/`, `src/services/`.
+   **컴포넌트에서 임의 hex(`bg-[#0052ff]`)를 쓰지 마라.** 위 토큰 이름만 쓴다 (UI_GUIDE 색상).
 
-6. `src/app/page.tsx`, `src/app/layout.tsx`를 최소 형태로 만든다. 페이지는 제목 한 줄만 렌더한다. 업로드 UI는 step 9에서 만든다.
+4. **폰트를 `next/font/google`로 두 벌만 로드한다** (UI_GUIDE 타이포그래피).
+   `src/app/layout.tsx`에서 **Inter**(400/500/600)와 **JetBrains Mono**(500)를 CSS 변수로 노출하고, `@theme`에 `--font-sans`/`--font-mono`로 연결해 `font-sans`·`font-mono` 유틸리티가 동작하게 한다.
+   JetBrains Mono는 **금액·비율·건수·순번 전용**이다. 다른 폰트를 추가하지 마라.
 
-7. **픽스처 로더**를 `src/lib/__fixtures__/load.ts`에 만든다. 이후 모든 step의 테스트가 이걸 쓴다.
+5. Vitest 설정 (`vitest.config.ts`). `src/` 하위 `*.test.ts`를 찾도록 한다. 환경은 `node`로 충분하다 — `src/lib/`가 순수 함수라 DOM이 필요 없다.
+
+6. `/docs/ARCHITECTURE.md`의 디렉토리 구조대로 빈 폴더를 만든다: `src/app/`, `src/components/`, `src/types/`, `src/lib/`, `src/services/`.
+
+7. `src/app/page.tsx`를 최소 형태로 만든다. 페이지는 제목 한 줄만 렌더한다. 업로드 UI는 step 9에서 만든다.
+
+8. **픽스처 로더**를 `src/lib/__fixtures__/load.ts`에 만든다. 이후 모든 step의 테스트가 이걸 쓴다.
    ```ts
    /** fixtures/toss-sample.csv 의 원문. 파일이 없으면 null. */
    export function loadSampleCsv(): string | null
    ```
    `fixtures/toss-sample.csv`는 gitignore돼 있어 없을 수 있다(ADR-010). 없으면 예외를 던지지 말고 `null`을 반환한다. 테스트는 `null`이면 `it.skip`으로 넘긴다.
 
-8. `.env.example`에 `OPENAI_API_KEY=` 한 줄. `.env.local`은 만들지 말고 gitignore에 이미 있는지 확인한다.
+9. `.env.example`에 `OPENAI_API_KEY=` 한 줄. `.env.local`은 만들지 말고 gitignore에 이미 있는지 확인한다.
 
 ## Acceptance Criteria
 
@@ -54,8 +79,10 @@ npm run test
    - `/docs/ARCHITECTURE.md`의 디렉토리 구조와 일치하는가?
    - `tsconfig.json`에 `"strict": true`가 있는가?
    - `package.json`의 스크립트 이름이 `dev`/`build`/`lint`/`test`인가?
+   - Tailwind가 **v4**이고 색 토큰이 `globals.css`의 `@theme`에 있는가? (`tailwind.config.ts`에 색을 등록하지 않았는가)
+   - Inter와 JetBrains Mono가 `next/font/google`로 로드되는가?
 3. `phases/0-initial-release/index.json`의 step 0을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "Next.js 15 + TS strict + Tailwind + Vitest 초기화. 픽스처 로더 src/lib/__fixtures__/load.ts 추가"`
+   - 성공 → `"status": "completed"`, `"summary": "Next.js 15 + TS strict + Tailwind v4(@theme 색·폰트 토큰) + Vitest 초기화. Inter/JetBrains Mono 로드, 픽스처 로더 src/lib/__fixtures__/load.ts 추가"`
    - 3회 시도 후 실패 → `"status": "error"`, `"error_message"`
    - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason"` 후 즉시 중단
 
@@ -66,3 +93,5 @@ npm run test
 - 상태 관리 라이브러리(zustand, redux, jotai)를 설치하지 마라. 이유: ARCHITECTURE.md에서 `useState`/`useReducer`만 쓰기로 했다
 - CSV·xlsx 파싱 라이브러리를 아직 설치하지 마라. 이유: step 2에서 필요한 것만 고른다
 - UI 컴포넌트 라이브러리(shadcn, MUI 등)를 설치하지 마라. 이유: `/docs/UI_GUIDE.md`가 직접 스타일을 규정한다
+- Tailwind v3를 설치하거나 `tailwind.config.ts`에 색을 등록하지 마라. 이유: 이 프로젝트는 v4 + `@theme` CSS-first 설정으로 고정했다. 두 방식이 섞이면 어느 쪽이 적용됐는지 추적이 안 된다
+- 폰트를 CDN `<link>`나 `@import url()`로 불러오지 마라. 이유: `next/font/google`이 셀프호스팅해서 레이아웃 시프트를 없앤다

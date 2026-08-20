@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #ffffff;
+  --color-blue: #0052ff;
+  --color-blue-hover: #003ecc;
+  --color-ink: #0a0b0d;
+  --color-surface-dark: #16181c;
+  --color-line: #dee1e6;
+  --color-line-dark: #2a2d33;
+  --color-fill-subtle: #eef0f3;
+  --color-fill-quiet: #f7f7f7;
+  --color-text-body: #5b616e;
+  --color-text-muted: #7c828a;
+  --color-text-ondark: #a8acb3;
+  --color-ramp: #c9cdd3;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.print-only {
+  display: none;
+}
+
+@media print {
+  section {
+    break-inside: avoid;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block;
+  }
+
+  .surface-dark {
+    background-color: var(--color-bg) !important;
+    border: 1px solid var(--color-line);
+    color: var(--color-ink) !important;
+  }
+
+  .surface-dark .bg-surface-dark {
+    background-color: var(--color-fill-quiet) !important;
+  }
+
+  .surface-dark .text-bg {
+    color: var(--color-ink) !important;
+  }
+
+  .surface-dark .text-text-ondark {
+    color: var(--color-text-body) !important;
+  }
+
+  .surface-dark .border-ink {
+    border-color: var(--color-line) !important;
+  }
+}
