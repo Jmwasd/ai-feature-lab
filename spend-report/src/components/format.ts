@@ -10,7 +10,7 @@ export function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 100)}%`;
 }
 
-export function formatDate(date: Date): string {
+function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("ko-KR", {
     year: "numeric",
     month: "2-digit",

@@ -69,6 +69,20 @@ describe("findCancelPairs", () => {
 
     expect(findCancelPairs(transactions)).toEqual([]);
   });
+
+  it("matches cancellations chronologically even when input rows are not time-sorted", () => {
+    const transactions = [
+      transaction("payment-early", -10000, "2026-08-01T09:00:00"),
+      transaction("cancel-late", 10000, "2026-08-01T12:00:00"),
+      transaction("payment-late", -10000, "2026-08-01T10:00:00"),
+      transaction("cancel-early", 10000, "2026-08-01T11:00:00"),
+    ];
+
+    expect(findCancelPairs(transactions)).toEqual([
+      { paymentId: "payment-late", cancelId: "cancel-early", amount: 10000 },
+      { paymentId: "payment-early", cancelId: "cancel-late", amount: 10000 },
+    ]);
+  });
 });
 
 const sampleCsv = loadSampleCsv();

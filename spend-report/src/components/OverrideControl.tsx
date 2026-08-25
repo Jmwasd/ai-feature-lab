@@ -1,23 +1,18 @@
-import type { Category, ClassifiedTx, Override } from "../types/report";
+import type { ChangeEvent } from "react";
+
+import {
+  isCategory,
+  SELECTABLE_CATEGORIES,
+  type Category,
+  type ClassifiedTx,
+  type Override,
+} from "../types/report";
 
 interface OverrideControlProps {
   item: ClassifiedTx;
   override?: Override;
   onChange: (id: string, override: Override) => void;
 }
-
-const categories: Category[] = [
-  "식비",
-  "카페",
-  "배달",
-  "식료품",
-  "생활",
-  "교통",
-  "숙박",
-  "문화",
-  "의료",
-  "수수료/기타",
-];
 
 export default function OverrideControl({ item, override, onChange }: OverrideControlProps) {
   const isExcluded = override?.excluded === true;
@@ -28,11 +23,24 @@ export default function OverrideControl({ item, override, onChange }: OverrideCo
   }
 
   function include(): void {
-    onChange(item.id, { ...(override?.category ? { category: override.category } : {}), excluded: false });
+    setExcluded(false);
   }
 
   function exclude(): void {
-    onChange(item.id, { ...(override?.category ? { category: override.category } : {}), excluded: true });
+    setExcluded(true);
+  }
+
+  function setExcluded(excluded: boolean): void {
+    const categoryOverride = override?.category;
+    onChange(item.id, categoryOverride ? { category: categoryOverride, excluded } : { excluded });
+  }
+
+  function handleCategoryChange(event: ChangeEvent<HTMLSelectElement>): void {
+    const nextCategory = event.target.value;
+
+    if (isCategory(nextCategory) && nextCategory !== "미분류") {
+      selectCategory(nextCategory);
+    }
   }
 
   return (
@@ -45,14 +53,10 @@ export default function OverrideControl({ item, override, onChange }: OverrideCo
         disabled={isExcluded}
         id={`category-${item.id}`}
         value={category}
-        onChange={(event) => {
-          if (event.target.value) {
-            selectCategory(event.target.value as Category);
-          }
-        }}
+        onChange={handleCategoryChange}
       >
         <option value="">카테고리</option>
-        {categories.map((option) => (
+        {SELECTABLE_CATEGORIES.map((option) => (
           <option key={option} value={option}>
             {option}
           </option>

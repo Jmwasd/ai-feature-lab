@@ -42,6 +42,23 @@ describe("parseTossCsv", () => {
       second: 16,
     });
   });
+
+  it("preserves commas, line breaks, and escaped quotes inside quoted fields", () => {
+    const csv = [
+      ",거래 일시,적요,거래 유형,거래 기관,계좌번호,거래 금액,거래 후 잔액,메모",
+      ',2026.08.14 20:32:16,"복합, 가맹점",체크카드결제,,,"-1,000","6,769,423","첫 줄',
+      '둘째 ""메모"""',
+    ].join("\r\n");
+
+    const [transaction] = parseTossCsv(csv).transactions;
+
+    expect(transaction).toMatchObject({
+      description: "복합, 가맹점",
+      amount: -1000,
+      balanceAfter: 6769423,
+      memo: '첫 줄\r\n둘째 "메모"',
+    });
+  });
 });
 
 const sampleCsv = loadSampleCsv();

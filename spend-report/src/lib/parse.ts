@@ -51,50 +51,81 @@ export function parseTossCsv(csv: string): ParseResult {
 }
 
 function parseCsv(csv: string): CsvRow[] {
-  const rows: CsvRow[] = [];
-  let row: string[] = [];
-  let value = "";
-  let isQuoted = false;
+  const parser = new CsvParser();
 
-  for (let index = 0; index < csv.length; index += 1) {
-    const character = csv[index];
+  for (let index = 0; index < csv.length; ) {
+    index += parser.consume(csv[index], csv[index + 1]);
+  }
 
+  return parser.finish();
+}
+
+class CsvParser {
+  private readonly rows: CsvRow[] = [];
+  private row: CsvRow = [];
+  private value = "";
+  private isQuoted = false;
+
+  consume(character: string, nextCharacter: string | undefined): number {
     if (character === '"') {
-      if (isQuoted && csv[index + 1] === '"') {
-        value += '"';
-        index += 1;
-      } else {
-        isQuoted = !isQuoted;
-      }
-      continue;
+      return this.consumeQuote(nextCharacter);
     }
 
-    if (character === "," && !isQuoted) {
-      row.push(value);
-      value = "";
-      continue;
+    if (!this.isQuoted && character === ",") {
+      this.finishValue();
+      return 1;
     }
 
-    if ((character === "\n" || character === "\r") && !isQuoted) {
-      if (character === "\r" && csv[index + 1] === "\n") {
-        index += 1;
-      }
-      row.push(value);
-      rows.push(row);
-      row = [];
-      value = "";
-      continue;
+    if (!this.isQuoted && isLineBreak(character)) {
+      this.finishRow();
+      return skipLineFeed(character, nextCharacter);
     }
 
-    value += character;
+    this.value += character;
+    return 1;
   }
 
-  if (value.length > 0 || row.length > 0) {
-    row.push(value);
-    rows.push(row);
+  finish(): CsvRow[] {
+    if (this.value.length > 0 || this.row.length > 0) {
+      this.finishRow();
+    }
+
+    return this.rows;
   }
 
-  return rows;
+  private consumeQuote(nextCharacter: string | undefined): number {
+    if (!this.isQuoted) {
+      this.isQuoted = true;
+      return 1;
+    }
+
+    if (nextCharacter === '"') {
+      this.value += '"';
+      return 2;
+    }
+
+    this.isQuoted = false;
+    return 1;
+  }
+
+  private finishValue(): void {
+    this.row.push(this.value);
+    this.value = "";
+  }
+
+  private finishRow(): void {
+    this.finishValue();
+    this.rows.push(this.row);
+    this.row = [];
+  }
+}
+
+function isLineBreak(character: string): boolean {
+  return character === "\n" || character === "\r";
+}
+
+function skipLineFeed(character: string, nextCharacter: string | undefined): number {
+  return character === "\r" && nextCharacter === "\n" ? 2 : 1;
 }
 
 function indexColumns(header: CsvRow): Map<string, number> {
