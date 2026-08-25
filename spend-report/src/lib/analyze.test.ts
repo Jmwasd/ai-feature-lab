@@ -29,6 +29,19 @@ describe("analyze", () => {
     expect(report.unclassified).toEqual({ count: 0, amount: 0, ratio: 0 });
   });
 
+  it("gives a user category override precedence over LLM and merchant rules", () => {
+    const report = analyze([transaction({ description: "쿠팡이츠" })], {
+      llmCategories: { 쿠팡이츠: "카페" },
+      overrides: { "tx-1": { category: "식비" } },
+    });
+
+    expect(report.byCategory).toEqual([{ category: "식비", amount: 10000, count: 1 }]);
+    expect(report.concentration.items[0]).toMatchObject({
+      category: "식비",
+      categorySource: "user",
+    });
+  });
+
   it("requires three matching descriptions for a short file, but two for a 30-day query period", () => {
     const transactions = [
       transaction({ id: "first", amount: -12000 }),

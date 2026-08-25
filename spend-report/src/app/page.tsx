@@ -9,16 +9,10 @@ import Landing from "../components/Landing";
 import ReportHeader from "../components/ReportHeader";
 import SummaryStrip from "../components/SummaryStrip";
 import { analyze } from "../lib/analyze";
+import { parseAnalyzeResponse, responseError } from "../lib/analyze-response";
 import type { Category, Override } from "../types/report";
 import type { Transaction } from "../types/transaction";
 import { formatPeriod } from "../components/format";
-
-interface AnalyzeResponse {
-  transactions: Transaction[];
-  queryPeriod: { from: Date; to: Date } | null;
-  llmCategories: Record<string, Category>;
-  summary: string | null;
-}
 
 const XLSX_GUIDANCE =
   "토스뱅크 원본 .xlsx는 암호화된 파일이라 바로 분석할 수 없습니다. 위 3단계에 따라 CSV로 내보낸 뒤 올려 주세요.";
@@ -151,123 +145,4 @@ function formatPrintTimestamp(value: Date): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(value);
-}
-
-function parseAnalyzeResponse(value: unknown): AnalyzeResponse | null {
-  if (
-    !isRecord(value) ||
-    !isRecord(value.report) ||
-    !Array.isArray(value.transactions) ||
-    !isRecord(value.llmCategories) ||
-    (value.summary !== null && typeof value.summary !== "string")
-  ) {
-    return null;
-  }
-
-  const transactions: Transaction[] = [];
-
-  for (const rawTransaction of value.transactions) {
-    const transaction = parseTransaction(rawTransaction);
-
-    if (!transaction) {
-      return null;
-    }
-
-    transactions.push(transaction);
-  }
-
-  const llmCategories = parseLlmCategories(value.llmCategories);
-
-  if (!llmCategories) {
-    return null;
-  }
-
-  return {
-    transactions,
-    queryPeriod: parseDateRange(value.queryPeriod),
-    llmCategories,
-    summary: value.summary,
-  };
-}
-
-function parseTransaction(value: unknown): Transaction | null {
-  if (
-    !isRecord(value) ||
-    typeof value.id !== "string" ||
-    typeof value.description !== "string" ||
-    typeof value.kind !== "string" ||
-    typeof value.amount !== "number" ||
-    typeof value.memo !== "string" ||
-    typeof value.balanceAfter !== "number"
-  ) {
-    return null;
-  }
-
-  const at = parseDate(value.at);
-  return at
-    ? {
-        id: value.id,
-        at,
-        description: value.description,
-        kind: value.kind,
-        amount: value.amount,
-        memo: value.memo,
-        balanceAfter: value.balanceAfter,
-      }
-    : null;
-}
-
-function parseDateRange(value: unknown): { from: Date; to: Date } | null {
-  if (!isRecord(value)) {
-    return null;
-  }
-
-  const from = parseDate(value.from);
-  const to = parseDate(value.to);
-  return from && to ? { from, to } : null;
-}
-
-function parseDate(value: unknown): Date | null {
-  if (typeof value !== "string") {
-    return null;
-  }
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date;
-}
-
-function parseLlmCategories(value: Record<string, unknown>): Record<string, Category> | null {
-  const entries = Object.entries(value);
-
-  if (!entries.every(([, category]) => isCategory(category))) {
-    return null;
-  }
-
-  return Object.fromEntries(entries) as Record<string, Category>;
-}
-
-function isCategory(value: unknown): value is Category {
-  return (
-    value === "식비" ||
-    value === "카페" ||
-    value === "배달" ||
-    value === "식료품" ||
-    value === "생활" ||
-    value === "교통" ||
-    value === "숙박" ||
-    value === "문화" ||
-    value === "의료" ||
-    value === "수수료/기타" ||
-    value === "미분류"
-  );
-}
-
-function responseError(value: unknown): string {
-  return isRecord(value) && typeof value.error === "string"
-    ? value.error
-    : "파일 분석 중 오류가 발생했습니다.";
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

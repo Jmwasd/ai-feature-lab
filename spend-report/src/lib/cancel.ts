@@ -56,26 +56,46 @@ function findClosestPriorPayment(
   cancellation: IndexedTransaction,
   consumedPaymentIndexes: Set<number>,
 ): IndexedTransaction | null {
-  let closest: IndexedTransaction | null = null;
+  return payments
+    .filter((payment) => isAvailablePriorMatch(payment, cancellation, consumedPaymentIndexes))
+    .reduce(selectClosestPayment, null);
+}
 
-  for (const payment of payments) {
-    if (
-      consumedPaymentIndexes.has(payment.index) ||
-      payment.transaction.description !== cancellation.transaction.description ||
-      Math.abs(payment.transaction.amount) !== cancellation.transaction.amount ||
-      payment.transaction.at.getTime() >= cancellation.transaction.at.getTime()
-    ) {
-      continue;
-    }
+function isAvailablePriorMatch(
+  payment: IndexedTransaction,
+  cancellation: IndexedTransaction,
+  consumedPaymentIndexes: Set<number>,
+): boolean {
+  return (
+    !consumedPaymentIndexes.has(payment.index) &&
+    hasMatchingCancellationKey(payment, cancellation) &&
+    occurredBefore(payment, cancellation)
+  );
+}
 
-    if (
-      !closest ||
-      payment.transaction.at.getTime() > closest.transaction.at.getTime() ||
-      (payment.transaction.at.getTime() === closest.transaction.at.getTime() && payment.index > closest.index)
-    ) {
-      closest = payment;
-    }
+function hasMatchingCancellationKey(
+  payment: IndexedTransaction,
+  cancellation: IndexedTransaction,
+): boolean {
+  return (
+    payment.transaction.description === cancellation.transaction.description &&
+    Math.abs(payment.transaction.amount) === cancellation.transaction.amount
+  );
+}
+
+function occurredBefore(left: IndexedTransaction, right: IndexedTransaction): boolean {
+  return left.transaction.at.getTime() < right.transaction.at.getTime();
+}
+
+function selectClosestPayment(
+  closest: IndexedTransaction | null,
+  payment: IndexedTransaction,
+): IndexedTransaction {
+  if (!closest || payment.transaction.at.getTime() > closest.transaction.at.getTime()) {
+    return payment;
   }
 
-  return closest;
+  return payment.transaction.at.getTime() === closest.transaction.at.getTime() && payment.index > closest.index
+    ? payment
+    : closest;
 }

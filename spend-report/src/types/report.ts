@@ -1,17 +1,28 @@
 import type { Transaction } from "./transaction";
 
-export type Category =
-  | "식비"
-  | "카페"
-  | "배달"
-  | "식료품"
-  | "생활"
-  | "교통"
-  | "숙박"
-  | "문화"
-  | "의료"
-  | "수수료/기타"
-  | "미분류";
+const CATEGORIES = [
+  "식비",
+  "카페",
+  "배달",
+  "식료품",
+  "생활",
+  "교통",
+  "숙박",
+  "문화",
+  "의료",
+  "수수료/기타",
+  "미분류",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
+export const SELECTABLE_CATEGORIES = CATEGORIES.filter(
+  (category): category is Exclude<Category, "미분류"> => category !== "미분류",
+);
+
+export function isCategory(value: unknown): value is Category {
+  return typeof value === "string" && CATEGORIES.some((category) => category === value);
+}
 
 /** 분류가 어디서 나왔는지. 리포트에서 신뢰도 표시에 쓴다. */
 export type CategorySource = "memo" | "rule" | "llm" | "user" | "none";

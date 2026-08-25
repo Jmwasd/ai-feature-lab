@@ -83,20 +83,47 @@ function classify(
   opts: AnalyzeOptions,
 ): ClassifiedTx {
   const categorized = categorize(transaction);
-  const llmCategory =
-    categorized.category === "미분류" && !categorized.isPg
-      ? opts.llmCategories?.[transaction.description]
-      : undefined;
-  const overrideCategory = opts.overrides?.[transaction.id]?.category;
+  const category = resolveCategory(transaction, categorized, opts);
 
   return {
     ...transaction,
-    category: overrideCategory ?? llmCategory ?? categorized.category,
-    categorySource: overrideCategory ? "user" : llmCategory ? "llm" : categorized.source,
+    ...category,
     displayName: categorized.displayName,
     isPg: categorized.isPg,
     ...(cancelledWith.has(transaction.id) ? { cancelledWith: cancelledWith.get(transaction.id) } : {}),
   };
+}
+
+function resolveCategory(
+  transaction: Transaction,
+  categorized: ReturnType<typeof categorize>,
+  opts: AnalyzeOptions,
+): Pick<ClassifiedTx, "category" | "categorySource"> {
+  const overrideCategory = opts.overrides?.[transaction.id]?.category;
+
+  if (overrideCategory) {
+    return { category: overrideCategory, categorySource: "user" };
+  }
+
+  const llmCategory = getLlmCategory(transaction, categorized, opts.llmCategories);
+
+  if (llmCategory) {
+    return { category: llmCategory, categorySource: "llm" };
+  }
+
+  return { category: categorized.category, categorySource: categorized.source };
+}
+
+function getLlmCategory(
+  transaction: Transaction,
+  categorized: ReturnType<typeof categorize>,
+  llmCategories: AnalyzeOptions["llmCategories"],
+): Category | undefined {
+  if (categorized.category !== "미분류" || categorized.isPg) {
+    return undefined;
+  }
+
+  return llmCategories?.[transaction.description];
 }
 
 function cancelledTransactionMap(

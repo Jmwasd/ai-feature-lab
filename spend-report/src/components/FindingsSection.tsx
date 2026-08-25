@@ -140,28 +140,30 @@ export default function FindingsSection({
           <p className="text-[15px] font-semibold text-ink">보정이 필요한 항목</p>
           {report.needsInput.length > 0 ? (
             <div className="mt-4 overflow-hidden rounded-2xl border border-fill-subtle">
-              {report.needsInput.map((item) => (
-                <div className="flex flex-col gap-4 border-b border-fill-subtle px-5 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between" key={item.id}>
-                  <div className="min-w-0">
-                    <p className="truncate text-[15px] font-semibold text-ink">{item.displayName}</p>
-                    <p className="mt-1 text-[13px] text-text-body">
-                      {overrides[item.id]?.excluded
-                        ? "제외됨"
-                        : overrides[item.id]?.category ?? (item.category === "미분류" ? "미분류" : "입력 필요")}
-                    </p>
+              {report.needsInput.map((item) => {
+                const override = overrides[item.id];
+                const status = override?.excluded
+                  ? "제외됨"
+                  : override?.category ?? (item.category === "미분류" ? "미분류" : "입력 필요");
+
+                return (
+                  <div
+                    className="flex flex-col gap-4 border-b border-fill-subtle px-5 py-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between"
+                    key={item.id}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-[15px] font-semibold text-ink">{item.displayName}</p>
+                      <p className="mt-1 text-[13px] text-text-body">{status}</p>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+                      <p className="shrink-0 font-mono text-[14px] font-medium tabular-nums text-ink">
+                        {formatCurrency(item.amount)}
+                      </p>
+                      <OverrideControl item={item} override={override} onChange={onOverrideChange} />
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
-                    <p className="shrink-0 font-mono text-[14px] font-medium tabular-nums text-ink">
-                      {formatCurrency(item.amount)}
-                    </p>
-                    <OverrideControl
-                      item={item}
-                      override={overrides[item.id]}
-                      onChange={onOverrideChange}
-                    />
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="mt-4 text-[15px] leading-6 text-text-body">지금 보정이 필요한 항목은 없습니다.</p>
