@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""프로젝트의 Claude Code 세션 전체를 질문·답변만 남긴 HTML 한 장으로 묶는다.
+"""프로젝트의 Claude Code · Codex 세션 전체를 질문·답변만 남긴 HTML 한 장으로 묶는다.
 
 사용법:
     python3 build_chat_logs.py peerlens          # 프로젝트명으로 세션을 찾아 HTML 생성
@@ -7,6 +7,15 @@
     python3 build_chat_logs.py peerlens --out /경로/파일.html
 
 출력: <프로젝트 경로>/docs/logs/<프로젝트명>-qa.html (다시 실행하면 덮어쓴다)
+
+두 소스를 읽는다:
+    ~/.claude/projects/  Claude Code 트랜스크립트
+    ~/.codex/sessions/   Codex CLI 트랜스크립트
+
+Codex 세션은 cwd가 프로젝트 폴더와 일치하면 포함한다. 모노레포 루트에서 돈
+세션은 질문이 그 프로젝트를 가리킬 때만 포함한다 — 루트 cwd 하나에 여러
+프로젝트의 작업이 섞이기 때문이다. harness가 돌린 비대화형 세션은 사람 발화가
+없어 자동으로 걸러진다.
 
 원칙: 질문·답변 문장은 손대지 않는다. 도구 호출, thinking, 시스템 메시지,
 슬래시 커맨드, 서브에이전트 대화 같은 노이즈만 걷어낸다.
@@ -24,6 +33,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
+CODEX_SESSIONS_DIR = Path.home() / ".codex" / "sessions"
 KST = timezone(timedelta(hours=9))
 
 # 사용자 입력처럼 보이지만 실제로는 하네스가 끼워 넣은 블록이다.
@@ -46,6 +56,15 @@ HARNESS_BLOCK_RE = re.compile(
 )
 HARNESS_OPEN_RE = re.compile(r"^<(" + "|".join(HARNESS_TAGS) + r")\b")
 NOISE_LINE_RE = re.compile(r"^\s*(?:\[Request interrupted[^\n]*|API Error[^\n]*)$", re.MULTILINE)
+
+# Codex는 주입 지시문도 user 롤로 기록한다. 사람이 친 질문과 구분해야 한다.
+CODEX_INJECTED_RE = re.compile(
+    r"^\s*(?:"
+    r"<(?:recommended_plugins|environment_context|user_instructions|skills_instructions)\b"
+    r"|#\s*AGENTS\.md instructions"
+    r"|당신은 .{1,80}? 프로젝트의 개발자입니다\."      # harness execute.py 프리앰블
+    r")"
+)
 
 
 # ---------------------------------------------------------------- 세션 찾기
@@ -114,6 +133,133 @@ def find_project(name: str) -> tuple[Path, str] | list[tuple[Path, str]]:
     if len(found) == 1:
         return found[0]
     return found
+
+
+# ---------------------------------------------------------------- Codex
+
+
+def codex_transcripts() -> list[Path]:
+    if not CODEX_SESSIONS_DIR.is_dir():
+        return []
+    return sorted(CODEX_SESSIONS_DIR.rglob("*.jsonl"))
+
+
+def clean_codex_user_text(raw: str) -> str | None:
+    """Codex의 user 롤에서 사람이 친 질문만 남긴다."""
+    if CODEX_INJECTED_RE.match(raw):
+        return None
+    if "<INSTRUCTIONS>" in raw[:400]:
+        return None
+    return clean_user_text(raw)
+
+
+def parse_codex_session(transcript: Path) -> tuple[list[dict], dict]:
+    """Codex 트랜스크립트에서 질문·답변 쌍과 메타데이터를 뽑는다.
+
+    레코드 형태가 Claude Code와 다르다. 메시지는 `response_item` 안의
+    `payload.type == "message"`이고, 본문은 `input_text`/`output_text` 블록이다.
+    `developer` 롤은 통째로 주입된 지시문이라 제외한다.
+    """
+    turns: list[dict] = []
+    meta: dict = {"session": transcript.stem, "source": "Codex"}
+
+    for row in read_lines(transcript):
+        payload = row.get("payload")
+        if not isinstance(payload, dict):
+            continue
+
+        kind = row.get("type")
+
+        if kind == "session_meta":
+            meta.setdefault("cwd", payload.get("cwd"))
+            meta.setdefault("session_id", payload.get("session_id") or payload.get("id"))
+            continue
+
+        if kind == "turn_context":
+            meta.setdefault("cwd", payload.get("cwd"))
+            if payload.get("model"):
+                meta["model"] = payload["model"]
+            continue
+
+        if kind != "response_item" or payload.get("type") != "message":
+            continue
+
+        role = payload.get("role")
+        if role not in {"user", "assistant"}:
+            continue  # developer 롤은 주입된 지시문이다
+
+        blocks = payload.get("content") or []
+        texts = [
+            block.get("text", "")
+            for block in blocks
+            if isinstance(block, dict) and block.get("type") in {"input_text", "output_text"}
+        ]
+        raw = "\n".join(text for text in texts if text).strip()
+        if not raw:
+            continue
+
+        timestamp = row.get("timestamp")
+
+        if role == "user":
+            text = clean_codex_user_text(raw)
+            if not text:
+                continue
+            meta.setdefault("started", timestamp)
+            if timestamp:
+                meta["ended"] = timestamp
+            if turns and turns[-1]["role"] == "user":
+                if turns[-1]["text"].strip() != text.strip():
+                    turns[-1]["text"] += "\n\n" + text
+                continue
+            turns.append({"role": "user", "text": text, "ts": timestamp})
+            continue
+
+        if not turns:
+            continue  # 질문 앞에 나온 답변은 주입 지시문에 대한 응답이다
+        meta.setdefault("started", timestamp)
+        if timestamp:
+            meta["ended"] = timestamp
+        if turns[-1]["role"] == "assistant":
+            turns[-1]["texts"].append(raw)
+        else:
+            turns.append({"role": "assistant", "texts": [raw], "ts": timestamp})
+
+    return pair_turns(turns), meta
+
+
+def mentions_project(text: str, name: str) -> bool:
+    return re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", text) is not None
+
+
+def codex_sessions_for(project_name: str, project_path: str) -> list[dict]:
+    """이 프로젝트에 속하는 Codex 세션을 모은다.
+
+    cwd가 프로젝트 폴더면 그대로 포함한다. 모노레포 루트에서 돈 세션은 질문이
+    프로젝트 이름을 가리킬 때만 포함한다 — 루트 cwd에는 여러 프로젝트의 작업이
+    섞이므로 전부 가져오면 남의 대화가 딸려온다.
+    """
+    target = Path(project_path) if project_path else None
+    sessions: list[dict] = []
+
+    for transcript in codex_transcripts():
+        pairs, meta = parse_codex_session(transcript)
+        if not pairs:
+            continue  # harness가 돌린 비대화형 세션은 사람 발화가 없다
+
+        cwd = meta.get("cwd")
+        if not cwd:
+            continue
+
+        owned = Path(cwd).name == project_name
+        if not owned and target is not None and Path(cwd) in target.parents:
+            owned = any(mentions_project(pair["question"], project_name) for pair in pairs)
+        if not owned:
+            continue
+
+        sid = str(meta.get("session_id") or transcript.stem)[:8]
+        sessions.append({"sid": sid, "pairs": pairs, "meta": meta})
+
+    return sessions
 
 
 # ---------------------------------------------------------------- 파싱
@@ -522,6 +668,7 @@ def render(project: str, sessions: list[dict]) -> str:
             stamps.append(str(meta["branch"]))
         if meta.get("model"):
             stamps.append(str(meta["model"]))
+        stamps.append(str(meta.get("source") or "Claude Code"))
         stamps.append(f'질문 {len(session["pairs"])}개')
 
         entries: list[str] = [
@@ -577,12 +724,23 @@ def render(project: str, sessions: list[dict]) -> str:
 
 
 def print_projects() -> None:
-    print("변환 가능한 프로젝트:")
+    print("변환 가능한 프로젝트 (Claude Code):")
     for directory in session_dirs():
         cwd = cwd_of(directory)
         count = len(list(directory.glob("*.jsonl")))
         label = Path(cwd).name if cwd else directory.name
         print(f"  {label:<28} 세션 {count:>2}개  {cwd or directory}")
+
+    counts: Counter[str] = Counter()
+    for transcript in codex_transcripts():
+        pairs, meta = parse_codex_session(transcript)
+        if pairs and meta.get("cwd"):
+            counts[meta["cwd"]] += 1
+    if counts:
+        print("\nCodex (사람 질문이 있는 세션만):")
+        for cwd, count in sorted(counts.items()):
+            print(f"  {Path(cwd).name:<28} 세션 {count:>2}개  {cwd}")
+        print("  ※ 모노레포 루트 cwd 세션은 질문이 프로젝트를 가리킬 때만 포함된다")
 
 
 def main() -> int:
@@ -612,7 +770,10 @@ def main() -> int:
     for transcript in directory.glob("*.jsonl"):
         pairs, meta = parse_session(transcript)
         if pairs:
+            meta.setdefault("source", "Claude Code")
             sessions.append({"sid": transcript.stem[:8], "pairs": pairs, "meta": meta})
+
+    sessions.extend(codex_sessions_for(args.project, project_path))
 
     if not sessions:
         print(f"'{args.project}'에서 질문·답변을 찾지 못했다.", file=sys.stderr)
@@ -630,8 +791,10 @@ def main() -> int:
     out_path.write_text(render(args.project, sessions), encoding="utf-8")
 
     total = sum(len(s["pairs"]) for s in sessions)
+    breakdown = Counter(s["meta"].get("source") or "Claude Code" for s in sessions)
+    detail = " · ".join(f"{src} {n}" for src, n in sorted(breakdown.items()))
     print(f"생성: {out_path}")
-    print(f"세션 {len(sessions)}개 · 질문 {total}개")
+    print(f"세션 {len(sessions)}개 · 질문 {total}개  ({detail})")
     return 0
 
 
