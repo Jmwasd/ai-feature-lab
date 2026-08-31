@@ -1,0 +1,17 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# 환경 변수. OPENAI_API_KEY · NOTION_TOKEN이 들어간다
+.env
+.env*.local
+
+# phase 실행 산출물
+phases/**/phase*-output.json
+phases/**/step*-output.json
+
+# python
+__pycache__/
+.pytest_cache/
