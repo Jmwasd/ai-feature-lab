@@ -1,7 +1,7 @@
 ---
 name: chat-logs
 description: 프로젝트명을 받아 그 프로젝트에서 나눈 Claude Code 대화 전체를 질문·답변만 남긴 HTML 한 장으로 묶는다. "/chat-logs <프로젝트명>", "/cl <프로젝트명>", "대화 기록 뽑아줘", "지금까지 나눈 질문이랑 답변 정리해줘", "세션 로그 HTML로 만들어줘" 같은 요청에 쓴다.
-argument-hint: [프로젝트명]
+argument-hint: "[프로젝트명]"
 allowed-tools: Bash(python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py *)
 ---
 

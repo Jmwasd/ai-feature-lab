@@ -1,7 +1,7 @@
 ---
 name: branch
 description: ai-feature-lab에서 새 git 브랜치를 만든다. 새 작업·`/branch` 요청·main에서의 작업을 발견했을 때 쓴다. `<type>/<project>/<slug>` 규칙으로 origin/main에서 분기·push하고 PR 제목·본문 초안을 낸다.
-argument-hint: [작업 설명]
+argument-hint: "[작업 설명]"
 ---
 
 # branch
