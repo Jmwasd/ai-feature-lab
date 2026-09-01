@@ -1,0 +1,140 @@
+<!-- jobfit 디자인 캔버스 아티팩트에서 추출한 기준 아트보드.
+     출처: https://claude.ai/code/artifact/dd65fd31-5083-4753-b693-2ed1e5eeb7df
+
+     {{ }} · sc-if · sc-for · sc-camel-on-* 는 Design Canvas의 바인딩 문법이다.
+     React로 옮길 때 각각 표현식 · 조건부 렌더 · map · onChange/onClick 으로 바꾼다.
+     인라인 style은 캔버스가 뱉은 형태일 뿐이다. 값만 가져오고 Tailwind로 옮겨라. -->
+
+<div style="min-height: 100vh; background: #ffffff; color: #212121; font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); -webkit-font-smoothing: antialiased">
+
+  <header style="height: 56px; border-bottom: 1px solid #d9d9dd; display: flex; align-items: center; justify-content: space-between; padding: 0 24px">
+    <span style="font: 400 18px/1.2 var(--font-display, 'Space Grotesk', system-ui, sans-serif); letter-spacing: -0.36px">jobfit</span>
+    <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #93939f">local · 저장 없음</span>
+  </header>
+
+  <main style="max-width: 1180px; margin: 0 auto; padding: 40px 24px 80px">
+
+    <section style="display: flex; flex-direction: column; gap: 24px; max-width: 720px">
+      <p style="font: 400 18px/1.4 var(--font-body, Inter, system-ui, sans-serif)">공고 링크를 넣으면 Notion 이력서와 대조해 <strong style="font-weight: 500">고쳐서 메울 수 있는 칸</strong>을 찾는다.</p>
+
+      <div style="display: flex; gap: 8px; align-items: stretch">
+        <input value="{{ url }}" sc-camel-on-change="{{ onUrl }}" sc-camel-on-key-down="{{ onKey }}" placeholder="https://… 채용공고 링크" style="flex: 1; font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 4px; color: #212121; background: #ffffff">
+        <button sc-camel-on-click="{{ analyze }}" style="font: 500 14px/1.71 var(--font-body, Inter, system-ui, sans-serif); padding: 12px 24px; border: 1px solid transparent; border-radius: 32px; background: #17171c; color: #ffffff; cursor: pointer; white-space: nowrap; transition: background 150ms linear">{{ analyzeLabel }}</button>
+      </div>
+
+      <button sc-camel-on-click="{{ togglePaste }}" style="align-self: flex-start; font: 400 14px/1.4 var(--font-body, Inter, system-ui, sans-serif); background: none; border: 0; padding: 0; color: #212121; text-decoration: underline; text-underline-offset: 4px; cursor: pointer">{{ pasteLabel }}</button>
+
+      <sc-if value="{{ pasteOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #93939f">공고 본문</span>
+          <textarea value="{{ pasted }}" sc-camel-on-change="{{ onPaste }}" placeholder="본문 추출이 실패하면 여기에 붙여넣는다." style="min-height: 140px; resize: vertical; font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); padding: 12px 16px; border: 1px solid #e5e7eb; border-radius: 4px; color: #212121; background: #ffffff"></textarea>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showNotice }}" hint-placeholder-val="{{ true }}">
+        <div style="border-top: 1px solid #d9d9dd; border-bottom: 1px solid #d9d9dd; padding: 16px 0; display: flex; flex-direction: column; gap: 6px; font: 400 14px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #75758a">
+          <span>분석하면 이력서 원문과 공고 본문이 OpenAI API로 전송된다.</span>
+          <span>Notion은 지정한 이력서 페이지의 블록만 읽는다. 쓰기 권한은 쓰지 않는다.</span>
+        </div>
+      </sc-if>
+    </section>
+
+    <sc-if value="{{ hasResult }}" hint-placeholder-val="{{ true }}">
+      <section style="margin-top: 64px; display: flex; flex-direction: column; gap: 32px">
+
+        <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #d9d9dd; padding-bottom: 20px">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #93939f">{{ jobSource }}</span>
+            <h1 style="font: 400 32px/1.2 var(--font-display, 'Space Grotesk', system-ui, sans-serif); letter-spacing: -0.32px; margin: 0">{{ jobTitle }}</h1>
+          </div>
+          <span style="font: 400 14px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #93939f">{{ resultMeta }}</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; align-items: start">
+
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <div style="border-top: 2px solid #d9d9dd; padding-top: 12px; display: flex; align-items: baseline; justify-content: space-between">
+              <h2 style="font: 400 18px/1.3 var(--font-body, Inter, system-ui, sans-serif); margin: 0">갖춘 것</h2>
+              <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; color: #93939f">{{ coveredCount }}</span>
+            </div>
+            <sc-for list="{{ covered }}" as="item" hint-placeholder-count="2">
+              <article style="border: 1px solid #f2f2f2; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #212121; border: 1px solid #d9d9dd; border-radius: 30px; padding: 2px 10px">{{ item.kind }}</span>
+                  <sc-if value="{{ item.months }}" hint-placeholder-val="{{ false }}">
+                    <span style="font: 400 12px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #75758a; border: 1px solid #e5e7eb; border-radius: 30px; padding: 2px 10px">{{ item.months }}</span>
+                  </sc-if>
+                </div>
+                <p style="font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); margin: 0">{{ item.req }}</p>
+                <div style="border-left: 2px solid #d9d9dd; padding-left: 12px; display: flex; flex-direction: column; gap: 6px">
+                  <p style="font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); margin: 0">{{ item.evidence }}</p>
+                  <span style="font: 400 12px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #93939f">{{ item.source }}</span>
+                </div>
+                <sc-if value="{{ showConfidence }}" hint-placeholder-val="{{ true }}">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; color: #93939f">{{ item.conf }}</span>
+                </sc-if>
+              </article>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <div style="border-top: 2px solid #ff7759; padding-top: 12px; display: flex; align-items: baseline; justify-content: space-between">
+              <h2 style="font: 400 18px/1.3 var(--font-body, Inter, system-ui, sans-serif); margin: 0">안 쓴 것</h2>
+              <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; color: #93939f">{{ implicitCount }}</span>
+            </div>
+            <p style="font: 400 14px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #75758a; margin: 0">근거는 있는데 공고의 용어로 안 적혀 있다. 여기부터 고친다.</p>
+            <sc-for list="{{ implicit }}" as="item" hint-placeholder-count="3">
+              <article style="border: 1px solid #ffad9b; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #17171c; background: #ff7759; border-radius: 30px; padding: 2px 10px">{{ item.kind }}</span>
+                  <sc-if value="{{ item.months }}" hint-placeholder-val="{{ false }}">
+                    <span style="font: 400 12px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #75758a; border: 1px solid #e5e7eb; border-radius: 30px; padding: 2px 10px">{{ item.months }}</span>
+                  </sc-if>
+                </div>
+                <p style="font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); margin: 0">{{ item.req }}</p>
+                <div style="border-left: 2px solid #d9d9dd; padding-left: 12px; display: flex; flex-direction: column; gap: 6px">
+                  <p style="font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); margin: 0">{{ item.evidence }}</p>
+                  <span style="font: 400 12px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #93939f">{{ item.source }}</span>
+                </div>
+                <div style="border-top: 1px solid #f2f2f2; padding-top: 12px; display: flex; flex-direction: column; gap: 10px">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #93939f">고쳐 쓴 문장</span>
+                  <p style="font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); margin: 0">{{ item.rewrite }}</p>
+                  <button sc-camel-on-click="{{ item.copy }}" style="align-self: flex-start; font: 500 14px/1.71 var(--font-body, Inter, system-ui, sans-serif); padding: 6px 16px; border: 1px solid #17171c; border-radius: 32px; background: none; color: #17171c; cursor: pointer; transition: background 150ms linear">{{ item.copyLabel }}</button>
+                </div>
+                <sc-if value="{{ showConfidence }}" hint-placeholder-val="{{ true }}">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; color: #93939f">{{ item.conf }}</span>
+                </sc-if>
+              </article>
+            </sc-for>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 16px">
+            <div style="border-top: 2px solid #d9d9dd; padding-top: 12px; display: flex; align-items: baseline; justify-content: space-between">
+              <h2 style="font: 400 18px/1.3 var(--font-body, Inter, system-ui, sans-serif); margin: 0">없는 것</h2>
+              <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; color: #93939f">{{ missingCount }}</span>
+            </div>
+            <sc-for list="{{ missing }}" as="item" hint-placeholder-count="2">
+              <article style="border-bottom: 1px solid #d9d9dd; padding: 0 0 16px; display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; text-transform: uppercase; color: #212121; border: 1px solid #d9d9dd; border-radius: 30px; padding: 2px 10px">{{ item.kind }}</span>
+                  <sc-if value="{{ item.months }}" hint-placeholder-val="{{ false }}">
+                    <span style="font: 400 12px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #75758a; border: 1px solid #e5e7eb; border-radius: 30px; padding: 2px 10px">{{ item.months }}</span>
+                  </sc-if>
+                </div>
+                <p style="font: 400 16px/1.5 var(--font-body, Inter, system-ui, sans-serif); margin: 0">{{ item.req }}</p>
+                <span style="font: 400 14px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #93939f">근거 없음</span>
+                <sc-if value="{{ showConfidence }}" hint-placeholder-val="{{ true }}">
+                  <span style="font: 400 12px/1.4 var(--font-mono, 'IBM Plex Mono', monospace); letter-spacing: 0.28px; color: #93939f">{{ item.conf }}</span>
+                </sc-if>
+              </article>
+            </sc-for>
+          </div>
+
+        </div>
+
+        <p style="font: 400 14px/1.4 var(--font-body, Inter, system-ui, sans-serif); color: #93939f; margin: 0; border-top: 1px solid #d9d9dd; padding-top: 16px">신뢰도는 모델의 자기평가다. 보정된 확률이 아니고 검토 필요 신호로만 쓴다. 새로고침하면 결과는 사라진다.</p>
+      </section>
+    </sc-if>
+
+  </main>
+</div>
