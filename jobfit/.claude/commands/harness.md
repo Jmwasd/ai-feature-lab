@@ -12,6 +12,7 @@ jobfit은 Harness 프레임워크를 사용한다. 아래 워크플로우에 따
 
 - `docs/PLAN.md` — 설계 근거 전문. **다른 문서와 충돌하면 이것이 우선이다**
 - `docs/PRD.md` · `docs/ARCHITECTURE.md` · `docs/ADR.md` · `docs/UI_GUIDE.md`
+- UI를 다루는 task라면 `.claude/skills/jobfit-design/SKILL.md`와 그 `references/`
 - `CLAUDE.md` — CRITICAL 규칙
 
 ### B. 논의
@@ -102,6 +103,8 @@ jobfit은 Harness 프레임워크를 사용한다. 아래 워크플로우에 따
 - `docs/ARCHITECTURE.md`
 - `docs/ADR.md`
 - {이전 step에서 생성/수정된 파일 경로}
+- **UI를 건드리는 step이면 반드시 추가한다** — `.claude/skills/jobfit-design/SKILL.md`, `.claude/skills/jobfit-design/references/tokens.css`, `.claude/skills/jobfit-design/references/artboard.html`
+  하네스는 `codex exec`으로 도는데 codex는 Claude Code 스킬을 자동으로 불러오지 못한다. 경로를 적어 두지 않으면 그 step은 디자인 규격 없이 UI를 짠다.
 
 이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
 
@@ -129,7 +132,7 @@ npm test        # 테스트 통과
      - 비밀값이 Route Handler 밖으로 새지 않았는가
      - `src/lib/`에 React·Next·네트워크·프롬프트 import가 들어가지 않았는가
      - 저장 계층(IndexedDB·DB·파일 캐시)을 만들지 않았는가
-   - UI를 건드렸다면 UI_GUIDE.md 안티패턴 표를 어기지 않았는가?
+   - UI를 건드렸다면 `.claude/skills/jobfit-design/SKILL.md`의 규격과 "하지 마라" 표를 어기지 않았는가? 토큰에 없는 색을 새로 만들지 않았는가?
 3. 결과에 따라 `phases/{task-name}/index.json`의 해당 step을 업데이트한다:
    - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
    - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
