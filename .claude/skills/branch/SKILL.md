@@ -72,7 +72,7 @@ git push -u origin <type>/<project>/<slug>
 
 ## squash 커밋 메시지 초안
 
-머지가 squash라 main에 남는 커밋은 PR 제목 하나다. 그 제목을 브랜치명에서 유도한다.
+머지가 squash라 main에는 커밋이 하나 남는다. 그 커밋의 제목은 PR 제목, 본문은 PR 본문이 그대로 들어간다. 제목은 브랜치명에서 유도한다.
 
 ```
 <type>/<project>/<slug>   →   <type>(<project>): <한글 요약>
@@ -86,7 +86,7 @@ git push -u origin <type>/<project>/<slug>
 
 ## PR 본문 초안
 
-제목 한 줄로는 부족하다. 머지가 squash라 main에 남는 건 제목뿐이고, **왜 이렇게 했는지가 기록되는 곳은 PR 본문 하나뿐이다.** 제목 초안과 함께 본문 초안도 낸다.
+제목 한 줄로는 부족하다. **여기 쓰는 본문이 squash 커밋의 본문이 되어 main 히스토리에 그대로 박힌다** — GitHub에만 남는 메모가 아니라 `git log`로 읽히는 영구 기록이다. 제목 초안과 함께 본문 초안도 낸다.
 
 ```markdown
 ## 무엇을
@@ -107,7 +107,7 @@ git push -u origin <type>/<project>/<slug>
 ```
 
 - 한글로 쓴다. 제목에 쓴 어휘를 본문에서도 그대로 쓴다.
-- CRITICAL: **"왜"를 생략하지 마라.** "무엇을"은 diff를 보면 알 수 있지만 "왜"는 저장소 어디에도 남지 않는다. 이 저장소는 실험 프로젝트를 모아둔 곳이라 되짚는 시점이 늦고, 그때 읽는 사람은 대개 작성자 자신이다.
+- CRITICAL: **"왜"를 생략하지 마라.** "무엇을"은 diff를 보면 알 수 있지만 "왜"는 코드 어디에도 없다. 여기 안 쓰면 그 판단은 어디에도 남지 않는다. 이 저장소는 실험 프로젝트를 모아둔 곳이라 되짚는 시점이 늦고, 그때 읽는 사람은 대개 작성자 자신이다. 대충 쓴 본문도 그대로 main에 박히므로 나중에 고칠 수 없다.
 - **확인 방법은 실제로 한 것만 적는다.** 안 돌려봤으면 "검증 안 함"이라고 적어라. 돌렸다고 지어내지 마라.
 - 커밋 목록을 옮겨 적지 마라. GitHub PR 페이지에 이미 있다. diff도 붙여 넣지 마라 — 파일은 경로로만 가리킨다 (`spend-report/parser.py:42`).
 - harness phase PR은 step 커밋이 수십 개다. **step을 나열하지 말고 그 phase가 무엇을 완성했는지로 쓴다.**
@@ -144,9 +144,15 @@ CRITICAL: **main에 직접 커밋하지 마라.** 오타 하나도 예외가 아
 
 ## 머지와 삭제
 
-- **squash merge만 쓴다.** GitHub Settings에서 Squash merging만 남기고 merge commit·rebase 버튼은 꺼둔다.
+- **squash merge만 쓴다.** GitHub Settings에서 Squash merging만 남기고 merge commit·rebase 버튼은 꺼둔다. 함께 `squash_merge_commit_title=PR_TITLE` · `squash_merge_commit_message=PR_BODY`로 둔다.
 
-  **Why:** harness가 step마다 커밋을 넘긴다. squash가 아니면 main 히스토리가 step 커밋으로 잠식된다. step 단위 기록은 GitHub PR 페이지에 그대로 남으므로 잃는 것이 없다.
+  **Why:** main 히스토리를 **결정 기록**으로 쓰기 위해서다. PR 하나가 커밋 하나가 되므로 로그가 "의도" 단위로 읽히고, `Merge pull request #NN` 같은 내용 없는 커밋이 끼지 않는다. 게다가 위 두 설정 덕에 squash 커밋이 PR 본문을 통째로 싣는다 — 브랜치 안의 중간 커밋을 접는 대신 **"왜"를 얻는다.** `git log`만으로 판단 근거를 되짚을 수 있고 GitHub 없이도 읽힌다.
+
+  이 규칙은 저장소 전체에 걸린다. 머지 방식은 GitHub에서 저장소 단위로만 정할 수 있어 프로젝트별로 다르게 둘 수 없다.
+
+  **가장 극단적인 사례가 harness다.** step마다 커밋이 하나씩 쌓여 phase 하나에 수십 개가 된다. 기계가 찍은 중간 저장이라 main에 펼쳐둘 이유가 없다. 다만 harness를 쓰지 않는 프로젝트에도 위의 근거는 그대로 성립한다.
+
+  **잃는 것:** 의도적으로 나눈 커밋도 하나로 접힌다. 그건 PR 본문이 대신 설명한다 — 그래서 본문에 "왜"를 쓰는 것이 CRITICAL이다. 중간 커밋 자체는 GitHub PR 페이지에 그대로 남는다.
 
 - 머지되면 로컬·원격 브랜치를 **손으로** 지운다.
 
