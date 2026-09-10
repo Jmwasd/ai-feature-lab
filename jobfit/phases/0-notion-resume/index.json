@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "notion-service",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-11T00:22:38+0900",
+      "summary": "fetchBlockTree(lister, rootId)와 getResumeEvidence()를 export하고, server-only로 보호한 Notion 재귀·페이지네이션 서비스와 mock 테스트를 추가했다.",
+      "completed_at": "2026-09-11T00:25:46+0900"
     },
     {
       "step": 4,
