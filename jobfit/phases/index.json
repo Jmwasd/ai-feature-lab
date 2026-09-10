@@ -1,8 +1,21 @@
 {
   "phases": [
-    { "dir": "0-notion-resume", "status": "pending" },
-    { "dir": "1-job-posting", "status": "pending" },
-    { "dir": "2-llm-matching", "status": "pending" },
-    { "dir": "3-result-ui", "status": "pending" }
+    {
+      "dir": "0-notion-resume",
+      "status": "completed",
+      "completed_at": "2026-09-11T00:31:11+0900"
+    },
+    {
+      "dir": "1-job-posting",
+      "status": "pending"
+    },
+    {
+      "dir": "2-llm-matching",
+      "status": "pending"
+    },
+    {
+      "dir": "3-result-ui",
+      "status": "pending"
+    }
   ]
 }
