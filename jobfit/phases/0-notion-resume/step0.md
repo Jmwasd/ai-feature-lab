@@ -2,16 +2,12 @@
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
-
-- `docs/PLAN.md` — 설계 근거 전문. 다른 문서와 충돌하면 이것이 우선이다
-- `docs/ARCHITECTURE.md` — 디렉토리 구조와 레이어 방향
-- `docs/ADR.md` — ADR-001(로컬 전용) · ADR-005(저장 없음)
-- `docs/UI_GUIDE.md` — 디자인 원칙과 결정 이력
 - `.claude/skills/jobfit-design/SKILL.md` — **"프로젝트에 심는 법" 절에 토큰 심는 방법이 있다**
 - `.claude/skills/jobfit-design/references/tokens.css` — **토큰 원본. 값을 바꾸지 마라**
 
-이 step은 UI 컴포넌트를 만들지 않지만 디자인 토큰과 폰트를 프로젝트에 심으므로 위 두 파일을 반드시 읽어라. 하네스는 Claude Code 스킬을 자동으로 불러오지 못하니 경로대로 직접 열어야 한다.
+이 step은 UI 컴포넌트를 만들지 않지만 디자인 토큰과 폰트를 프로젝트에 심으므로 위 둘을 반드시 열어라. codex는 Claude Code 스킬을 자동으로 부르지 못한다.
+
+디렉토리 구조는 `docs/ARCHITECTURE.md`를, 스택 결정은 `docs/ADR.md`를 따른다.
 
 ## 현재 상태
 
@@ -145,28 +141,13 @@ create-next-app이 만든 `src/app/page.tsx`의 기본 랜딩(Next.js 로고·�
 npm run build   # 컴파일 에러 없음
 npm run lint    # 통과
 npm test        # 통과 (테스트 0개 + --passWithNoTests)
-```
 
-추가로 아래를 눈으로 확인한다:
-
-```bash
 ls CLAUDE.md docs/PLAN.md scripts/execute.py phases/index.json   # 전부 살아 있어야 한다
 grep -c "env\*.local" .gitignore                                  # 1 이상
 grep -c "prefers-color-scheme" src/app/globals.css                # 0
 ```
 
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - `docs/ARCHITECTURE.md`의 디렉토리 구조(`app` / `components` / `types` / `lib` / `prompts` / `services`)를 만들었는가?
-   - `docs/ADR.md`의 스택(Next.js 15 App Router · TS strict · Tailwind · Vitest)을 벗어나지 않았는가?
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히 저장 계층(IndexedDB·DB·파일 캐시)을 만들지 않았는가
-   - `SKILL.md`의 "하지 마라" 표를 어기지 않았는가? 토큰에 없는 색을 새로 만들지 않았는가?
-3. 결과에 따라 `phases/0-notion-resume/index.json`의 step 0을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: `SKILL.md`의 "하지 마라" 표를 어기지 않았는가? 토큰에 없는 색을 새로 만들지 않았는가?
 
 `summary`에는 최소한 이것을 담아라: Tailwind 버전, 토큰을 심은 파일 경로, 폰트 변수 이름 세 개, 테스트 커맨드.
 
@@ -179,4 +160,3 @@ grep -c "prefers-color-scheme" src/app/globals.css                # 0
 - **Tailwind 기본 팔레트 색(`bg-blue-500`, `text-gray-700` 등)을 쓰지 마라.** 이유: 토큰에 없는 색이다. 색이 필요하면 `SKILL.md`의 색 표에서 고른다
 - **`@media (prefers-color-scheme: dark)`를 남기지 마라.** 이유: 라이트 한 벌만 유지한다
 - **`box-shadow` · `backdrop-filter` · gradient를 쓰지 마라.** 이유: 이 시스템에 그림자는 아예 없고, 경계는 전부 1~2px 선이다
-- 기존 테스트를 깨뜨리지 마라

@@ -2,15 +2,10 @@
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
-
-- `docs/PLAN.md` — 4절 "근거의 단위는 Notion 블록이다", 10절 "테스트 규율"
-- `docs/ARCHITECTURE.md` — "근거의 단위는 Notion 블록이다" 절
-- `docs/ADR.md` — ADR-003 · ADR-004 · ADR-009
 - `src/types/index.ts` — 이전 step에서 만든 `ResumeEvidence`
 - `vitest.config.ts` — 테스트가 어디를 include 하는지 확인하라
 
-이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
+파싱 규칙의 근거는 `docs/ARCHITECTURE.md`의 "근거의 단위는 Notion 블록이다" 절과 ADR-003 · ADR-004 · ADR-009에 있다.
 
 ## 이 step이 프로젝트에서 가장 중요한 이유
 
@@ -94,23 +89,20 @@ H3의 `Bidbowl (맞춤형 공공 입찰 정보 구독 플랫폼)` 같은 괄호�
 - 같은 `blockId`가 두 번 나오면 처음 것만 남긴다
 - 결과는 문서 등장 순서를 보존한다
 
-### 테스트 케이스 (최소한 이만큼)
+### 테스트 케이스
 
 1. H2 `소프트보울 ( 2024. 02 - 재직중 )` → `company === '소프트보울'`
 2. H3 프로젝트명이 `project`에 붙는다. H3의 괄호는 남는다
-3. 불릿 + 자식 코드블록 1개 → 텍스트가 개행으로 이어붙고 `blockId`는 불릿의 것
-4. 자식 코드블록 2개 → 문서 순서대로 이어붙는다
-5. 흡수된 코드블록이 독립 근거로 중복 등장하지 않는다
-6. 불릿 자체는 `MIN_EVIDENCE_LENGTH` 미만이지만 코드블록 흡수 후 넘으면 **살아남는다**
-7. 흡수 후에도 `MIN_EVIDENCE_LENGTH` 미만이면 버린다
-8. `column_list` 서브트리 전체가 제외된다 (그 안의 불릿도 안 나온다)
-9. `image` · `divider`가 제외된다
-10. 텍스트가 공백뿐인 블록이 제외된다
-11. 새 H2를 만나면 프로젝트가 초기화된다 (이전 H3가 새 회사로 새지 않는다)
-12. 중첩 불릿이 부모의 회사·프로젝트를 물려받아 독립 근거가 된다
-13. 첫 H2 이전 블록은 `company === ''`, `project === ''`이고 버려지지 않는다
-14. 같은 `blockId`가 두 번 들어오면 하나만 남는다
-15. 빈 배열을 넣으면 빈 배열이 나온다
+3. 불릿 + 자식 코드블록 → 텍스트가 개행으로 이어붙고 `blockId`는 불릿의 것
+4. 흡수된 코드블록이 독립 근거로 중복 등장하지 않는다
+5. 불릿 자체는 `MIN_EVIDENCE_LENGTH` 미만이지만 코드블록 흡수 후 넘으면 **살아남는다**
+6. 흡수 후에도 `MIN_EVIDENCE_LENGTH` 미만이면 버린다
+7. `column_list` 서브트리 전체가 제외된다 (그 안의 불릿도 안 나온다)
+8. `image` · `divider`가 제외된다
+9. 새 H2를 만나면 프로젝트가 초기화된다 (이전 H3가 새 회사로 새지 않는다)
+10. 중첩 불릿이 부모의 회사·프로젝트를 물려받아 독립 근거가 된다
+11. 첫 H2 이전 블록은 `company === ''`, `project === ''`이고 버려지지 않는다
+12. 같은 `blockId`가 두 번 들어오면 하나만 남는다
 
 ## Acceptance Criteria
 
@@ -118,29 +110,12 @@ H3의 `Bidbowl (맞춤형 공공 입찰 정보 구독 플랫폼)` 같은 괄호�
 npm run build   # 컴파일 에러 없음
 npm run lint    # 통과
 npm test        # 위 테스트 전부 통과
-```
 
-추가로 확인한다:
-
-```bash
 grep -nE "^import|require\(" src/lib/resume-parser.ts
 # @/types 외의 import가 있으면 안 된다. react·next·@notionhq/client·fs·프롬프트 전부 금지
 ```
 
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - `src/lib/`이 잎으로 남았는가? React·Next·네트워크·프롬프트·Notion SDK를 import 하지 않았는가?
-   - `docs/ARCHITECTURE.md`의 레이어 방향(`app → services → 외부`, `lib`은 잎)을 따르는가?
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히:
-     - 근거 텍스트를 지어내지 않고 입력 블록의 원문만 쓰는가
-     - 저장 계층(IndexedDB·DB·파일 캐시)을 만들지 않았는가
-   - 테스트를 **먼저** 썼는가? (구현부터 쓰고 테스트를 나중에 맞추면 TDD가 아니다)
-3. 결과에 따라 `phases/0-notion-resume/index.json`의 step 2를 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: 테스트를 **먼저** 썼는가? (구현부터 쓰고 테스트를 나중에 맞추면 TDD가 아니다)
 
 `summary`에는 `NotionBlockNode`의 필드와 `parseResume` 시그니처를 적어라. 다음 step의 서비스가 이 형태로 정규화해서 넘겨야 한다.
 
@@ -153,4 +128,3 @@ grep -nE "^import|require\(" src/lib/resume-parser.ts
 - **텍스트를 요약·정리·번역하지 마라.** 이유: 화면에 나가는 근거는 Notion 원문이어야 한다. 파서가 문장을 손대면 사용자가 원문과 대조할 수 없다
 - **네트워크 호출·`fs` 접근·`process.env` 읽기를 넣지 마라.** 이유: 순수 함수여야 테스트가 실제 API 없이 돌아간다
 - **날짜 계산 · 경력 개월 수 계산 코드를 넣지 마라.** 이유: ADR-009
-- 기존 테스트를 깨뜨리지 마라

@@ -2,43 +2,37 @@
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
-
-- `docs/PLAN.md` — 1절(3분할 정의), 3절 "아키텍처 규칙", 4절, 7절
-- `docs/PRD.md` — 세 칸의 정의. **두 번째 칸이 이 제품의 존재 이유다**
-- `docs/ARCHITECTURE.md`
-- `docs/ADR.md` — ADR-003 · ADR-007 · ADR-008 · ADR-009 · ADR-011
 - `src/types/index.ts` — `Requirement` · `Verdict` · `ResumeEvidence`
 - `src/lib/schemas.ts` — `REQUIREMENTS_SCHEMA` · `VERDICTS_SCHEMA`. **프롬프트가 요구하는 형식과 스키마가 어긋나면 안 된다**
 - `src/lib/posting-text.ts` — `MAX_POSTING_CHARS`
 
-이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
+세 칸의 정의는 `docs/PRD.md` 표가 기준이다. 근거는 ADR-003 · ADR-007 · ADR-008 · ADR-009 · ADR-011에 있다.
 
 ## 작업
 
 `src/prompts/`에 프롬프트를 **파일로** 둔다. `CLAUDE.md`: *"프롬프트는 `src/prompts/`에 파일로 둔다. 코드에 인라인하지 마라."*
 
-파일 형식은 `.ts`로 하고 템플릿 리터럴 상수와 빌더 함수를 export 한다. `.md`를 `fs`로 읽는 방식은 쓰지 마라 — Next.js 번들에서 `process.cwd()` 기준 경로가 실행 환경에 따라 달라지고, 그것을 맞추는 코드가 프롬프트보다 길어진다. 규칙의 의도는 "서비스 코드 안에 프롬프트 문자열을 박지 말 것"이고, 전용 디렉토리의 전용 파일이면 그것을 만족한다.
+파일 형식은 `.ts`로 하고 템플릿 리터럴 상수와 빌더 함수를 export 한다. `.md`를 `fs`로 읽는 방식은 쓰지 마라 — Next.js 번들에서 `process.cwd()` 기준 경로가 실행 환경에 따라 달라지고, 그것을 맞추는 코드가 프롬프트보다 길어진다.
 
 ### 파일
 
-- `src/lib/sanitize.ts` · `src/lib/sanitize.test.ts` — 데이터 구획 이스케이프 (순수 함수라 lib에 둔다. **TDD**)
+- `src/prompts/sanitize.ts` — 데이터 구획 이스케이프
 - `src/prompts/extract-requirements.ts` — LLM ① 공고 → `Requirement[]`
 - `src/prompts/match-verdicts.ts` — LLM ② 판정 + 제안
-- `src/prompts/extract-requirements.test.ts` · `src/prompts/match-verdicts.test.ts` — 빌더 함수 검증
+- `src/prompts/prompts.test.ts` — 위 셋을 한 파일에서 검증한다
 
-### 1. `src/lib/sanitize.ts`
+**`sanitize`를 `src/lib/`에 두지 마라.** 프롬프트의 데이터 구획 태그를 아는 함수라 프롬프트 옆이 제자리다. `src/lib/`에 두면 lib이 프롬프트 형식을 알게 되고, TDD 규칙 때문에 전용 테스트 파일이 하나 더 생긴다.
+
+### 1. `src/prompts/sanitize.ts`
 
 ```ts
 /** 데이터 구획 태그가 본문 안에서 닫히는 것을 막는다 */
 export function sanitizeDataBlock(text: string, tag: string): string;
 ```
 
-본문에 `</job_posting>` 같은 닫는 태그 문자열이 있으면 무력화한다(예: `<`를 전각 문자나 이스케이프로 치환). 여는 태그도 같이 처리한다.
+본문에 `</job_posting>` 같은 닫는 태그 문자열이 있으면 무력화한다(예: `<`를 전각 문자로 치환). 여는 태그도 같이 처리하고, 대소문자 변형도 잡는다.
 
 이유: 공고 본문과 Notion 원문은 **비신뢰 데이터**다. 본문이 구획을 닫고 나오면 그 뒤에 쓴 문장이 지시문처럼 읽힌다.
-
-테스트: 닫는 태그가 무력화된다 / 다른 태그는 건드리지 않는다 / 평범한 텍스트는 그대로 / 대소문자 변형도 잡는다.
 
 ### 2. `src/prompts/extract-requirements.ts`
 
@@ -97,13 +91,14 @@ export const MAX_EVIDENCE_CHARS = 60000;
 
 넘으면 앞에서부터 자르고, **잘렸다는 사실을 프롬프트에 적는다.** 조용히 자르면 모델이 없는 근거를 없다고 판정한다.
 
-### 5. 빌더 테스트
+### 5. 테스트 케이스
 
-- 공고 본문이 `<job_posting>` 구획 안에 들어간다
-- 본문에 `</job_posting>`이 있으면 무력화된다
-- 근거의 `blockId` · 회사 · 프로젝트 · 원문이 전부 프롬프트에 들어간다
-- `onlyRequirementIds`를 주면 그 id들이 프롬프트에 나타나고, 주지 않으면 전체가 나타난다
-- 근거가 `MAX_EVIDENCE_ITEMS`를 넘으면 잘리고 잘렸다는 문구가 들어간다
+1. 공고 본문이 `<job_posting>` 구획 안에 들어간다
+2. `sanitizeDataBlock`: 본문의 닫는 태그가 무력화되고, 대소문자 변형도 잡히며, 다른 태그와 평범한 텍스트는 그대로다
+3. 본문에 `</job_posting>`이 있으면 빌더를 거친 결과에서 무력화되어 있다
+4. 근거의 `blockId` · 회사 · 프로젝트 · 원문이 전부 프롬프트에 들어간다
+5. `onlyRequirementIds`를 주면 그 id들이 프롬프트에 나타나고, 주지 않으면 전체가 나타난다
+6. 근거가 `MAX_EVIDENCE_ITEMS`를 넘으면 잘리고 잘렸다는 문구가 들어간다
 
 ## Acceptance Criteria
 
@@ -111,30 +106,12 @@ export const MAX_EVIDENCE_CHARS = 60000;
 npm run build   # 컴파일 에러 없음
 npm run lint    # 통과
 npm test        # 위 테스트 전부 통과
+
+grep -rn "job_posting\|resume_evidence" src/services/ 2>/dev/null   # 결과 없음
+grep -rn "sanitize" src/lib/                                        # 결과 없음
 ```
 
-추가로 확인한다:
-
-```bash
-grep -rn "job_posting\|resume_evidence" src/services/ 2>/dev/null   # 결과 없음 (프롬프트가 서비스로 새지 않았다)
-grep -nE "^import" src/lib/sanitize.ts                              # import 없음
-```
-
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - 프롬프트가 `src/prompts/`에만 있고 서비스 코드에 인라인되지 않았는가?
-   - `src/lib/sanitize.ts`가 순수 함수인가?
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히:
-     - **프롬프트가 LLM에게 근거 문장을 쓰라고 요구하지 않는가** (블록 ID만 요구하는가)
-     - **프롬프트가 집계·개수 세기·순위 매기기를 요구하지 않는가**
-     - 공고 본문과 Notion 원문을 데이터 구획으로 감쌌는가
-   - 프롬프트가 요구하는 출력 형식이 `src/lib/schemas.ts`의 스키마와 일치하는가?
-3. 결과에 따라 `phases/2-llm-matching/index.json`의 step 2를 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: **프롬프트가 LLM에게 근거 문장을 쓰라고 요구하지 않는가** (블록 ID만 요구하는가)? 프롬프트가 집계·개수 세기·순위 매기기를 요구하지 않는가? 프롬프트가 요구하는 출력 형식이 `src/lib/schemas.ts`의 스키마와 일치하는가?
 
 `summary`에 두 빌더 함수의 시그니처와 상수 이름을 적어라. 다음 step의 서비스가 이것을 부른다.
 
@@ -144,9 +121,8 @@ grep -nE "^import" src/lib/sanitize.ts                              # import 없
 - **LLM에게 개수를 세거나 순위를 매기거나 적합도 점수를 내라고 요구하지 마라.** 이유: `CLAUDE.md` CRITICAL — 집계·계산은 전부 `src/lib/`의 순수 함수가 한다
 - **판정과 제안을 두 프롬프트로 나누지 마라.** 이유: ADR-007 — 나누면 제안 호출이 "어느 근거로 쓸지"를 다시 골라서 화면의 근거와 제안의 출처가 어긋난다
 - **제안에 근거 밖의 사실을 쓰도록 허용하지 마라.** 이유: 사용자가 그 문장을 이력서에 붙여넣는다. 없는 경험이 이력서에 들어가면 이 도구가 해를 끼친 것이 된다
-- **경력 개월 수를 계산하거나 비교하라고 지시하지 마라.** 이유: ADR-009 — 이력서로는 회사 재직 기간만 알 수 있고 그것은 공고가 묻는 기술 경력 기간이 아니다
+- **경력 개월 수를 계산하거나 비교하라고 지시하지 마라.** 이유: ADR-009
 - **본문을 데이터 구획 없이 프롬프트에 이어 붙이지 마라.** 이유: 공고 본문은 비신뢰 데이터다. 구획이 없으면 본문 안의 문장이 지시문으로 읽힌다
 - **프롬프트 문자열을 `src/services/`에 인라인하지 마라.** 이유: `CLAUDE.md` — 프롬프트는 파일로 둔다
 - **근거를 조용히 자르지 마라.** 이유: 모델이 잘린 것을 모르면 "근거가 없다"고 판정한다. 그것이 `missing`으로 화면에 나가면 거짓이다
 - **이름·연락처를 마스킹하는 코드를 넣지 마라.** 이유: ADR-011 — 로컬 전용이고 내 키로 내 이력서만 보낸다. 한글 이름 정규식은 오탐이 심해 회사명·제품명을 지워 매칭 근거를 망친다
-- 기존 테스트를 깨뜨리지 마라
