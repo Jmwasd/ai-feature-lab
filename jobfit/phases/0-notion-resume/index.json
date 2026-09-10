@@ -7,7 +7,8 @@
       "name": "project-setup",
       "status": "completed",
       "started_at": "2026-09-11T00:11:37+0900",
-      "summary": "Next.js 15.5.25와 Tailwind v4를 구성하고, src/app/globals.css에 디자인 토큰을 심었으며 --font-space-grotesk·--font-inter·--font-ibm-plex-mono 폰트 변수와 npm test(vitest run --passWithNoTests)를 설정했다."
+      "summary": "Next.js 15.5.25와 Tailwind v4를 구성하고, src/app/globals.css에 디자인 토큰을 심었으며 --font-space-grotesk·--font-inter·--font-ibm-plex-mono 폰트 변수와 npm test(vitest run --passWithNoTests)를 설정했다.",
+      "completed_at": "2026-09-11T00:18:39+0900"
     },
     {
       "step": 1,
