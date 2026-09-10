@@ -1,0 +1,11 @@
+{
+  "project": "jobfit",
+  "phase": "2-llm-matching",
+  "steps": [
+    { "step": 0, "name": "llm-schemas", "status": "pending" },
+    { "step": 1, "name": "verdict-aggregation", "status": "pending" },
+    { "step": 2, "name": "prompts", "status": "pending" },
+    { "step": 3, "name": "openai-service", "status": "pending" },
+    { "step": 4, "name": "analyze-route-full", "status": "pending" }
+  ]
+}

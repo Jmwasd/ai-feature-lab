@@ -1,0 +1,10 @@
+{
+  "project": "jobfit",
+  "phase": "1-job-posting",
+  "steps": [
+    { "step": 0, "name": "posting-guards", "status": "pending" },
+    { "step": 1, "name": "posting-service", "status": "pending" },
+    { "step": 2, "name": "analyze-route-skeleton", "status": "pending" },
+    { "step": 3, "name": "input-ui", "status": "pending" }
+  ]
+}
