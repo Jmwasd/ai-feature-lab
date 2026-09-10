@@ -24,7 +24,7 @@
       "status": "completed",
       "started_at": "2026-09-11T00:20:25+0900",
       "summary": "NotionBlockNode { id, type, text, children }와 parseResume(blocks: NotionBlockNode[]): ResumeEvidence[] 순수 파서를 추가해 코드블록 흡수·소속 상속·노이즈 및 중복 제거를 구현했다.",
-      "completed_at": "2026-09-11T00:22:14+0900"
+      "completed_at": "2026-09-11T00:22:38+0900"
     },
     {
       "step": 3,
