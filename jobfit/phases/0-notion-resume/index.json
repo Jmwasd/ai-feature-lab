@@ -2,10 +2,47 @@
   "project": "jobfit",
   "phase": "0-notion-resume",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "core-types", "status": "pending" },
-    { "step": 2, "name": "resume-parser", "status": "pending" },
-    { "step": 3, "name": "notion-service", "status": "pending" },
-    { "step": 4, "name": "resume-dump-script", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-09-11T00:11:37+0900",
+      "summary": "Next.js 15.5.25와 Tailwind v4를 구성하고, src/app/globals.css에 디자인 토큰을 심었으며 --font-space-grotesk·--font-inter·--font-ibm-plex-mono 폰트 변수와 npm test(vitest run --passWithNoTests)를 설정했다.",
+      "completed_at": "2026-09-11T00:18:39+0900"
+    },
+    {
+      "step": 1,
+      "name": "core-types",
+      "status": "completed",
+      "started_at": "2026-09-11T00:18:39+0900",
+      "summary": "src/types/index.ts에 ResumeEvidence, JobPosting, RequirementKind, Requirement, VerdictBucket, Verdict 타입을 export했다.",
+      "completed_at": "2026-09-11T00:20:25+0900"
+    },
+    {
+      "step": 2,
+      "name": "resume-parser",
+      "status": "completed",
+      "started_at": "2026-09-11T00:20:25+0900",
+      "summary": "NotionBlockNode { id, type, text, children }와 parseResume(blocks: NotionBlockNode[]): ResumeEvidence[] 순수 파서를 추가해 코드블록 흡수·소속 상속·노이즈 및 중복 제거를 구현했다.",
+      "completed_at": "2026-09-11T00:22:38+0900"
+    },
+    {
+      "step": 3,
+      "name": "notion-service",
+      "status": "completed",
+      "started_at": "2026-09-11T00:22:38+0900",
+      "summary": "fetchBlockTree(lister, rootId)와 getResumeEvidence()를 export하고, server-only로 보호한 Notion 재귀·페이지네이션 서비스와 mock 테스트를 추가했다.",
+      "completed_at": "2026-09-11T00:26:22+0900"
+    },
+    {
+      "step": 4,
+      "name": "resume-dump-script",
+      "status": "completed",
+      "started_at": "2026-09-11T00:26:22+0900",
+      "summary": "scripts/dump-resume.ts와 npm run resume:dump를 추가해 Notion 이력서 근거를 stdout으로 확인할 수 있게 했다.",
+      "completed_at": "2026-09-11T00:31:11+0900"
+    }
+  ],
+  "created_at": "2026-09-11T00:11:37+0900",
+  "completed_at": "2026-09-11T00:31:11+0900"
 }
