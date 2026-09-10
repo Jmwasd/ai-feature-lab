@@ -2,10 +2,33 @@
   "project": "jobfit",
   "phase": "0-notion-resume",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "core-types", "status": "pending" },
-    { "step": 2, "name": "resume-parser", "status": "pending" },
-    { "step": 3, "name": "notion-service", "status": "pending" },
-    { "step": 4, "name": "resume-dump-script", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-09-11T00:11:37+0900",
+      "summary": "Next.js 15.5.25와 Tailwind v4를 구성하고, src/app/globals.css에 디자인 토큰을 심었으며 --font-space-grotesk·--font-inter·--font-ibm-plex-mono 폰트 변수와 npm test(vitest run --passWithNoTests)를 설정했다."
+    },
+    {
+      "step": 1,
+      "name": "core-types",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "resume-parser",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "notion-service",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "resume-dump-script",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-11T00:11:37+0900"
 }
