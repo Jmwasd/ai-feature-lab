@@ -2,8 +2,7 @@
   "project": "jobfit",
   "phase": "3-result-ui",
   "steps": [
-    { "step": 0, "name": "result-primitives", "status": "pending" },
-    { "step": 1, "name": "result-columns", "status": "pending" },
-    { "step": 2, "name": "result-page", "status": "pending" }
+    { "step": 0, "name": "result-columns", "status": "pending" },
+    { "step": 1, "name": "result-page", "status": "pending" }
   ]
 }

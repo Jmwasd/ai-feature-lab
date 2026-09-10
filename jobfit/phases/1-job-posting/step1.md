@@ -2,18 +2,12 @@
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
-
-- `docs/PLAN.md` — 6절 "공고 링크를 어떻게 읽는가", 11절 "알려진 약점"
-- `docs/ARCHITECTURE.md` — "공고 URL fetch 가드레일" 절
-- `docs/ADR.md` — ADR-006
 - `src/types/index.ts` — `JobPosting`
 - `src/lib/url-guard.ts` — `checkPostingUrl`
 - `src/lib/posting-text.ts` — `normalizePostingText` · `isExtractionSufficient` · `truncatePostingText` · 상수들
-- `src/services/notion.ts` — **이전 phase의 서비스. `server-only` 사용법과 의존성 주입 방식을 여기에 맞춘다**
-- `src/services/notion.test.ts` — mock 테스트 스타일
+- `src/services/notion.ts` · `src/services/notion.test.ts` — **기존 서비스의 `server-only` 사용법·의존성 주입 방식·mock 테스트 스타일을 여기에 맞춘다**
 
-이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
+가드레일의 범위는 `docs/PLAN.md` 6절과 ADR-006이 정한다.
 
 ## 작업
 
@@ -28,10 +22,8 @@
 ```ts
 export type PostingFetchFailure =
   | 'blocked-url'    // url-guard가 거부
-  | 'fetch-failed'   // 네트워크 오류 · 4xx · 5xx
+  | 'fetch-failed'   // 네트워크 오류 · 4xx · 5xx · 리다이렉트 상한 초과 · 타임아웃
   | 'not-html'       // content-type이 HTML이 아니다
-  | 'too-large'      // 응답이 크기 상한을 넘었다
-  | 'timeout'
   | 'too-short';     // 본문은 뽑혔지만 임계값 미만이다
 
 export type PostingFetchResult =
@@ -48,6 +40,8 @@ export async function fetchPosting(rawUrl: string, deps?: FetchPostingDeps): Pro
 export function postingFromPastedText(text: string): PostingFetchResult;
 ```
 
+실패 종류를 넷으로 줄였다. 타임아웃·크기 초과·리다이렉트 상한은 전부 `fetch-failed`로 합친다 — 화면이 이 셋을 다르게 다루지 않기 때문이다(전부 붙여넣기 폴백으로 간다).
+
 ### 가드레일
 
 `docs/ARCHITECTURE.md`가 정한 "기본만 둔다"를 그대로 구현한다.
@@ -55,8 +49,8 @@ export function postingFromPastedText(text: string): PostingFetchResult;
 - **URL 검사**: `checkPostingUrl`을 통과하지 못하면 즉시 `blocked-url`
 - **User-Agent**: 일반 브라우저 UA 문자열을 헤더에 넣는다. 봇 차단을 조금이라도 덜 맞기 위해서다
 - **타임아웃 10초**: `AbortController`로 끊는다
-- **응답 크기 상한 2MB**: 본문을 다 받고 나서 길이를 재지 말고, **스트림을 읽으며 누적 바이트가 상한을 넘는 순간 중단**한다. 다 받고 재면 상한의 의미가 없다
-- **리다이렉트 상한 3**: `redirect: 'manual'`로 직접 따라간다. **매 홉마다 `checkPostingUrl`을 다시 통과시킨다.** 공개 URL이 사설 IP로 리다이렉트하는 경로를 막기 위해서다
+- **리다이렉트 상한 3**: `redirect: 'manual'`로 직접 따라간다. **따라가기 전에 매 `Location`을 `checkPostingUrl`로 통과시킨다.** 공개 URL이 사설 IP로 리다이렉트하는 경로를 막기 위해서다. 최종 URL만 검사하면 이미 그 IP로 요청이 나간 뒤다
+- **응답 크기 상한 2MB**: `Content-Length`가 상한을 넘으면 읽지 않고 중단한다. 헤더가 없으면 본문을 읽은 뒤 `MAX_POSTING_CHARS` 기준으로 자른다. 스트림 누적 바이트를 세지 마라 — 10초 타임아웃이 이미 상한 역할을 한다
 - **content-type 검사**: `text/html` 또는 `application/xhtml+xml`이 아니면 `not-html`
 
 ### 본문 추출
@@ -83,15 +77,11 @@ export function postingFromPastedText(text: string): PostingFetchResult;
 
 1. 정상 HTML → `ok: true`, 본문에 기사 텍스트가 들어 있다
 2. `http://127.0.0.1/x` → `blocked-url` (fetch가 **호출되지 않았음**을 확인한다)
-3. 공개 URL → 사설 IP로 302 리다이렉트 → `blocked-url`
-4. 리다이렉트 4번 → `fetch-failed` 또는 전용 실패. 무한히 따라가지 않는다
-5. 404 응답 → `fetch-failed`
-6. `content-type: application/pdf` → `not-html`
-7. 본문이 400자 미만인 HTML → `too-short`, 메시지에 붙여넣기 안내가 들어 있다
-8. 2MB를 넘는 응답 → `too-large` (전부 읽지 않고 중단했는지 확인한다)
-9. `fetchImpl`이 `AbortError`를 던지면 → `timeout`
-10. `postingFromPastedText('짧은 글')` → `too-short`
-11. `postingFromPastedText`(400자 이상) → `ok: true`, `sourceUrl`이 없다
+3. 공개 URL → 사설 IP로 302 리다이렉트 → `blocked-url` (두 번째 fetch가 나가지 않았음을 확인한다)
+4. 404 응답 → `fetch-failed`
+5. `content-type: application/pdf` → `not-html`
+6. 본문이 400자 미만인 HTML → `too-short`, 메시지에 붙여넣기 안내가 들어 있다
+7. `postingFromPastedText`: 짧은 글이면 `too-short`, 400자 이상이면 `ok: true`이고 `sourceUrl`이 없다
 
 ## Acceptance Criteria
 
@@ -99,41 +89,24 @@ export function postingFromPastedText(text: string): PostingFetchResult;
 npm run build   # 컴파일 에러 없음
 npm run lint    # 통과
 npm test        # 위 테스트 전부 통과
-```
 
-추가로 확인한다:
-
-```bash
 head -1 src/services/posting.ts                        # import 'server-only';
 grep -rn "jsdom\|readability" src/lib/ src/components/ # 결과 없음
 ```
 
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - 레이어 방향(`app → services → 외부`, `lib`은 잎)을 지켰는가? 판정 로직이 `src/lib/`에 있고 서비스는 그것을 쓰기만 하는가?
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히:
-     - 저장 계층(파일 캐시 포함)을 만들지 않았는가 — **가져온 HTML을 디스크에 쓰지 않는다**
-     - 공고 본문을 비신뢰 데이터로 다루는가 (스크립트 실행 금지, 리소스 로드 금지)
-   - 실패를 조용히 넘기지 않고 이유가 붙은 결과로 돌려주는가?
-3. 결과에 따라 `phases/1-job-posting/index.json`의 step 1을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: 판정 상수와 함수가 `src/lib/`에 있고 서비스는 그것을 쓰기만 하는가? 가져온 HTML을 디스크에 쓰지 않았는가?
 
 **이 step은 `blocked`가 되면 안 된다.** 테스트가 전부 mock이라 네트워크 없이 완료된다.
 
-`summary`에 `fetchPosting` · `postingFromPastedText` 시그니처와 `PostingFetchFailure`의 값들을 적어라. 다음 step의 Route Handler가 이 결과로 분기한다.
+`summary`에 `fetchPosting` · `postingFromPastedText` 시그니처와 `PostingFetchFailure`의 값 넷을 적어라. 다음 step의 Route Handler가 이 결과로 분기한다.
 
 ## 금지사항
 
 - **실제 채용 사이트를 부르는 테스트를 만들지 마라.** 이유: `docs/PLAN.md` 10절 — 서비스 경계는 mock으로 검증한다. 실제 사이트는 언제든 마크업이 바뀌고 봇 차단에 걸린다
 - **jsdom에서 스크립트를 실행하거나 외부 리소스를 로드하지 마라.** 이유: 공고 본문은 비신뢰 데이터다. 남의 페이지 스크립트를 내 서버에서 돌리는 순간 이 도구가 공격 표면이 된다
-- **응답을 전부 읽은 뒤에 크기를 재지 마라.** 이유: 그러면 상한이 아무것도 막지 못한다. 스트림을 읽으며 넘는 순간 끊어야 한다
-- **리다이렉트 중간 홉의 URL 검사를 건너뛰지 마라.** 이유: 공개 URL이 `169.254.169.254`로 리다이렉트하면 첫 검사만으로는 막지 못한다
+- **리다이렉트 중간 홉의 URL 검사를 건너뛰지 마라.** 이유: 공개 URL이 `169.254.169.254`로 리다이렉트하면 최종 URL만 검사해서는 못 막는다. 이미 요청이 나간 뒤다
+- **실패 종류를 더 쪼개지 마라.** 이유: 화면이 `blocked-url`과 나머지만 구분한다. 종류를 늘리면 분기와 메시지만 늘고 사용자가 할 일은 같다
 - **가져온 HTML이나 추출 본문을 파일·DB에 저장하지 마라.** 이유: ADR-005 — 아무것도 저장하지 않는다
 - **본문이 짧을 때 빈 문자열로 성공을 반환하지 마라.** 이유: ADR-006 — 조용히 실패하지 않고 붙여넣기 폴백으로 안내한다
 - **허용 도메인 목록이나 사이트별 전용 파서를 만들지 마라.** 이유: `docs/PLAN.md` 11절이 Readability의 한계를 이미 알려진 약점으로 받아들였다. 사이트별 파서는 유지비가 얻는 것을 넘어선다
 - **`src/lib/`에 코드를 추가하지 마라.** 이유: 판정 상수와 함수는 이전 step에서 확정됐다. 여기서 또 만들면 사본이 둘이 된다
-- 기존 테스트를 깨뜨리지 마라

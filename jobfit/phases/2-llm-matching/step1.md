@@ -2,17 +2,11 @@
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
-
-- `docs/PLAN.md` — 1절(3분할 정의), 3절 "아키텍처 규칙", 7절
-- `docs/PRD.md` — 세 칸의 정의와 산출물
-- `docs/ARCHITECTURE.md`
-- `docs/ADR.md` — ADR-003 · ADR-008(제안의 사실성을 자동 판별하지 않는다)
 - `src/types/index.ts` — `Requirement` · `Verdict` · `ResumeEvidence` · `VerdictBucket`
 - `src/lib/schemas.ts` — 이전 step의 `ParseOutcome`
 - `src/lib/resume-parser.ts` — `ResumeEvidence`가 어떻게 만들어지는지
 
-이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
+세 칸의 정의는 `docs/PRD.md`, 근거는 ADR-003 · ADR-008에 있다.
 
 ## 이 step이 하는 일
 
@@ -90,23 +84,17 @@ export function unjudgedRequirementIds(
 
 - 각 칸 안에서 `requirements`의 입력 순서를 보존한다. 정렬하지 마라 — 정렬 규칙은 화면의 결정이고 여기서 미리 하면 UI가 바꿀 수 없다
 
-### 4. 테스트 케이스 (최소한 이만큼)
+### 4. 테스트 케이스
 
 1. covered · implicit · missing 하나씩 → 각 칸에 하나씩 들어간다
 2. 판정이 없는 requirement → `unjudged`에 들어간다. **`missing`에 들어가지 않는다**
-3. `evidenceBlockIds`에 실재하지 않는 ID가 섞이면 그것만 버려지고 실재하는 것은 남는다
-4. `evidenceBlockIds`가 **전부** 가짜인 covered → `unjudged`로 내려간다
-5. 4번과 같은 상황의 implicit → `unjudged`로 내려간다
-6. `missing`인데 근거가 딸려 오면 `evidence`가 빈 배열이 된다
-7. 같은 blockId가 두 번 오면 `evidence`에 하나만 남는다
-8. `evidence`에 담긴 객체의 `text`가 입력 `ResumeEvidence`의 원문과 **완전히 같다**
-9. `suggestionEvidenceBlockIds`의 가짜 ID가 걸러진다
-10. `implicit`인데 `suggestion`이 빈 문자열이면 `null`이 되고 bucket은 그대로 `implicit`
-11. `requirements`에 없는 `requirementId`의 verdict는 무시된다
-12. 각 칸의 순서가 `requirements` 입력 순서를 따른다
-13. `unjudgedRequirementIds`가 판정 없는 id만 돌려준다
-14. 빈 입력 → 네 칸 모두 빈 배열
-15. verdicts가 비면 모든 requirement가 `unjudged`
+3. `evidenceBlockIds`에 실재하지 않는 ID가 섞이면 그것만 버려지고, 같은 blockId가 두 번 오면 하나만 남는다
+4. `evidenceBlockIds`가 **전부** 가짜인 covered·implicit → 둘 다 `unjudged`로 내려간다
+5. `missing`인데 근거가 딸려 오면 `evidence`가 빈 배열이 된다
+6. `evidence`에 담긴 객체의 `text`가 입력 `ResumeEvidence`의 원문과 **완전히 같다**. `suggestionEvidenceBlockIds`의 가짜 ID도 같은 규칙으로 걸러진다
+7. `implicit`인데 `suggestion`이 빈 문자열이면 `null`이 되고 bucket은 그대로 `implicit`
+8. `requirements`에 없는 `requirementId`의 verdict는 무시된다. 각 칸의 순서는 `requirements` 입력 순서를 따른다
+9. verdicts가 비면 모든 requirement가 `unjudged`이고, `unjudgedRequirementIds`가 그 id들을 돌려준다
 
 ## Acceptance Criteria
 
@@ -114,30 +102,12 @@ export function unjudgedRequirementIds(
 npm run build   # 컴파일 에러 없음
 npm run lint    # 통과
 npm test        # 위 테스트 전부 통과
-```
 
-추가로 확인한다:
-
-```bash
 grep -nE "^import|require\(" src/lib/verdicts.ts   # @/types 외 import 없음
 grep -rn "openai\|prompt" src/lib/verdicts.ts       # 결과 없음
 ```
 
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - `src/lib/`이 잎으로 남았는가?
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히:
-     - **근거 텍스트를 코드가 `ResumeEvidence`에서 가져오는가** — 새로 쓰거나 다듬지 않는가
-     - **실재하지 않는 블록 ID를 버리는가**
-     - **집계를 코드가 하는가** (LLM에 시키는 코드가 없는가)
-     - **누락을 `missing`으로 간주하지 않는가**
-   - 테스트를 **먼저** 썼는가?
-3. 결과에 따라 `phases/2-llm-matching/index.json`의 step 1을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: **근거 텍스트를 코드가 `ResumeEvidence`에서 가져오는가** — 새로 쓰거나 다듬지 않는가? **실재하지 않는 블록 ID를 버리는가?** 테스트를 **먼저** 썼는가?
 
 `summary`에 `AnalysisItem` · `AnalysisResult`의 필드와 `buildAnalysis` 시그니처를 적어라. `3-result-ui` phase의 화면이 이 형태를 그대로 렌더한다.
 
@@ -150,4 +120,3 @@ grep -rn "openai\|prompt" src/lib/verdicts.ts       # 결과 없음
 - **점수·순위·퍼센트 적합도를 계산하지 마라.** 이유: `docs/PRD.md`의 산출물은 3분할과 문장 제안이다. 적합도 점수는 "되냐 안 되냐"에 답하는 물건이고, 이 도구는 그 질문에 답하지 않는다
 - **칸 안을 정렬하지 마라** (must 우선 등). 이유: 정렬은 화면의 결정이다. 여기서 하면 UI가 되돌릴 수 없다
 - **`openai`나 프롬프트를 import 하지 마라.** 이유: `src/lib/`은 잎이다
-- 기존 테스트를 깨뜨리지 마라

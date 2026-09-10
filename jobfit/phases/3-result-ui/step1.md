@@ -1,100 +1,62 @@
-# Step 1: result-columns
+# Step 1: result-page
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
+**UI step이다. 아래 디자인 파일 셋을 반드시 직접 열어라 — codex는 Claude Code 스킬을 자동으로 부르지 못한다.**
 
-- `docs/PLAN.md` — 1절(3분할 정의) · 5절
-- `docs/PRD.md` — **"두 번째 칸이 이 제품의 존재 이유다"**
-- `docs/ARCHITECTURE.md`
-- `docs/ADR.md` — ADR-003 · ADR-008
-- `docs/UI_GUIDE.md` — **원칙 2(주목을 "안 쓴 것"에) · 원칙 3(근거가 제안보다 먼저) · 원칙 4(색이 아니라 밀도로 가른다)**
-- `.claude/skills/jobfit-design/SKILL.md` — **"칸 머리" · "카드" · "고쳐 쓴 문장" 절이 이 step의 규격이다**
+- `.claude/skills/jobfit-design/SKILL.md` — **"결과 헤더" 절과 "아트보드가 정하지 않은 것" 표**
 - `.claude/skills/jobfit-design/references/tokens.css`
-- `.claude/skills/jobfit-design/references/artboard.html` — **기준 아트보드. 세 칸의 마크업이 전부 여기 있다**
-- `src/types/index.ts` — `AnalysisItem` · `AnalysisResult`
-- `src/components/KindBadge.tsx` · `MonthsBadge.tsx` · `EvidenceQuote.tsx` · `ConfidenceLabel.tsx` · `MonoLabel.tsx` — 이전 step의 조각들
-- `src/lib/format.ts`
+- `.claude/skills/jobfit-design/references/artboard.html` — **기준 아트보드. 결과 섹션 전체 구조가 여기 있다**
 
-**이 step은 UI를 만든다.** 하네스는 `codex exec`으로 돌기 때문에 스킬이 자동으로 걸리지 않는다. 위 디자인 파일 세 개를 반드시 직접 열어라.
+그리고:
+
+- `src/app/page.tsx` — **현재 상태 기계와 임시 `<pre>` 블록. 이것을 교체한다**
+- `src/components/ResultColumns.tsx` 등 이전 step의 컴포넌트
+- `src/components/PostingInput.tsx` · `PrivacyNotice.tsx`
+- `src/types/api.ts` — `AnalyzeResponse`
+- `src/types/index.ts` — `AnalysisResult` · `AnalysisItem`
+
+이 step이 끝나면 **링크 하나를 넣으면 세 칸이 나온다** — `docs/PLAN.md` 8절 M3의 완료 기준이다.
 
 ## 작업
 
-세 칸과 그 안의 카드를 만든다. 결과 섹션 조립과 상태 연결은 다음 step 소관이다.
+### 1. `src/components/ResultSection.tsx`
 
-### 컴포넌트
+`AnalyzeResponse`의 `ok` 갈래를 받아 결과 전체를 그린다. `margin-top 64px`, 세로 `gap 32px`. 순서:
 
-`src/components/` 아래에 둔다.
+**a. 결과 헤더** — `border-bottom 1px #d9d9dd`, `padding-bottom 20px`, baseline 양끝 정렬, `flex-wrap`
 
-- `ColumnHeader` — 칸 머리
-- `CoveredCard` · `ImplicitCard` · `MissingRow` — 칸별 항목
-- `ResultColumns` — `AnalysisResult`를 받아 3분할 그리드를 그린다
+- 왼쪽 세로 `gap 6px`: mono 출처(`sourceUrl`의 호스트명. 붙여넣기면 `붙여넣은 본문`) 위에, display `400 32px/1.2` `letter-spacing -0.32px` 공고 제목
+- 오른쪽: `400 14px/1.4` `#93939f`로 `요구사항 N개 · 저장하지 않음`
 
-`ImplicitCard`만 복사 버튼 때문에 Client Component다. 나머지는 Server Component로 남긴다.
+**b. `ResultColumns`** — 3분할
 
-### 원칙: 색이 아니라 밀도로 가른다
+**c. 판정 없음 구획** — `result.unjudged`가 비어 있지 않을 때만 렌더한다
 
-`docs/UI_GUIDE.md` 원칙 4. 세 칸의 차이는 **구조**다.
+`SKILL.md`: *"판정 없음 → `없는 것`으로 옮기지 말고 그 자리에 `판정 없음`으로 표시한다."*
 
-| 칸 | 컨테이너 | 상단선 |
-|---|---|---|
-| 갖춘 것 | `border 1px #f2f2f2`, `radius 8px`, `padding 16px` | `2px #d9d9dd` |
-| 안 쓴 것 | `border 1px #ffad9b`, `radius 8px`, `padding 16px` | **`2px #ff7759`** |
-| 없는 것 | 카드 아님. `border-bottom 1px #d9d9dd`, `padding 0 0 16px` | `2px #d9d9dd` |
+아트보드는 이 상태를 그리지 않았다. 토큰에서 유도하되 다음 선을 지켜라:
 
-### `ColumnHeader`
+- 3분할 **바깥**, 그리드 아래에 둔다. 어느 칸에도 속하지 않기 때문이다
+- mono 라벨 `판정 없음` + 그 아래 항목 목록
+- 각 항목은 `MissingRow`와 같은 밑줄 행 스타일이되, `근거 없음` 자리에 `판정 없음`을 쓰고 **신뢰도는 렌더하지 않는다**(`confidence`가 `null`이다)
+- **유채색을 쓰지 마라.** 회색조로 해결한다
+- 라벨 아래 설명 한 줄을 붙인다: 모델이 이 요구사항에 답하지 않았다는 것, 근거가 없다는 뜻이 아니라는 것
 
-`border-top 2px`, `padding-top 12px`, baseline 양끝 정렬. 왼쪽에 칸 제목(`400 18px/1.3` body), 오른쪽에 mono 개수.
+**d. 꼬리 고지** — `border-top 1px #d9d9dd`, `padding-top 16px`, `400 14px/1.4`, `#93939f`. 문구는 아트보드 그대로:
 
-`implicit` 칸에만 머리 아래 설명 한 줄이 붙는다 — `400 14px/1.4`, `#75758a`:
+> 신뢰도는 모델의 자기평가다. 보정된 확률이 아니고 검토 필요 신호로만 쓴다. 새로고침하면 결과는 사라진다.
 
-> 근거는 있는데 공고의 용어로 안 적혀 있다. 여기부터 고친다.
+### 2. `src/app/page.tsx`
 
-### `CoveredCard`
+- 임시 `<pre>` 블록을 **지우고** `ResultSection`으로 교체한다
+- `result` 상태일 때 고지 문구(`PrivacyNotice`)가 사라진다 — 첫 분석 전에만 보인다
+- 결과 등장 애니메이션은 `fade-in 0.2s` 하나뿐이다. 그 외 전부 금지
+- 다시 분석하면 이전 결과를 버리고 새 결과로 바꾼다. 쌓지 마라
 
-카드 안 세로 `gap 12px`. 순서:
+### 3. 컨테이너
 
-1. 배지 줄 (`KindBadge` default + `MonthsBadge`), 가로 `gap 8px`, `flex-wrap`
-2. 요구사항 문장 `400 16px/1.5`
-3. **근거 인용** — `EvidenceQuote`
-4. `ConfidenceLabel`
-
-### `ImplicitCard`
-
-`CoveredCard`와 같은 순서에 **근거 다음, 신뢰도 앞**으로 "고쳐 쓴 문장" 구획이 들어간다. `KindBadge`는 `accent` variant.
-
-고쳐 쓴 문장 구획: `border-top 1px #f2f2f2`, `padding-top 12px`, 세로 `gap 10px`.
-
-1. mono 라벨 `고쳐 쓴 문장`
-2. 제안 문장 `400 16px/1.5`
-3. 복사 버튼 — `padding 6px 16px`, `radius 32px`, `border 1px #17171c`, 배경 없음, `transition: background 150ms linear`. 누르면 라벨이 `복사됨`으로 **1.6초간** 바뀐다
-
-**근거가 제안보다 위에 온다.** `docs/UI_GUIDE.md` 원칙 3: 제안은 LLM이 쓴 문장이고 근거는 내가 쓴 문장이다. 순서를 바꾸지 마라.
-
-`suggestion`이 `null`이면 이 구획 전체를 렌더하지 않는다. 카드는 여전히 `implicit`이다(근거는 있는데 문장만 안 온 경우다).
-
-복사는 `navigator.clipboard.writeText`. 실패하면 조용히 넘기지 말고 버튼 라벨을 `복사 실패`로 바꾼다.
-
-### `MissingRow`
-
-카드가 아니라 밑줄 행이다. 세로 `gap 10px`. 순서:
-
-1. 배지 줄 (`KindBadge` default + `MonthsBadge`)
-2. 요구사항 문장
-3. `근거 없음` — `400 14px/1.4`, `#93939f`
-4. `ConfidenceLabel`
-
-### `ResultColumns`
-
-`grid-template-columns: repeat(3, 1fr)`, `gap 24px`, `align-items: start`. 칸 안 카드 사이 `gap 16px`.
-
-**근거가 여러 개인 경우**: 아트보드는 근거 하나만 그렸지만 `AnalysisItem.evidence`는 배열이다. `EvidenceQuote`를 개수만큼 세로로 반복하고 사이 간격은 카드 안 `gap 12px`을 따른다. 개수를 제한하거나 접지 마라.
-
-**좁은 화면**: 3분할을 세로로 쌓고 **`안 쓴 것`을 맨 위**에 둔다(`SKILL.md` 명시). Tailwind 반응형으로 처리하되, DOM 순서를 바꾸지 말고 `order`로 재배치한다.
-
-**빈 칸**: 항목이 0개인 칸도 머리와 개수 `0`은 그린다. 3분할 구조가 무너지면 "없다"가 안 보인다. 안내 일러스트나 "비어 있습니다" 문구를 넣지 마라.
-
-`unjudged`는 이 컴포넌트가 그리지 않는다. 다음 step에서 3분할 **바깥**에 별도로 그린다.
+`main`은 `max-width 1180px`, `padding 40px 24px 80px`. 이미 그렇다면 건드리지 마라.
 
 ## Acceptance Criteria
 
@@ -102,47 +64,37 @@
 npm run build   # 컴파일 에러 없음
 npm run lint    # 통과
 npm test        # 기존 테스트 전부 통과
+
+grep -rn "<pre" src/app/page.tsx                                       # 결과 없음 (임시 블록 제거)
+grep -rn "localStorage\|sessionStorage\|indexedDB" src/                 # 결과 없음
+grep -rn "process.env\|NEXT_PUBLIC" src/app/page.tsx src/components/    # 결과 없음
+grep -rn "box-shadow\|shadow-\|backdrop-blur\|gradient\|animate-pulse\|animate-spin" src/app/ src/components/  # 결과 없음
+grep -rniE "text-(gray|slate|zinc|blue|purple|indigo)-[0-9]" src/components/ src/app/  # 결과 없음
 ```
 
-추가로 확인한다:
+`npm run dev`로 띄워 **키 없이도 확인 가능한 것**을 본다:
 
-```bash
-grep -rn "use client" src/components/CoveredCard.tsx src/components/MissingRow.tsx src/components/ColumnHeader.tsx  # 결과 없음
-grep -rn "box-shadow\|shadow-\|backdrop-blur\|gradient\|animate-pulse" src/components/   # 결과 없음
-grep -rniE "text-(gray|slate|zinc|blue|purple|indigo)-[0-9]" src/components/             # 결과 없음
-grep -rn "localStorage\|sessionStorage\|indexedDB" src/                                   # 결과 없음
-```
+- `/`가 200으로 뜨고 헤더·입력 줄·고지 문구가 규격대로 보인다
+- 빈 입력으로 분석을 누르면 호출이 일어나지 않는다
+- 잘못된 URL(`http://127.0.0.1`)을 넣으면 에러 한 줄이 뜬다
+- 콘솔에 React 경고나 하이드레이션 에러가 없다
 
-## 검증 절차
+실제 분석 결과는 `OPENAI_API_KEY`·`NOTION_TOKEN`이 있어야 보인다. **없다고 해서 `blocked`로 만들지 마라** — 코드 완성과 실행 확인은 별개다.
 
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히:
-     - **근거 텍스트를 컴포넌트가 가공하지 않는가** (자르기·요약 없음, 줄바꿈 보존)
-     - **판정 없음을 `없는 것` 칸에 넣지 않았는가**
-     - 저장 계층(localStorage 포함)을 만들지 않았는가
-   - **`SKILL.md`의 "하지 마라" 표를 어기지 않았는가?**
-   - **토큰에 없는 색을 새로 만들지 않았는가?**
-   - 유채색이 `implicit` 칸에만 나타나는가? (`covered`·`missing`에 포인트 색이 없는가)
-   - 근거가 제안보다 위에 있는가?
-3. 결과에 따라 `phases/3-result-ui/index.json`의 step 1을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: 상태 기계(`idle → loading → result / needsPaste / error`)를 따르는가? **판정 없음을 `없는 것`으로 옮기지 않았는가?** **`SKILL.md`의 "하지 마라" 표와 "아트보드가 정하지 않은 것" 표를 지켰는가?**
 
-`summary`에 만든 컴포넌트 이름과 `ResultColumns`의 props를 적어라.
+`summary`에 만든 컴포넌트와 화면이 완성됐다는 사실, 그리고 실제 분석에 필요한 환경 변수 이름을 적어라.
 
 ## 금지사항
 
-- **세 칸에 각각 다른 유채색을 주지 마라.** 이유: `docs/UI_GUIDE.md` 원칙 2 — 세 칸에 각각 색을 주면 신호등이 되고 강조가 사라진다. 이 도구가 존재하는 이유가 두 번째 칸이다
-- **제안을 근거보다 위에 두지 마라.** 이유: 원칙 3 — 제안은 LLM이 쓴 문장이고 근거는 내가 쓴 문장이다. 위치·크기·순서 모두에서 근거가 앞선다
-- **`covered`의 근거를 접어두고 "근거 보기"로 만들지 마라.** 이유: `docs/UI_GUIDE.md` 결정 이력이 이것을 명시적으로 뒤집어 "처음부터 펼침"으로 정했다
-- **판정 없음(`unjudged`)을 `없는 것` 칸에 넣지 마라.** 이유: `SKILL.md` 명시 + `CLAUDE.md` CRITICAL — 대답을 안 한 것과 근거가 없는 것은 다르다
-- **근거 개수를 제한하거나 "외 N건"으로 접지 마라.** 이유: 근거는 사용자가 제안과 대조할 대상이다. 가려지면 대조할 수 없다
-- **빈 칸에 일러스트나 안내 문구를 넣지 마라.** 이유: `SKILL.md` "빈 상태: 안내 일러스트를 넣지 마라"
-- **모든 카드에 같은 모서리 반경을 쓰지 마라.** 이유: 반경 4/8/30/32이 역할을 나눈다. 전부 같으면 템플릿처럼 보인다
-- **`missing`을 카드로 만들지 마라.** 이유: 원칙 4 — 밀도가 세 칸을 가른다. `missing`은 밑줄 행이다
-- **`box-shadow` · gradient · backdrop-filter · 펄스 애니메이션을 쓰지 마라**
-- **`localStorage`에 복사 이력이나 결과를 저장하지 마라.** 이유: ADR-005
-- **결과 섹션 헤더와 페이지 조립을 하지 마라.** 이유: 다음 step 소관이다
-- 기존 테스트를 깨뜨리지 마라
+- **판정 없음(`unjudged`)을 `없는 것` 칸에 합치거나 조용히 버리지 마라.** 이유: `CLAUDE.md` CRITICAL — 버리면 요구사항 개수와 세 칸의 합이 안 맞는데 사용자는 그것을 모른다
+- **적합도 점수·매칭률·"합격 가능성"을 표시하지 마라.** 이유: `docs/PLAN.md` 1절 — 이 도구는 "내가 되냐 안 되냐"에 답하지 않는다. 답하는 것은 "고쳐서 메울 수 있는 칸이 어디냐"다
+- **내 경력 기간을 계산해 요구 기간과 비교하지 마라.** 이유: ADR-009
+- **결과를 `localStorage`·`sessionStorage`·URL 쿼리에 저장하지 마라.** 이유: ADR-005 — 새로고침하면 사라지는 것이 결정이다. "결과 공유 링크"도 같은 이유로 만들지 마라
+- **결과를 인쇄·PDF·다운로드로 내보내는 기능을 만들지 마라.** 이유: `docs/PRD.md` MVP 제외 사항. 이 도구는 화면에서 보고 고칠 문장을 복사하는 물건이다
+- **`fade-in 0.2s`와 버튼 `background 150ms linear` 외의 애니메이션을 넣지 마라.** 이유: `SKILL.md` "그 외 전부 금지"
+- **결과를 쌓아 보여주지 마라** (분석 이력·탭·아코디언). 이유: 여러 공고에 걸친 집계는 MVP 제외 사항이다
+- **히어로 섹션·소개 문단·일러스트를 넣지 마라.** 이유: 원칙 1 — 작업창이다
+- **세 칸에 각각 다른 유채색을 주지 마라.** 이유: 원칙 2
+- **`box-shadow` · gradient · backdrop-filter · 다크 모드를 쓰지 마라**
+- **`src/lib/` · `src/services/` · `src/app/api/`를 수정하지 마라.** 이유: 이 step은 화면만 만든다. 응답 형태가 부족하면 그것은 설계 문제이므로 `error`로 보고하라

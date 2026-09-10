@@ -2,15 +2,10 @@
 
 ## 읽어야 할 파일
 
-먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
-
-- `docs/PLAN.md` — 4절 "데이터 모델"
-- `docs/ARCHITECTURE.md` — "데이터 모델" 절
-- `docs/ADR.md` — ADR-003(블록 ID 앵커링) · ADR-004(안정 ID를 만들지 않는다) · ADR-009(경력 개월 수를 계산하지 않는다)
-- `tsconfig.json` · `vitest.config.ts` — 이전 step에서 만들어진 설정. `@/*` alias가 어디를 가리키는지 확인하라
+- `tsconfig.json` · `vitest.config.ts` — 이전 step의 설정. `@/*` alias가 어디를 가리키는지 확인하라
 - `src/app/globals.css` — 이전 step의 산출물
 
-이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
+타입은 `docs/ARCHITECTURE.md`의 "데이터 모델" 절이 기준이다. 근거는 ADR-003 · ADR-004 · ADR-009에 있다.
 
 ## 작업
 
@@ -59,29 +54,13 @@ export interface Verdict {
 ## Acceptance Criteria
 
 ```bash
-npm run build   # 컴파일 에러 없음
-npm run lint    # 통과
-npm test        # 통과
-```
-
-추가로 확인한다:
-
-```bash
+npm run build                          # 컴파일 에러 없음
+npm run lint                           # 통과
 npx tsc --noEmit                       # 타입 에러 없음
 grep -rn "any" src/types/index.ts      # 결과 없음
 ```
 
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - `docs/ARCHITECTURE.md`의 데이터 모델과 필드 이름·타입·옵셔널 여부가 정확히 일치하는가?
-   - `types/`가 아무것도 import 하지 않는가? (`types/`는 모두가 import 하는 잎이다)
-   - `CLAUDE.md` CRITICAL 규칙을 위반하지 않았는가? 특히 저장 계층을 위한 타입(캐시 키, 버전, 타임스탬프 등)을 만들지 않았는가
-3. 결과에 따라 `phases/0-notion-resume/index.json`의 step 1을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
+추가로 확인한다: `types/`가 아무것도 import 하지 않는가? (`types/`는 모두가 import 하는 잎이다)
 
 `summary`에는 파일 경로와 export한 타입 이름을 전부 적어라. 다음 step들이 이것을 import 한다.
 
@@ -92,4 +71,3 @@ grep -rn "any" src/types/index.ts      # 결과 없음
 - **`docs/ARCHITECTURE.md`에 없는 타입을 추가하지 마라** — `AnalysisResult` · `AnalyzeResponse` 같은 파생 타입 포함. 이유: 집계 결과 타입은 `2-llm-matching` phase에서 집계 로직과 함께 정해진다. 미리 만들면 로직이 그 모양에 끌려간다
 - **이력서 버전·캐시 키·타임스탬프 필드를 넣지 마라.** 이유: ADR-005 — 아무것도 저장하지 않는다. 저장이 없으면 버전도 없다
 - **`Verdict`를 판정용과 제안용 둘로 쪼개지 마라.** 이유: ADR-007 — 한 객체에 담아야 화면에 보이는 근거와 제안의 출처가 같아진다
-- 기존 테스트를 깨뜨리지 마라
