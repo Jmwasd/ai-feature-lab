@@ -1,0 +1,8 @@
+{
+  "phases": [
+    { "dir": "0-notion-resume", "status": "pending" },
+    { "dir": "1-job-posting", "status": "pending" },
+    { "dir": "2-llm-matching", "status": "pending" },
+    { "dir": "3-result-ui", "status": "pending" }
+  ]
+}
