@@ -99,6 +99,38 @@ describe("fetchBlockTree", () => {
     ]);
   });
 
+  it("leaves equation fragments out of the text so a decorative divider normalizes to empty", async () => {
+    const lister = fakeLister({
+      "root:first": [
+        page([
+          {
+            id: "divider",
+            type: "paragraph",
+            has_children: false,
+            paragraph: { rich_text: [{ type: "equation", plain_text: "\\large\\color{#d27b2d}━━" }] },
+          },
+          {
+            id: "mixed",
+            type: "paragraph",
+            has_children: false,
+            paragraph: {
+              rich_text: [
+                { type: "text", plain_text: "조회 성능을 " },
+                { type: "equation", plain_text: "O(n)" },
+                { type: "text", plain_text: "으로 개선" },
+              ],
+            },
+          },
+        ]),
+      ],
+    });
+
+    await expect(fetchBlockTree(lister, "root")).resolves.toEqual([
+      { id: "divider", type: "paragraph", text: "", children: [] },
+      { id: "mixed", type: "paragraph", text: "조회 성능을 으로 개선", children: [] },
+    ]);
+  });
+
   it("does not descend beyond depth six", async () => {
     const lister = fakeLister({
       "root:first": [page([block("depth-0", "toggle", { hasChildren: true })])],

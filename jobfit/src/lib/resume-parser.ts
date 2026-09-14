@@ -45,7 +45,10 @@ export function parseResume(blocks: NotionBlockNode[]): ResumeEvidence[] {
       return;
     }
 
-    if (block.type === "heading_2") {
+    if (block.type === "heading_1") {
+      ownership.company = "";
+      ownership.project = "";
+    } else if (block.type === "heading_2") {
       ownership.company = companyName(block.text);
       ownership.project = "";
     } else if (block.type === "heading_3") {
