@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "analyze-route-skeleton",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-15T00:04:46+0900",
+      "summary": "src/types/api.ts에 AnalyzeRequest({ url?; text? })와 AnalyzeResponse(ok posting | needs-paste | error)를 정의하고 src/app/api/analyze/route.ts에 공고 확보·Notion 이력서 읽기 POST 흐름을 연결했다.",
+      "completed_at": "2026-09-15T00:07:22+0900"
     },
     {
       "step": 3,
