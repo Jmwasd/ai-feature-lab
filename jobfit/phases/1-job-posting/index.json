@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "input-ui",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-15T00:08:22+0900",
+      "summary": "src/components/PostingInput.tsx와 src/components/PrivacyNotice.tsx를 만들고 src/app/page.tsx에서 idle · loading · result · needsPaste · error 상태를 관리하며, 같은 파일의 임시 <pre> 블록에 ok 응답 JSON을 표시했다.",
+      "completed_at": "2026-09-15T00:12:33+0900"
     }
   ],
   "created_at": "2026-09-14T23:57:16+0900"
