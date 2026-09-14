@@ -2,9 +2,28 @@
   "project": "jobfit",
   "phase": "1-job-posting",
   "steps": [
-    { "step": 0, "name": "posting-guards", "status": "pending" },
-    { "step": 1, "name": "posting-service", "status": "pending" },
-    { "step": 2, "name": "analyze-route-skeleton", "status": "pending" },
-    { "step": 3, "name": "input-ui", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "posting-guards",
+      "status": "completed",
+      "started_at": "2026-09-14T23:57:16+0900",
+      "summary": "checkPostingUrl, normalizePostingText, isExtractionSufficient, truncatePostingText와 MIN_POSTING_LENGTH = 400, MAX_POSTING_CHARS = 20000 가드레일을 추가했다."
+    },
+    {
+      "step": 1,
+      "name": "posting-service",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "analyze-route-skeleton",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "input-ui",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-14T23:57:16+0900"
 }
