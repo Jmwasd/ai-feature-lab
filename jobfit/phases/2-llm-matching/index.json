@@ -32,7 +32,7 @@
       "status": "completed",
       "started_at": "2026-09-15T00:45:09+0900",
       "summary": "extractRequirements(postingText: string, deps?: LlmDeps)와 matchVerdicts(requirements: Requirement[], evidence: ResumeEvidence[], deps?: LlmDeps)를 제공하고 OPENAI_MODEL='gpt-5'로 통일하며 판정 누락분만 한 번 재시도한다.",
-      "completed_at": "2026-09-15T00:49:05+0900"
+      "completed_at": "2026-09-15T00:50:09+0900"
     },
     {
       "step": 4,
