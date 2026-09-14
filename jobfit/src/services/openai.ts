@@ -1,8 +1,8 @@
 import 'server-only';
 
-import OpenAI from "openai";
+import OpenAI, { APIConnectionError, APIConnectionTimeoutError, APIError } from "openai";
 
-import { OPENAI_MODEL } from "@/lib/constants";
+import { OPENAI_MODEL, OPENAI_REASONING_EFFORT } from "@/lib/constants";
 import {
   parseRequirements,
   parseVerdicts,
@@ -37,10 +37,13 @@ function defaultCaller(): StructuredCaller {
 
   return {
     async call({ prompt, schemaName, schema }) {
-      const response = await client.responses.create({
+      // 스트리밍으로 받는다. 비스트리밍 요청은 생성이 끝나야 헤더가 오는데,
+      // Node fetch가 헤더를 300초까지만 기다려서 긴 판정이 SDK 타임아웃과 무관하게 끊긴다
+      const stream = client.responses.stream({
         model: OPENAI_MODEL,
         input: prompt,
         store: false,
+        reasoning: { effort: OPENAI_REASONING_EFFORT },
         text: {
           format: {
             type: "json_schema",
@@ -50,10 +53,34 @@ function defaultCaller(): StructuredCaller {
           },
         },
       });
+      const response = await stream.finalResponse();
 
       return response.output_text;
     },
   };
+}
+
+const API_KEY_PATTERN = /sk-[A-Za-z0-9_*-]+/g;
+
+/** 로그와 화면에 남길 실패 원인. API 오류 본문은 키 일부를 되돌려주므로 담지 않는다 */
+export function describeLlmError(error: unknown): string {
+  if (error instanceof APIConnectionTimeoutError) {
+    return "OpenAI 응답 시간 초과";
+  }
+
+  if (error instanceof APIConnectionError) {
+    return "OpenAI 연결 실패";
+  }
+
+  if (error instanceof APIError) {
+    return `OpenAI API 오류 (HTTP ${error.status ?? "-"}${error.code ? ` ${error.code}` : ""})`;
+  }
+
+  if (error instanceof Error) {
+    return error.message.replace(API_KEY_PATTERN, "sk-***");
+  }
+
+  return "알 수 없는 오류";
 }
 
 function callerFrom(deps?: LlmDeps): StructuredCaller {

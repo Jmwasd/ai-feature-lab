@@ -1,7 +1,7 @@
 import { MAX_POSTING_CHARS } from "@/lib/posting-text";
 import { buildAnalysis } from "@/lib/verdicts";
 import { getResumeEvidence } from "@/services/notion";
-import { extractRequirements, matchVerdicts } from "@/services/openai";
+import { describeLlmError, extractRequirements, matchVerdicts } from "@/services/openai";
 import {
   fetchPosting,
   postingFromPastedText,
@@ -137,11 +137,13 @@ export async function POST(request: Request): Promise<Response> {
     const extraction = await extractRequirements(postingResult.posting.rawText);
     requirements = extraction.requirements;
     logParsingErrors("요구사항 추출", extraction.errors);
-  } catch {
-    const message =
-      "OpenAI 요구사항 추출에 실패했습니다. 네트워크 연결, API 키, 사용량 제한을 확인하세요.";
-    console.error("[analyze] OpenAI 요구사항 추출 호출 실패");
-    return errorResponse(message, 500);
+  } catch (error) {
+    const cause = describeLlmError(error);
+    console.error(`[analyze] OpenAI 요구사항 추출 호출 실패: ${cause}`);
+    return errorResponse(
+      `OpenAI 요구사항 추출에 실패했습니다 (${cause}). 네트워크 연결, API 키, 사용량 제한을 확인하세요.`,
+      500,
+    );
   }
 
   if (requirements.length === 0) {
@@ -157,11 +159,13 @@ export async function POST(request: Request): Promise<Response> {
     const matching = await matchVerdicts(requirements, evidence);
     verdicts = matching.verdicts;
     logParsingErrors("매칭 판정", matching.errors);
-  } catch {
-    const message =
-      "OpenAI 매칭 판정에 실패했습니다. 네트워크 연결, API 키, 사용량 제한을 확인하세요.";
-    console.error("[analyze] OpenAI 매칭 판정 호출 실패");
-    return errorResponse(message, 500);
+  } catch (error) {
+    const cause = describeLlmError(error);
+    console.error(`[analyze] OpenAI 매칭 판정 호출 실패: ${cause}`);
+    return errorResponse(
+      `OpenAI 매칭 판정에 실패했습니다 (${cause}). 네트워크 연결, API 키, 사용량 제한을 확인하세요.`,
+      500,
+    );
   }
 
   const result = buildAnalysis(requirements, verdicts, evidence);

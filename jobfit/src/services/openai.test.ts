@@ -1,21 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { responsesCreate } = vi.hoisted(() => ({
-  responsesCreate: vi.fn(),
+const { responsesStream } = vi.hoisted(() => ({
+  responsesStream: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
-vi.mock("openai", () => ({
+vi.mock("openai", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("openai")>()),
   default: class {
-    responses = { create: responsesCreate };
+    responses = { stream: responsesStream };
   },
 }));
 
-import { OPENAI_MODEL } from "@/lib/constants";
+import { APIConnectionError, APIConnectionTimeoutError, APIError } from "openai";
+
+import { OPENAI_MODEL, OPENAI_REASONING_EFFORT } from "@/lib/constants";
 import { REQUIREMENTS_SCHEMA, VERDICTS_SCHEMA } from "@/lib/schemas";
 import type { Requirement, ResumeEvidence, Verdict } from "@/types";
 
 import {
+  describeLlmError,
   extractRequirements,
   matchVerdicts,
   type StructuredCaller,
@@ -199,7 +203,7 @@ describe("OpenAI configuration", () => {
 
   beforeEach(() => {
     delete process.env.OPENAI_API_KEY;
-    responsesCreate.mockReset();
+    responsesStream.mockReset();
   });
 
   afterEach(() => {
@@ -216,11 +220,14 @@ describe("OpenAI configuration", () => {
     );
   });
 
-  it("uses OPENAI_MODEL and strict structured outputs for both LLM operations", async () => {
+  it("streams with OPENAI_MODEL, the shared reasoning effort and strict structured outputs", async () => {
     process.env.OPENAI_API_KEY = "test-key";
-    responsesCreate
-      .mockResolvedValueOnce({
-        output_text: JSON.stringify({
+    const streamed = (payload: unknown) => ({
+      finalResponse: async () => ({ output_text: JSON.stringify(payload) }),
+    });
+    responsesStream
+      .mockReturnValueOnce(
+        streamed({
           requirements: [
             {
               id: "req-1",
@@ -230,18 +237,21 @@ describe("OpenAI configuration", () => {
             },
           ],
         }),
-      })
-      .mockResolvedValueOnce({
-        output_text: JSON.stringify({ verdicts: [verdict("req-1")] }),
-      });
+      )
+      .mockReturnValueOnce(streamed({ verdicts: [verdict("req-1")] }));
 
-    await extractRequirements("공고 본문");
-    await matchVerdicts([requirements[0]], evidence);
+    await expect(extractRequirements("공고 본문")).resolves.toMatchObject({
+      requirements: [requirements[0]],
+    });
+    await expect(matchVerdicts([requirements[0]], evidence)).resolves.toMatchObject({
+      verdicts: [expect.objectContaining({ requirementId: "req-1" })],
+    });
 
-    expect(responsesCreate).toHaveBeenCalledTimes(2);
-    for (const [request] of responsesCreate.mock.calls) {
+    expect(responsesStream).toHaveBeenCalledTimes(2);
+    for (const [request] of responsesStream.mock.calls) {
       expect(request).toMatchObject({
         model: OPENAI_MODEL,
+        reasoning: { effort: OPENAI_REASONING_EFFORT },
         store: false,
         text: {
           format: {
@@ -251,5 +261,37 @@ describe("OpenAI configuration", () => {
         },
       });
     }
+  });
+});
+
+describe("describeLlmError", () => {
+  it("names a timeout without leaking details", () => {
+    expect(describeLlmError(new APIConnectionTimeoutError())).toContain("시간 초과");
+  });
+
+  it("reports a connection failure", () => {
+    expect(describeLlmError(new APIConnectionError({ message: "fetch failed" }))).toContain("연결");
+  });
+
+  it("reports HTTP status and error code but never the API message that can echo the key", () => {
+    const error = new APIError(
+      401,
+      { code: "invalid_api_key", message: "Incorrect API key provided: sk-proj-abcd****wxyz" },
+      undefined,
+      new Headers(),
+    );
+
+    const description = describeLlmError(error);
+
+    expect(description).toContain("401");
+    expect(description).toContain("invalid_api_key");
+    expect(description).not.toContain("sk-");
+  });
+
+  it("keeps a plain error message but redacts anything shaped like an API key", () => {
+    expect(describeLlmError(new Error("Missing required environment variable: OPENAI_API_KEY"))).toContain(
+      "OPENAI_API_KEY",
+    );
+    expect(describeLlmError(new Error("bad key sk-live-secret123"))).not.toContain("secret123");
   });
 });
