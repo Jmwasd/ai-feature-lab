@@ -94,6 +94,23 @@ describe("fetchPosting", () => {
     });
   });
 
+  it("extracts the article when a long head precedes it and Content-Length is absent", async () => {
+    const html = articleHtml(longPostingText).replace(
+      "</head>",
+      `<script>${"x".repeat(25_000)}</script></head>`,
+    );
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(html, { status: 200, headers: { "content-type": "text/html" } }),
+    );
+
+    const result = await fetchPosting("https://jobs.example.com/chunked", { fetchImpl });
+
+    expect(result).toMatchObject({
+      ok: true,
+      posting: { rawText: expect.stringContaining("백엔드 서비스를 설계하고 운영하며") },
+    });
+  });
+
   it("returns too-short with paste guidance for insufficient article text", async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(articleHtml("짧은 공고입니다."), {

@@ -5,7 +5,6 @@ import { JSDOM } from "jsdom";
 
 import {
   isExtractionSufficient,
-  MAX_POSTING_CHARS,
   normalizePostingText,
   truncatePostingText,
 } from "@/lib/posting-text";
@@ -138,8 +137,8 @@ export async function fetchPosting(
       return failure("fetch-failed");
     }
 
-    const receivedHtml = await response.text();
-    const html = contentLength ? receivedHtml : receivedHtml.slice(0, MAX_POSTING_CHARS);
+    // Content-Length가 없는 응답도 같은 상한까지만 파싱한다. 공고 본문 길이는 추출 뒤 truncatePostingText가 자른다
+    const html = (await response.text()).slice(0, MAX_RESPONSE_BYTES);
     const dom = new JSDOM(html, { url: currentUrl.href });
     const documentTitle = dom.window.document.title.trim();
     const article = new Readability(dom.window.document).parse();
