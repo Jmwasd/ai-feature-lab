@@ -7,7 +7,8 @@
       "name": "llm-schemas",
       "status": "completed",
       "started_at": "2026-09-15T00:32:54+0900",
-      "summary": "REQUIREMENTS_SCHEMA·VERDICTS_SCHEMA와 parseRequirements·parseVerdicts를 export하고 ParseOutcome<T> { items: T[]; errors: string[] } 형태로 항목별 검증 결과를 제공한다."
+      "summary": "REQUIREMENTS_SCHEMA·VERDICTS_SCHEMA와 parseRequirements·parseVerdicts를 export하고 ParseOutcome<T> { items: T[]; errors: string[] } 형태로 항목별 검증 결과를 제공한다.",
+      "completed_at": "2026-09-15T00:37:05+0900"
     },
     {
       "step": 1,
