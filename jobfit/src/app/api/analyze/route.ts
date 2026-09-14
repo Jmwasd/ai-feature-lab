@@ -1,10 +1,13 @@
 import { MAX_POSTING_CHARS } from "@/lib/posting-text";
+import { buildAnalysis } from "@/lib/verdicts";
 import { getResumeEvidence } from "@/services/notion";
+import { extractRequirements, matchVerdicts } from "@/services/openai";
 import {
   fetchPosting,
   postingFromPastedText,
   type PostingFetchFailure,
 } from "@/services/posting";
+import type { Requirement, ResumeEvidence, Verdict } from "@/types";
 import type { AnalyzeRequest, AnalyzeResponse } from "@/types/api";
 
 export const runtime = "nodejs";
@@ -44,6 +47,12 @@ function notionErrorMessage(error: unknown): string {
     "Notion 이력서를 읽지 못했습니다. NOTION_TOKEN과 NOTION_RESUME_PAGE_ID 환경 변수, " +
     `이력서 페이지의 Notion integration 권한을 확인하세요. 원인: ${cause}`
   );
+}
+
+function logParsingErrors(stage: string, errors: string[]): void {
+  if (errors.length > 0) {
+    console.error(`[analyze] ${stage} 응답 파싱 오류`, errors);
+  }
 }
 
 export async function POST(request: Request): Promise<Response> {
@@ -104,8 +113,10 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(postingResult.message);
   }
 
+  let evidence: ResumeEvidence[];
+
   try {
-    const evidence = await getResumeEvidence();
+    evidence = await getResumeEvidence();
 
     if (evidence.length === 0) {
       const message =
@@ -120,6 +131,45 @@ export async function POST(request: Request): Promise<Response> {
     return errorResponse(message, 500);
   }
 
+  let requirements: Requirement[];
+
+  try {
+    const extraction = await extractRequirements(postingResult.posting.rawText);
+    requirements = extraction.requirements;
+    logParsingErrors("요구사항 추출", extraction.errors);
+  } catch {
+    const message =
+      "OpenAI 요구사항 추출에 실패했습니다. 네트워크 연결, API 키, 사용량 제한을 확인하세요.";
+    console.error("[analyze] OpenAI 요구사항 추출 호출 실패");
+    return errorResponse(message, 500);
+  }
+
+  if (requirements.length === 0) {
+    const message =
+      "공고에서 요구사항을 찾지 못했습니다. 자격요건과 우대사항이 포함된 공고 본문인지 확인해 주세요.";
+    console.error(`[analyze] ${message}`);
+    return errorResponse(message, 500);
+  }
+
+  let verdicts: Verdict[];
+
+  try {
+    const matching = await matchVerdicts(requirements, evidence);
+    verdicts = matching.verdicts;
+    logParsingErrors("매칭 판정", matching.errors);
+  } catch {
+    const message =
+      "OpenAI 매칭 판정에 실패했습니다. 네트워크 연결, API 키, 사용량 제한을 확인하세요.";
+    console.error("[analyze] OpenAI 매칭 판정 호출 실패");
+    return errorResponse(message, 500);
+  }
+
+  const result = buildAnalysis(requirements, verdicts, evidence);
+
+  if (result.unjudged.length > 0) {
+    console.warn(`[analyze] 판정 없음 ${result.unjudged.length}개`);
+  }
+
   return jsonResponse({
     status: "ok",
     posting: {
@@ -128,5 +178,7 @@ export async function POST(request: Request): Promise<Response> {
         ? { sourceUrl: postingResult.posting.sourceUrl }
         : {}),
     },
+    requirementCount: requirements.length,
+    result,
   });
 }
