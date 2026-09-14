@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "verdict-aggregation",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-15T00:37:05+0900",
+      "summary": "AnalysisItem { requirement, bucket, evidence, confidence, suggestion, suggestionEvidence } · AnalysisResult { covered, implicit, missing, unjudged }와 buildAnalysis(requirements: Requirement[], verdicts: Verdict[], evidence: ResumeEvidence[]): AnalysisResult를 제공한다.",
+      "completed_at": "2026-09-15T00:39:45+0900"
     },
     {
       "step": 2,
