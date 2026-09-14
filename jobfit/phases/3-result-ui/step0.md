@@ -52,7 +52,7 @@ export function formatConfidence(confidence: number): string;
 
 ### 2. 컴포넌트
 
-`src/components/` 아래에 둔다. **`ImplicitCard`만 복사 버튼 때문에 Client Component다.** 나머지는 Server Component로 남긴다 (`'use client'`를 붙이지 마라).
+`src/components/` 아래에 둔다. **`'use client'`는 복사 버튼이 있는 `ImplicitCard`에만 붙인다.** 나머지 파일에는 붙이지 마라. 이 컴포넌트들은 Client Component인 `src/app/page.tsx` 아래에서 렌더되므로 어차피 클라이언트에서 돈다. **Server Component로 만들려고 `page.tsx`의 구조를 바꾸지 마라** — 결과는 클라이언트 상태(`/api/analyze` 응답)에서 오고, 페이지 조립은 다음 step 소관이다.
 
 파일로 나누는 것은 아래 다섯뿐이다.
 
@@ -126,6 +126,8 @@ export function formatConfidence(confidence: number): string;
 **근거가 제안보다 위에 온다.** 원칙 3: 제안은 LLM이 쓴 문장이고 근거는 내가 쓴 문장이다. 순서를 바꾸지 마라.
 
 `suggestion`이 `null`이면 이 구획 전체를 렌더하지 않는다. 카드는 여전히 `implicit`이다(근거는 있는데 문장만 안 온 경우다).
+
+**`suggestionEvidence`를 따로 그리지 마라.** `buildAnalysis`가 그것을 항상 `evidence`의 부분집합으로 만들고, 비면 `suggestion`을 `null`로 버린다. 그래서 위의 근거 인용이 곧 제안의 원문이다. 같은 인용을 두 번 그리면 근거가 제안보다 먼저 읽힌다는 원칙 3이 흐려진다.
 
 복사는 `navigator.clipboard.writeText`. 실패하면 조용히 넘기지 말고 버튼 라벨을 `복사 실패`로 바꾼다.
 
