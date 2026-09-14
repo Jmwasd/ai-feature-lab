@@ -71,7 +71,7 @@ export function buildMatchVerdictsPrompt(
 - `bucket`이 `implicit`이면 `suggestion`과 `suggestionEvidenceBlockIds`를 같은 객체에 채운다
   - **제안은 새 사실을 더하는 글쓰기가 아니다.** 선택한 근거 안에 있는 사실만으로, 공고의 용어를 써서 표현만 바꾼 이력서 문장 한 줄을 쓴다
   - 근거에 없는 기술명·수치·성과를 넣지 마라
-  - `suggestionEvidenceBlockIds`에는 그 문장을 쓸 때 실제로 사용한 근거 ID를 넣는다
+  - `suggestionEvidenceBlockIds`에는 그 문장을 쓸 때 실제로 사용한 근거 ID를 넣되, **같은 판정의 `evidenceBlockIds` 중에서만 고른다.** 코드(`buildAnalysis`)가 그 밖의 ID를 버리고, 하나도 안 남으면 제안 자체를 버린다. 프롬프트가 이것을 알리지 않으면 멀쩡한 제안이 화면에서 조용히 사라진다
 - `bucket`이 `covered`나 `missing`이면 `suggestion`은 `null`
 - `confidence`: 0~1. 자신의 판정에 대한 자기평가다. 확신이 없으면 낮게 준다
 - **요구사항 하나당 판정 하나.** 빠뜨리지 말고 전부 답한다

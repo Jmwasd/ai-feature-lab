@@ -34,8 +34,8 @@ export interface AnalysisItem {
   bucket: VerdictBucket | 'unjudged';
   evidence: ResumeEvidence[];            // 실재가 검증된 근거만. 원문 그대로
   confidence: number | null;             // 판정이 없으면 null
-  suggestion: string | null;             // implicit이고 제안이 있을 때만
-  suggestionEvidence: ResumeEvidence[];  // 제안이 근거로 삼은 블록. 실재 검증됨
+  suggestion: string | null;             // implicit이고 제안과 그 근거가 둘 다 있을 때만
+  suggestionEvidence: ResumeEvidence[];  // 제안이 근거로 삼은 블록. 항상 evidence의 부분집합
 }
 
 export interface AnalysisResult {
@@ -69,7 +69,8 @@ export function unjudgedRequirementIds(
 - `evidenceBlockIds`의 각 ID를 `evidence` 목록에서 찾는다. **없으면 버린다.** 경고를 남기고 통과시키지 마라
 - 같은 blockId가 여러 번 오면 하나만 남긴다
 - 살아남은 근거는 `ResumeEvidence` 객체를 **그대로** 담는다. 텍스트를 자르거나 다듬지 마라 — 화면에 나가는 것이 Notion 원문이어야 사용자가 대조할 수 있다
-- `suggestionEvidenceBlockIds`도 같은 규칙으로 검증한다 (ADR-008: 코드는 ID 실재만 본다)
+- `suggestionEvidenceBlockIds`는 **위에서 살아남은 이 항목의 `evidence` 안에 있는 ID만** 남긴다. 목록에 없는 ID도, 실재하지만 `evidence`에 없는 ID도 버린다 (ADR-008: 코드는 ID만 보고 문장의 사실성은 판정하지 않는다)
+  - 이유: 화면은 `evidence`만 원문으로 보여준다. 제안이 `evidence` 밖의 블록으로 쓰였으면 사용자는 복사 전에 제안과 원문을 대조할 수 없다. ADR-007이 막으려던 "화면의 근거와 제안의 출처가 어긋나는" 상태다
 
 **bucket 배정**
 
@@ -78,7 +79,10 @@ export function unjudgedRequirementIds(
 - `covered` 또는 `implicit`인데 **유효한 근거가 0개면 `unjudged`로 내린다.** 이유: 근거 ID가 전부 가짜였다는 뜻이므로 그 판정을 믿을 수 없다. 그렇다고 `missing`으로 옮기면 "근거가 없다"고 코드가 단정하는 것인데, 그것은 모델이 한 말이 아니다
 - `missing`인데 근거가 딸려 왔으면 **근거를 비운다.** bucket은 `missing` 그대로 둔다
 - `implicit`인데 `suggestion`이 없거나 빈 문자열이면 `suggestion`은 `null`. bucket은 `implicit` 그대로 둔다 (근거는 있는데 문장만 안 온 것이다)
-- `unjudged`는 `confidence: null`, `evidence: []`, `suggestion: null`
+- `implicit`인데 위 검증 뒤 `suggestionEvidence`가 0개면 **`suggestion`도 `null`로 버린다.** bucket은 `implicit` 그대로 둔다
+  - 이유: 검증된 원문 없이 제안 문장만 남기면 사용자가 대조할 대상 없이 복사 버튼을 누른다. 판정 근거는 살아 있으니 칸을 옮길 이유는 없다
+- `suggestion`이 `null`이면 `suggestionEvidence`는 `[]`
+- `unjudged`는 `confidence: null`, `evidence: []`, `suggestion: null`, `suggestionEvidence: []`
 
 **순서**
 
@@ -95,6 +99,8 @@ export function unjudgedRequirementIds(
 7. `implicit`인데 `suggestion`이 빈 문자열이면 `null`이 되고 bucket은 그대로 `implicit`
 8. `requirements`에 없는 `requirementId`의 verdict는 무시된다. 각 칸의 순서는 `requirements` 입력 순서를 따른다
 9. verdicts가 비면 모든 requirement가 `unjudged`이고, `unjudgedRequirementIds`가 그 id들을 돌려준다
+10. `implicit`의 `suggestionEvidenceBlockIds`가 **실재하지만 `evidenceBlockIds`에 없는** 블록을 가리키면 그 ID가 버려진다. 그래서 `suggestionEvidence`가 0개가 되면 `suggestion`이 `null`이 되고 bucket은 `implicit` 그대로다
+11. `suggestionEvidenceBlockIds` 일부만 `evidence` 안에 있으면 그것만 남고 `suggestion`은 유지된다
 
 ## Acceptance Criteria
 
@@ -116,7 +122,8 @@ grep -rn "openai\|prompt" src/lib/verdicts.ts       # 결과 없음
 - **판정 없음(`unjudged`)을 `missing`에 합치지 마라.** 이유: `CLAUDE.md` CRITICAL — 대답을 안 한 것과 근거가 없는 것은 다르다. 합치면 사용자에게 "당신에게 이 경험이 없다"고 거짓을 보여주게 된다
 - **실재하지 않는 blockId를 경고만 남기고 통과시키지 마라.** 이유: ADR-003 — 지어낸 근거가 화면에 나가면 사용자가 그것을 이력서에 적는다. 이 도구의 가장 치명적인 실패다
 - **근거 텍스트를 새로 쓰거나 요약·정리하지 마라.** 이유: 화면의 근거는 Notion 원문이어야 사용자가 제안과 대조할 수 있다
-- **제안 문장의 사실성을 판정하는 로직을 만들지 마라.** 이유: ADR-008 — 코드는 ID 실재만 검증한다. 한국어 표현을 해석해 사실성을 자동 판별하는 검증기는 오탐이 심하고, 근거를 나란히 보여 주고 사람이 판단하는 편이 낫다
+- **`suggestionEvidence`가 비었는데 `suggestion`을 남기지 마라.** 이유: 원문 없는 제안이 복사 버튼과 함께 화면에 나간다. 사용자가 대조 없이 이력서에 붙여넣는 경로다
+- **제안 문장의 사실성을 판정하는 로직을 만들지 마라.** 이유: ADR-008 — 코드는 제안 근거 ID가 판정 근거 안에 있는지만 본다. 한국어 표현을 해석해 사실성을 자동 판별하는 검증기는 오탐이 심하고, 근거를 나란히 보여 주고 사람이 판단하는 편이 낫다
 - **점수·순위·퍼센트 적합도를 계산하지 마라.** 이유: `docs/PRD.md`의 산출물은 3분할과 문장 제안이다. 적합도 점수는 "되냐 안 되냐"에 답하는 물건이고, 이 도구는 그 질문에 답하지 않는다
 - **칸 안을 정렬하지 마라** (must 우선 등). 이유: 정렬은 화면의 결정이다. 여기서 하면 UI가 되돌릴 수 없다
 - **`openai`나 프롬프트를 import 하지 마라.** 이유: `src/lib/`은 잎이다
