@@ -2,9 +2,39 @@
   "project": "jobfit",
   "phase": "1-job-posting",
   "steps": [
-    { "step": 0, "name": "posting-guards", "status": "pending" },
-    { "step": 1, "name": "posting-service", "status": "pending" },
-    { "step": 2, "name": "analyze-route-skeleton", "status": "pending" },
-    { "step": 3, "name": "input-ui", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "posting-guards",
+      "status": "completed",
+      "started_at": "2026-09-14T23:57:16+0900",
+      "summary": "checkPostingUrl, normalizePostingText, isExtractionSufficient, truncatePostingText와 MIN_POSTING_LENGTH = 400, MAX_POSTING_CHARS = 20000 가드레일을 추가했다.",
+      "completed_at": "2026-09-15T00:00:43+0900"
+    },
+    {
+      "step": 1,
+      "name": "posting-service",
+      "status": "completed",
+      "started_at": "2026-09-15T00:00:43+0900",
+      "summary": "fetchPosting(rawUrl, deps?)와 postingFromPastedText(text)를 추가하고 PostingFetchFailure을 blocked-url | fetch-failed | not-html | too-short 네 값으로 정의했다.",
+      "completed_at": "2026-09-15T00:04:46+0900"
+    },
+    {
+      "step": 2,
+      "name": "analyze-route-skeleton",
+      "status": "completed",
+      "started_at": "2026-09-15T00:04:46+0900",
+      "summary": "src/types/api.ts에 AnalyzeRequest({ url?; text? })와 AnalyzeResponse(ok posting | needs-paste | error)를 정의하고 src/app/api/analyze/route.ts에 공고 확보·Notion 이력서 읽기 POST 흐름을 연결했다.",
+      "completed_at": "2026-09-15T00:08:22+0900"
+    },
+    {
+      "step": 3,
+      "name": "input-ui",
+      "status": "completed",
+      "started_at": "2026-09-15T00:08:22+0900",
+      "summary": "src/components/PostingInput.tsx와 src/components/PrivacyNotice.tsx를 만들고 src/app/page.tsx에서 idle · loading · result · needsPaste · error 상태를 관리하며, 같은 파일의 임시 <pre> 블록에 ok 응답 JSON을 표시했다.",
+      "completed_at": "2026-09-15T00:13:54+0900"
+    }
+  ],
+  "created_at": "2026-09-14T23:57:16+0900",
+  "completed_at": "2026-09-15T00:13:54+0900"
 }

@@ -7,7 +7,8 @@
     },
     {
       "dir": "1-job-posting",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-15T00:13:54+0900"
     },
     {
       "dir": "2-llm-matching",

@@ -11,7 +11,9 @@
     "resume:dump": "tsx --conditions=react-server --env-file=.env.local scripts/dump-resume.ts"
   },
   "dependencies": {
+    "@mozilla/readability": "0.6.0",
     "@notionhq/client": "5.26.0",
+    "jsdom": "29.1.1",
     "next": "15.5.25",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "3.3.7",
     "@tailwindcss/postcss": "^4",
+    "@types/jsdom": "30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
