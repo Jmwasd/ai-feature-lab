@@ -2,10 +2,33 @@
   "project": "jobfit",
   "phase": "2-llm-matching",
   "steps": [
-    { "step": 0, "name": "llm-schemas", "status": "pending" },
-    { "step": 1, "name": "verdict-aggregation", "status": "pending" },
-    { "step": 2, "name": "prompts", "status": "pending" },
-    { "step": 3, "name": "openai-service", "status": "pending" },
-    { "step": 4, "name": "analyze-route-full", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "llm-schemas",
+      "status": "completed",
+      "started_at": "2026-09-15T00:32:54+0900",
+      "summary": "REQUIREMENTS_SCHEMA·VERDICTS_SCHEMA와 parseRequirements·parseVerdicts를 export하고 ParseOutcome<T> { items: T[]; errors: string[] } 형태로 항목별 검증 결과를 제공한다."
+    },
+    {
+      "step": 1,
+      "name": "verdict-aggregation",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "prompts",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "openai-service",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "analyze-route-full",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-15T00:32:54+0900"
 }
