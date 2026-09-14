@@ -7,7 +7,8 @@
       "name": "posting-guards",
       "status": "completed",
       "started_at": "2026-09-14T23:57:16+0900",
-      "summary": "checkPostingUrl, normalizePostingText, isExtractionSufficient, truncatePostingText와 MIN_POSTING_LENGTH = 400, MAX_POSTING_CHARS = 20000 가드레일을 추가했다."
+      "summary": "checkPostingUrl, normalizePostingText, isExtractionSufficient, truncatePostingText와 MIN_POSTING_LENGTH = 400, MAX_POSTING_CHARS = 20000 가드레일을 추가했다.",
+      "completed_at": "2026-09-15T00:00:43+0900"
     },
     {
       "step": 1,
