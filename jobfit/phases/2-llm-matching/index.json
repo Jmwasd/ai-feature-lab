@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "prompts",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-15T00:40:29+0900",
+      "summary": "buildExtractRequirementsPrompt(postingText: string): string · buildMatchVerdictsPrompt(requirements: Requirement[], evidence: ResumeEvidence[], onlyRequirementIds?: string[]): string · MAX_EVIDENCE_ITEMS · MAX_EVIDENCE_CHARS를 제공한다.",
+      "completed_at": "2026-09-15T00:44:30+0900"
     },
     {
       "step": 3,
