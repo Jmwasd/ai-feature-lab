@@ -15,6 +15,7 @@
     "@notionhq/client": "5.26.0",
     "jsdom": "29.1.1",
     "next": "15.5.25",
+    "openai": "6.49.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "0.0.1"
