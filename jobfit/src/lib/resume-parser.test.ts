@@ -99,6 +99,25 @@ describe("parseResume", () => {
     expect(evidence[1]).toMatchObject({ company: "두 번째 회사", project: "" });
   });
 
+  it("resets both company and project when it reaches a new H1 section", () => {
+    const evidence = parseResume([
+      node("work", "heading_1", "Work"),
+      node("company", "heading_2", "마지막 회사 ( 2021 - 2023 )"),
+      node("project", "heading_3", "회사 프로젝트"),
+      node("work-evidence", "paragraph", "회사 프로젝트에 속한 충분히 긴 근거입니다."),
+      node("education", "heading_1", "Education"),
+      node("section-evidence", "paragraph", "새 섹션 첫머리에 있어 소속이 없는 충분히 긴 근거입니다."),
+      node("course", "heading_3", "교육 과정 ( 2020 - 2021 )"),
+      node("course-evidence", "paragraph", "교육 과정에 속하고 회사는 없는 충분히 긴 근거입니다."),
+    ]);
+
+    expect(evidence).toEqual([
+      expect.objectContaining({ blockId: "work-evidence", company: "마지막 회사", project: "회사 프로젝트" }),
+      expect.objectContaining({ blockId: "section-evidence", company: "", project: "" }),
+      expect.objectContaining({ blockId: "course-evidence", company: "", project: "교육 과정 ( 2020 - 2021 )" }),
+    ]);
+  });
+
   it("treats nested non-code candidates as their own evidence with inherited ownership", () => {
     const evidence = parseResume([
       node("company", "heading_2", "소프트보울 ( 2024 - 재직중 )"),

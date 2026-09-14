@@ -35,6 +35,11 @@ function richTextFrom(block: Record<string, unknown>, type: string): string {
         return "";
       }
 
+      // 수식 조각의 plain_text는 LaTeX 원문이다. 이력서에서는 장식선으로만 쓰인다
+      if ((fragment as Record<string, unknown>).type === "equation") {
+        return "";
+      }
+
       const plainText = (fragment as Record<string, unknown>).plain_text;
       return typeof plainText === "string" ? plainText : "";
     })
