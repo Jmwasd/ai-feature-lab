@@ -20,6 +20,8 @@ const BROWSER_USER_AGENT =
 
 const PASTE_FALLBACK_MESSAGE =
   "이 사이트는 본문을 읽지 못했습니다. 공고 내용을 복사해 붙여넣어 주세요";
+const PASTED_TOO_SHORT_MESSAGE =
+  "붙여넣은 공고가 너무 짧습니다. 자격요건·우대사항이 포함된 본문 전체를 붙여넣어 주세요";
 
 export type PostingFetchFailure = "blocked-url" | "fetch-failed" | "not-html" | "too-short";
 
@@ -33,7 +35,11 @@ export interface FetchPostingDeps {
 
 function failure(reason: PostingFetchFailure): PostingFetchResult {
   if (reason === "blocked-url") {
-    return { ok: false, reason, message: "안전하지 않은 공고 URL은 열 수 없습니다" };
+    return {
+      ok: false,
+      reason,
+      message: "열 수 없는 공고 URL입니다. http:// 또는 https://로 시작하는 공개 주소인지 확인해 주세요",
+    };
   }
 
   if (reason === "not-html") {
@@ -167,7 +173,7 @@ export async function fetchPosting(
 export function postingFromPastedText(text: string): PostingFetchResult {
   const rawText = normalizePostingText(text);
   if (!isExtractionSufficient(rawText)) {
-    return failure("too-short");
+    return { ok: false, reason: "too-short", message: PASTED_TOO_SHORT_MESSAGE };
   }
 
   return {

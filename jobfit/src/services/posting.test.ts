@@ -55,6 +55,18 @@ describe("fetchPosting", () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it("guides a URL without a scheme toward a public http(s) address", async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+
+    const result = await fetchPosting("jobs.example.com/backend", { fetchImpl });
+
+    expect(result).toMatchObject({ ok: false, reason: "blocked-url" });
+    if (!result.ok) {
+      expect(result.message).toContain("http");
+    }
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it("blocks a redirect to a private URL before the second fetch", async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValueOnce(
       new Response(null, {
@@ -134,6 +146,10 @@ describe("postingFromPastedText", () => {
     const successResult = postingFromPastedText(longPostingText);
 
     expect(shortResult).toMatchObject({ ok: false, reason: "too-short" });
+    if (!shortResult.ok) {
+      // 이미 붙여넣은 사람에게 "이 사이트는 본문을 읽지 못했습니다"를 보여주지 않는다
+      expect(shortResult.message).not.toContain("사이트");
+    }
     expect(successResult).toMatchObject({
       ok: true,
       posting: { rawText: longPostingText },
