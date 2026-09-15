@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PostingInput } from "@/components/PostingInput";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
+import { ResultSection } from "@/components/ResultSection";
 import type { AnalyzeRequest, AnalyzeResponse } from "@/types/api";
 
 type ViewState = "idle" | "loading" | "result" | "needsPaste" | "error";
@@ -17,6 +18,8 @@ export default function Home() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [message, setMessage] = useState<string>();
   const [result, setResult] = useState<SuccessfulAnalyzeResponse>();
+  // 고지 문구는 첫 결과가 나올 때까지 보인다. 로딩 중에는 버튼 라벨 말고 아무것도 바뀌지 않는다
+  const [hasShownResult, setHasShownResult] = useState(false);
 
   async function analyze() {
     if (viewState === "loading") {
@@ -34,6 +37,7 @@ export default function Home() {
       ? { text: pastedText }
       : { url: trimmedUrl };
 
+    setResult(undefined);
     setViewState("loading");
 
     try {
@@ -46,6 +50,7 @@ export default function Home() {
 
       if (data.status === "ok") {
         setResult(data);
+        setHasShownResult(true);
         setMessage(undefined);
         setViewState("result");
         return;
@@ -83,14 +88,11 @@ export default function Home() {
           onPasteToggle={() => setPasteOpen((isOpen) => !isOpen)}
           onSubmit={analyze}
         />
-        {result ? null : <PrivacyNotice />}
+        {hasShownResult ? null : <PrivacyNotice />}
       </section>
 
       {viewState === "result" && result ? (
-        <>
-          {/* 임시: 3-result-ui phase의 result-page step에서 3분할 결과 섹션으로 교체한다 */}
-          <pre>{JSON.stringify(result, null, 2)}</pre>
-        </>
+        <ResultSection response={result} />
       ) : null}
     </main>
   );
