@@ -18,6 +18,8 @@ export default function Home() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [message, setMessage] = useState<string>();
   const [result, setResult] = useState<SuccessfulAnalyzeResponse>();
+  // 고지 문구는 첫 결과가 나올 때까지 보인다. 로딩 중에는 버튼 라벨 말고 아무것도 바뀌지 않는다
+  const [hasShownResult, setHasShownResult] = useState(false);
 
   async function analyze() {
     if (viewState === "loading") {
@@ -48,6 +50,7 @@ export default function Home() {
 
       if (data.status === "ok") {
         setResult(data);
+        setHasShownResult(true);
         setMessage(undefined);
         setViewState("result");
         return;
@@ -85,7 +88,7 @@ export default function Home() {
           onPasteToggle={() => setPasteOpen((isOpen) => !isOpen)}
           onSubmit={analyze}
         />
-        {viewState === "idle" ? <PrivacyNotice /> : null}
+        {hasShownResult ? null : <PrivacyNotice />}
       </section>
 
       {viewState === "result" && result ? (
