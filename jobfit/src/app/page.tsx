@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { PostingInput } from "@/components/PostingInput";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
+import { ResultSection } from "@/components/ResultSection";
 import type { AnalyzeRequest, AnalyzeResponse } from "@/types/api";
 
 type ViewState = "idle" | "loading" | "result" | "needsPaste" | "error";
@@ -34,6 +35,7 @@ export default function Home() {
       ? { text: pastedText }
       : { url: trimmedUrl };
 
+    setResult(undefined);
     setViewState("loading");
 
     try {
@@ -83,14 +85,11 @@ export default function Home() {
           onPasteToggle={() => setPasteOpen((isOpen) => !isOpen)}
           onSubmit={analyze}
         />
-        {result ? null : <PrivacyNotice />}
+        {viewState === "idle" ? <PrivacyNotice /> : null}
       </section>
 
       {viewState === "result" && result ? (
-        <>
-          {/* 임시: 3-result-ui phase의 result-page step에서 3분할 결과 섹션으로 교체한다 */}
-          <pre>{JSON.stringify(result, null, 2)}</pre>
-        </>
+        <ResultSection response={result} />
       ) : null}
     </main>
   );
