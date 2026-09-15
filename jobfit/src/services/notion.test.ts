@@ -52,6 +52,20 @@ const page = (results: unknown[], hasMore = false, nextCursor: string | null = n
 });
 
 describe("fetchBlockTree", () => {
+  it("never fetches column subtrees that the resume parser discards", async () => {
+    const lister = fakeLister({
+      "root:first": [page([
+        block("contact", "column_list", { hasChildren: true }),
+        block("photo", "column", { hasChildren: true }),
+        block("experience", "bulleted_list_item", { hasChildren: true }),
+      ])],
+      "experience:first": [page([block("details", "code", { richText: ["Docker CI"] })])],
+    });
+    const tree = await fetchBlockTree(lister, "root");
+    expect(lister.calls.map(({ blockId }) => blockId)).toEqual(["root", "experience"]);
+    expect(tree[2].children[0].text).toBe("Docker CI");
+  });
+
   it("recursively follows blocks with children", async () => {
     const lister = fakeLister({
       "root:first": [page([block("parent", "bulleted_list_item", { hasChildren: true })])],
@@ -174,6 +188,7 @@ describe("getResumeEvidence", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     if (originalToken === undefined) {
       delete process.env.NOTION_TOKEN;
     } else {
@@ -195,6 +210,23 @@ describe("getResumeEvidence", () => {
     process.env.NOTION_TOKEN = "test-token";
 
     await expect(getResumeEvidence()).rejects.toThrow("NOTION_RESUME_PAGE_ID");
+  });
+
+  it("aborts the actual fetch when the overall Notion read times out", async () => {
+    vi.useFakeTimers();
+    process.env.NOTION_TOKEN = "test-token";
+    process.env.NOTION_RESUME_PAGE_ID = "test-page";
+    let signal: AbortSignal | null | undefined;
+    const fetchImpl = vi.fn<typeof fetch>((_url, init) => {
+      signal = init?.signal;
+      return new Promise((_resolve, reject) => signal?.addEventListener("abort", () => reject(signal?.reason), { once: true }));
+    });
+    const pending = expect(getResumeEvidence({ fetchImpl })).rejects.toMatchObject({ name: "TimeoutError" });
+    await vi.advanceTimersByTimeAsync(30_000);
+    await pending;
+    expect(signal?.aborted).toBe(true);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
 });

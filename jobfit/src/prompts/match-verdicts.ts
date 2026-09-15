@@ -134,16 +134,18 @@ export function buildMatchVerdictsPrompt(
     ? "근거 목록은 입력 상한 때문에 앞부분만 제공되어 뒤쪽 일부가 잘렸다. 목록에 포함되지 않은 근거가 있을 수 있으므로 이를 감안해 판정하고 confidence를 낮춰라."
     : "근거 목록은 잘리지 않았다.";
 
+  // 공통 근거를 앞에 두어 묶음/누락 재시도가 같은 입력 prefix를 재사용할 수 있게 한다.
   return `${MATCH_VERDICTS_PROMPT}
 
-${retryInstruction}
 ${truncationNotice}
-
-<requirements>
-${safeRequirements}
-</requirements>
 
 <resume_evidence>
 ${safeEvidence}
-</resume_evidence>`;
+</resume_evidence>
+
+${retryInstruction}
+
+<requirements>
+${safeRequirements}
+</requirements>`;
 }

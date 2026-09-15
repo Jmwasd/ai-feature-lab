@@ -16,7 +16,7 @@ const EVIDENCE_TYPES = new Set([
   "toggle",
 ]);
 
-const SKIPPED_SUBTREE_TYPES = new Set(["column_list", "column"]);
+export const SKIPPED_SUBTREE_TYPES = new Set(["column_list", "column"]);
 
 interface Ownership {
   company: string;

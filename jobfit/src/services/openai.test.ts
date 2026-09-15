@@ -66,6 +66,16 @@ function fakeCaller(...responses: unknown[]): {
   return { caller: { call }, call };
 }
 
+function promptRequirements(prompt: string): Requirement[] {
+  return JSON.parse(prompt.split("<requirements>\n")[1].split("\n</requirements>")[0]);
+}
+
+const manyRequirements: Requirement[] = Array.from({ length: 12 }, (_, index) => ({
+  id: `req-${index + 1}`,
+  text: `요구사항 ${index + 1}`,
+  kind: "must",
+}));
+
 describe("extractRequirements", () => {
   it("returns parsed requirements from a structured response", async () => {
     const { caller, call } = fakeCaller({
@@ -90,6 +100,7 @@ describe("extractRequirements", () => {
       prompt: expect.stringContaining("TypeScript 개발자를 찾습니다."),
       schemaName: "job_requirements",
       schema: REQUIREMENTS_SCHEMA,
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -121,6 +132,132 @@ describe("extractRequirements", () => {
 });
 
 describe("matchVerdicts", () => {
+  it("processes more than three batches without exceeding three concurrent calls", async () => {
+    const input = Array.from({ length: 20 }, (_, index) => ({ id: `req-${index + 1}`, text: "요건", kind: "must" as const }));
+    let active = 0;
+    let peak = 0;
+    const complete: Array<() => void> = [];
+    const call = vi.fn<StructuredCaller["call"]>(({ prompt }) => {
+      active++;
+      peak = Math.max(peak, active);
+      return new Promise((resolve) => complete.push(() => {
+        active--;
+        resolve({ verdicts: promptRequirements(prompt).map(({ id }) => verdict(id)) });
+      }));
+    });
+    const pending = matchVerdicts(input, evidence, { caller: { call } });
+    expect(call).toHaveBeenCalledTimes(3);
+    complete[1]();
+    await vi.waitFor(() => expect(call).toHaveBeenCalledTimes(4));
+    complete[3]();
+    await vi.waitFor(() => expect(call).toHaveBeenCalledTimes(5));
+    complete[0](); complete[2](); complete[4]();
+    expect((await pending).verdicts.map(({ requirementId }) => requirementId)).toEqual(input.map(({ id }) => id));
+    expect(peak).toBe(3);
+    expect(call.mock.calls.every(([args]) => promptRequirements(args.prompt).length <= 4)).toBe(true);
+  });
+
+  it("preserves a first pass on cancellation and never starts queued batches", async () => {
+    const input = Array.from({ length: 20 }, (_, index) => ({ id: `req-${index + 1}`, text: "요건", kind: "must" as const }));
+    const controller = new AbortController();
+    const call = vi.fn<StructuredCaller["call"]>(({ callId }) => {
+      if (callId === "match_1") return Promise.resolve({ verdicts: [verdict("req-1")] });
+      return new Promise(() => {});
+    });
+    const pending = matchVerdicts(input, evidence, { caller: { call }, signal: controller.signal });
+    await vi.waitFor(() => expect(call).toHaveBeenCalledTimes(4));
+    controller.abort(new DOMException("분석 시간 초과", "TimeoutError"));
+    const result = await pending;
+    expect(result.verdicts.map(({ requirementId }) => requirementId)).toEqual(["req-1"]);
+    expect(call).toHaveBeenCalledTimes(4);
+    expect(call.mock.calls.filter(([args]) => args.callId !== "match_1").every(([args]) => args.signal?.aborted)).toBe(true);
+  });
+
+  it("runs at most three batches concurrently and merges out-of-order completions", async () => {
+    const complete: Array<() => void> = [];
+    const call = vi.fn<StructuredCaller["call"]>(({ prompt }) => new Promise((resolve) => {
+      const targets = promptRequirements(prompt);
+      complete.push(() => resolve({ verdicts: targets.map(({ id }) => verdict(id)) }));
+    }));
+
+    const pending = matchVerdicts(manyRequirements, evidence, { caller: { call } });
+
+    expect(call).toHaveBeenCalledTimes(3);
+    expect(call.mock.calls.map(([args]) => promptRequirements(args.prompt).length)).toEqual([4, 4, 4]);
+    for (const [args] of call.mock.calls) {
+      expect(args.prompt).toContain(evidence[0].text);
+      expect(args.prompt).toContain(evidence[0].blockId);
+    }
+    complete[2]();
+    complete[0]();
+    complete[1]();
+
+    const result = await pending;
+    expect(result.verdicts.map(({ requirementId }) => requirementId)).toEqual(
+      manyRequirements.map(({ id }) => id),
+    );
+    expect(result.errors).toEqual([]);
+  });
+
+  it("retries only omissions in the affected batch and rejects foreign batch verdicts", async () => {
+    const call = vi.fn<StructuredCaller["call"]>(async ({ prompt }) => {
+      const targets = promptRequirements(prompt);
+      if (targets.length === 1) {
+        return { verdicts: [verdict("req-4")] };
+      }
+      if (targets[0].id === "req-1") {
+        return { verdicts: [verdict("req-1"), verdict("req-2"), verdict("req-3"), verdict("req-5", "missing")] };
+      }
+      return { verdicts: targets.map(({ id }) => verdict(id)) };
+    });
+
+    const result = await matchVerdicts(manyRequirements, evidence, { caller: { call } });
+
+    expect(call).toHaveBeenCalledTimes(4);
+    expect(promptRequirements(call.mock.calls[3][0].prompt).map(({ id }) => id)).toEqual(["req-4"]);
+    expect(result.verdicts).toHaveLength(12);
+    expect(result.verdicts.find(({ requirementId }) => requirementId === "req-5")?.bucket).toBe("covered");
+  });
+
+  it("preserves successful batches when another batch fails", async () => {
+    const call = vi.fn<StructuredCaller["call"]>(async ({ prompt }) => {
+      const targets = promptRequirements(prompt);
+      if (targets[0].id === "req-5") throw new APIConnectionTimeoutError();
+      return { verdicts: targets.map(({ id }) => verdict(id)) };
+    });
+
+    const result = await matchVerdicts(manyRequirements, evidence, { caller: { call } });
+
+    expect(result.verdicts.map(({ requirementId }) => requirementId)).toEqual([
+      "req-1", "req-2", "req-3", "req-4", "req-9", "req-10", "req-11", "req-12",
+    ]);
+    expect(result.errors.join(" ")).toContain("시간 초과");
+    expect(call).toHaveBeenCalledTimes(3);
+  });
+
+  it("preserves first-pass verdicts when their omission retry fails", async () => {
+    const { caller, call } = fakeCaller({ verdicts: [verdict("req-1")] });
+    call.mockRejectedValueOnce(new APIConnectionTimeoutError());
+
+    const result = await matchVerdicts(requirements, evidence, { caller });
+
+    expect(result.verdicts.map(({ requirementId }) => requirementId)).toEqual(["req-1"]);
+    expect(result.errors.join(" ")).toContain("시간 초과");
+  });
+
+  it("throws an API error when every batch fails", async () => {
+    const failure = new APIConnectionTimeoutError();
+    const call = vi.fn<StructuredCaller["call"]>().mockRejectedValue(failure);
+    await expect(matchVerdicts(manyRequirements, evidence, { caller: { call } })).rejects.toBe(failure);
+    expect(call).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not call the API for zero requirements", async () => {
+    const { caller, call } = fakeCaller();
+    await expect(matchVerdicts([], evidence, { caller })).resolves.toEqual({ verdicts: [], errors: [] });
+    expect(call).not.toHaveBeenCalled();
+  });
+
   it("does not retry when every requirement is judged", async () => {
     const { caller, call } = fakeCaller({
       verdicts: requirements.map(({ id }) => verdict(id)),
@@ -131,11 +268,11 @@ describe("matchVerdicts", () => {
     expect(result.verdicts).toHaveLength(3);
     expect(result.errors).toEqual([]);
     expect(call).toHaveBeenCalledOnce();
-    expect(call).toHaveBeenCalledWith({
+    expect(call).toHaveBeenCalledWith(expect.objectContaining({
       prompt: expect.any(String),
       schemaName: "job_verdicts",
       schema: VERDICTS_SCHEMA,
-    });
+    }));
   });
 
   it("retries once with only the missing requirement ids and merges the result", async () => {
@@ -204,9 +341,12 @@ describe("OpenAI configuration", () => {
   beforeEach(() => {
     delete process.env.OPENAI_API_KEY;
     responsesStream.mockReset();
+    vi.spyOn(console, "info").mockImplementation(() => {});
   });
 
   afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
     if (originalApiKey === undefined) {
       delete process.env.OPENAI_API_KEY;
     } else {
@@ -261,6 +401,55 @@ describe("OpenAI configuration", () => {
         },
       });
     }
+  });
+
+  it("aborts the SDK stream when it stalls after receiving headers", async () => {
+    vi.useFakeTimers();
+    process.env.OPENAI_API_KEY = "test-key";
+    let signal: AbortSignal | undefined;
+    responsesStream.mockImplementation((_request, options) => {
+      signal = options.signal;
+      return { finalResponse: () => new Promise(() => {}) };
+    });
+    const pending = expect(extractRequirements("공고 본문")).rejects.toMatchObject({ name: "TimeoutError" });
+    await vi.advanceTimersByTimeAsync(60_000);
+    await pending;
+    expect(signal?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("logs timing and token counts with the analysis id, without logging prompts or outputs", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    responsesStream.mockReturnValue({
+      finalResponse: async () => ({
+        output_text: JSON.stringify({ requirements: [requirements[0]] }),
+        usage: {
+          input_tokens: 1000,
+          input_tokens_details: { cached_tokens: 100 },
+          output_tokens: 200,
+          output_tokens_details: { reasoning_tokens: 150 },
+        },
+      }),
+    });
+
+    await extractRequirements("private posting text", { requestId: "analysis-test" });
+
+    expect(console.info).toHaveBeenCalledWith("[analyze:analysis-test] openai", expect.objectContaining({
+      call: "job_requirements", status: "ok", durationMs: expect.any(Number),
+      inputTokens: 1000, cachedInputTokens: 100, outputTokens: 200, reasoningTokens: 150,
+    }));
+    expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain("private posting text");
+    expect(JSON.stringify(vi.mocked(console.info).mock.calls)).not.toContain("TypeScript 경험");
+  });
+
+  it("records the failed call duration when the stream errors", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    responsesStream.mockReturnValue({ finalResponse: async () => { throw new APIConnectionTimeoutError(); } });
+
+    await expect(extractRequirements("private posting text", { requestId: "analysis-test" })).rejects.toThrow();
+    expect(console.info).toHaveBeenCalledWith("[analyze:analysis-test] openai", expect.objectContaining({
+      call: "job_requirements", status: "error", durationMs: expect.any(Number),
+    }));
   });
 });
 

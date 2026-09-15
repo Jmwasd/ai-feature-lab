@@ -31,6 +31,7 @@ export type PostingFetchResult =
 
 export interface FetchPostingDeps {
   fetchImpl?: typeof fetch;
+  signal?: AbortSignal;
 }
 
 function failure(reason: PostingFetchFailure): PostingFetchResult {
@@ -87,6 +88,9 @@ export async function fetchPosting(
 
   const fetchImpl = deps.fetchImpl ?? fetch;
   const controller = new AbortController();
+  const abort = () => controller.abort(deps.signal?.reason);
+  if (deps.signal?.aborted) abort();
+  else deps.signal?.addEventListener("abort", abort, { once: true });
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
   try {
@@ -95,6 +99,7 @@ export async function fetchPosting(
     let response: Response;
 
     while (true) {
+      controller.signal.throwIfAborted();
       response = await fetchImpl(currentUrl, {
         headers: { "User-Agent": BROWSER_USER_AGENT },
         redirect: "manual",
@@ -166,6 +171,7 @@ export async function fetchPosting(
     return failure("fetch-failed");
   } finally {
     clearTimeout(timeout);
+    deps.signal?.removeEventListener("abort", abort);
   }
 }
 
