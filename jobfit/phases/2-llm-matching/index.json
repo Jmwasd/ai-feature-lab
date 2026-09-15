@@ -2,10 +2,47 @@
   "project": "jobfit",
   "phase": "2-llm-matching",
   "steps": [
-    { "step": 0, "name": "llm-schemas", "status": "pending" },
-    { "step": 1, "name": "verdict-aggregation", "status": "pending" },
-    { "step": 2, "name": "prompts", "status": "pending" },
-    { "step": 3, "name": "openai-service", "status": "pending" },
-    { "step": 4, "name": "analyze-route-full", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "llm-schemas",
+      "status": "completed",
+      "started_at": "2026-09-15T00:32:54+0900",
+      "summary": "REQUIREMENTS_SCHEMA·VERDICTS_SCHEMA와 parseRequirements·parseVerdicts를 export하고 ParseOutcome<T> { items: T[]; errors: string[] } 형태로 항목별 검증 결과를 제공한다.",
+      "completed_at": "2026-09-15T00:37:05+0900"
+    },
+    {
+      "step": 1,
+      "name": "verdict-aggregation",
+      "status": "completed",
+      "started_at": "2026-09-15T00:37:05+0900",
+      "summary": "AnalysisItem { requirement, bucket, evidence, confidence, suggestion, suggestionEvidence } · AnalysisResult { covered, implicit, missing, unjudged }와 buildAnalysis(requirements: Requirement[], verdicts: Verdict[], evidence: ResumeEvidence[]): AnalysisResult를 제공한다.",
+      "completed_at": "2026-09-15T00:40:29+0900"
+    },
+    {
+      "step": 2,
+      "name": "prompts",
+      "status": "completed",
+      "started_at": "2026-09-15T00:40:29+0900",
+      "summary": "buildExtractRequirementsPrompt(postingText: string): string · buildMatchVerdictsPrompt(requirements: Requirement[], evidence: ResumeEvidence[], onlyRequirementIds?: string[]): string · MAX_EVIDENCE_ITEMS · MAX_EVIDENCE_CHARS를 제공한다.",
+      "completed_at": "2026-09-15T00:45:09+0900"
+    },
+    {
+      "step": 3,
+      "name": "openai-service",
+      "status": "completed",
+      "started_at": "2026-09-15T00:45:09+0900",
+      "summary": "extractRequirements(postingText: string, deps?: LlmDeps)와 matchVerdicts(requirements: Requirement[], evidence: ResumeEvidence[], deps?: LlmDeps)를 제공하고 OPENAI_MODEL='gpt-5'로 통일하며 판정 누락분만 한 번 재시도한다.",
+      "completed_at": "2026-09-15T00:50:09+0900"
+    },
+    {
+      "step": 4,
+      "name": "analyze-route-full",
+      "status": "completed",
+      "started_at": "2026-09-15T00:50:09+0900",
+      "summary": "AnalyzeResponse의 ok 갈래를 { status: 'ok', posting: { title, sourceUrl? }, requirementCount, result: AnalysisResult }로 확장하고 요구사항 추출·매칭·검증 집계를 Route Handler에 연결한다.",
+      "completed_at": "2026-09-15T00:52:43+0900"
+    }
+  ],
+  "created_at": "2026-09-15T00:32:54+0900",
+  "completed_at": "2026-09-15T00:52:44+0900"
 }

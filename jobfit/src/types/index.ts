@@ -50,3 +50,26 @@ export interface Verdict {
   suggestion?: string;
   suggestionEvidenceBlockIds?: string[];
 }
+
+/**
+ * 화면 한 항목이다. LLM이 답하지 않았거나 판정을 신뢰할 근거가 없으면
+ * bucket이 unjudged다.
+ */
+export interface AnalysisItem {
+  requirement: Requirement;
+  bucket: VerdictBucket | "unjudged";
+  evidence: ResumeEvidence[];
+  confidence: number | null;
+  suggestion: string | null;
+  suggestionEvidence: ResumeEvidence[];
+}
+
+/**
+ * 요구사항 입력 순서를 유지한 화면용 분석 결과다.
+ */
+export interface AnalysisResult {
+  covered: AnalysisItem[];
+  implicit: AnalysisItem[];
+  missing: AnalysisItem[];
+  unjudged: AnalysisItem[];
+}
