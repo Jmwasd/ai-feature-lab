@@ -2,8 +2,9 @@ import "server-only";
 
 import { Client } from "@notionhq/client";
 
-import { parseResume, type NotionBlockNode } from "@/lib/resume-parser";
+import { parseResume, SKIPPED_SUBTREE_TYPES, type NotionBlockNode } from "@/lib/resume-parser";
 import type { ResumeEvidence } from "@/types";
+import { createDeadline, NOTION_TIMEOUT_MS, withAbort } from "./request-control";
 
 const MAX_BLOCK_DEPTH = 6;
 const NOTION_PAGE_SIZE = 100;
@@ -78,16 +79,18 @@ async function listAllChildren(lister: BlockLister, blockId: string): Promise<un
 }
 
 /** 블록 트리를 재귀 순회해 파서가 먹는 형태로 정규화한다. */
-export async function fetchBlockTree(lister: BlockLister, rootId: string): Promise<NotionBlockNode[]> {
+export async function fetchBlockTree(lister: BlockLister, rootId: string, signal?: AbortSignal): Promise<NotionBlockNode[]> {
   const fetchChildren = async (blockId: string, depth: number): Promise<NotionBlockNode[]> => {
-    const rawBlocks = await listAllChildren(lister, blockId);
+    signal?.throwIfAborted();
+    const rawBlocks = await withAbort(listAllChildren(lister, blockId), signal);
     const nodes: NotionBlockNode[] = [];
 
     for (const rawBlock of rawBlocks) {
       const block = rawBlock && typeof rawBlock === "object" ? (rawBlock as Record<string, unknown>) : {};
       const id = typeof block.id === "string" ? block.id : "";
       const hasChildren = block.has_children === true;
-      const children = hasChildren && depth < MAX_BLOCK_DEPTH ? await fetchChildren(id, depth + 1) : [];
+      const skip = typeof block.type === "string" && SKIPPED_SUBTREE_TYPES.has(block.type);
+      const children = hasChildren && !skip && depth < MAX_BLOCK_DEPTH ? await fetchChildren(id, depth + 1) : [];
 
       nodes.push(normalizeBlock(rawBlock, children));
     }
@@ -114,9 +117,18 @@ function requireNotionConfig(): { token: string; resumePageId: string } {
 }
 
 /** 환경 변수를 읽어 실제 Notion을 호출하고 근거 목록까지 만든다. */
-export async function getResumeEvidence(): Promise<ResumeEvidence[]> {
+export async function getResumeEvidence(deps: { signal?: AbortSignal; fetchImpl?: typeof fetch } = {}): Promise<ResumeEvidence[]> {
   const { token, resumePageId } = requireNotionConfig();
-  const notion = new Client({ auth: token });
+  const deadline = createDeadline(NOTION_TIMEOUT_MS, deps.signal, "Notion 이력서 조회 시간 초과");
+  const fetchImpl = deps.fetchImpl ?? fetch;
+  const notion = new Client({
+    auth: token,
+    retry: false,
+    fetch: (url, init) => {
+      deadline.signal.throwIfAborted();
+      return fetchImpl(url, { ...init, signal: deadline.signal });
+    },
+  });
   const lister: BlockLister = {
     async list({ blockId, startCursor }) {
       const response = await notion.blocks.children.list({
@@ -133,5 +145,10 @@ export async function getResumeEvidence(): Promise<ResumeEvidence[]> {
     },
   };
 
-  return parseResume(await fetchBlockTree(lister, resumePageId));
+  try {
+    return parseResume(await fetchBlockTree(lister, resumePageId, deadline.signal));
+  } finally {
+    deadline.abort();
+    deadline.dispose();
+  }
 }
