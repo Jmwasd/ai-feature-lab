@@ -22,4 +22,4 @@
 
 - 기술 구조와 데이터 흐름: [ARCHITECTURE.md](./ARCHITECTURE.md)
 - 되돌리기 어려운 결정: [ADR.md](./ADR.md)
-- UI가 있는 프로젝트의 디자인 기준: [UI_GUIDE.md](./UI_GUIDE.md)
+- 디자인 기준: [design 스킬 guide.md](../.claude/skills/design/guide.md)

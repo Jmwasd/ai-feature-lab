@@ -75,6 +75,19 @@ def top_index(tmp_project):
 
 
 @pytest.fixture
+def design_skill(tmp_project):
+    """.claude/skills/design/ 에 SKILL.md 와 guide.md 를 갖춘 디자인 스킬."""
+    d = tmp_project / ".claude" / "skills" / "design"
+    d.mkdir(parents=True)
+    (d / "SKILL.md").write_text(
+        "---\nname: design\ndescription: 트리거 설명\n---\n\n# design\n적용 절차",
+        encoding="utf-8",
+    )
+    (d / "guide.md").write_text("# UI_GUIDE\n강조는 앰버 하나", encoding="utf-8")
+    return d
+
+
+@pytest.fixture
 def executor(tmp_project, phase_dir):
     """테스트용 StepExecutor 인스턴스. git 호출은 별도 mock 필요."""
     with patch.object(ex, "ROOT", tmp_project):
@@ -279,6 +292,106 @@ class TestBuildPreamble:
     def test_includes_index_path(self, executor):
         result = executor._build_preamble("", "")
         assert "/phases/0-mvp/index.json" in result
+
+    def test_no_design_section_by_default(self, executor):
+        result = executor._build_preamble("", "")
+        assert "디자인 기준" not in result
+
+    def test_design_section_when_given(self, executor):
+        result = executor._build_preamble("", "", design="DESIGN_CONTENT")
+        assert "디자인 기준" in result
+        assert "DESIGN_CONTENT" in result
+
+    def test_design_after_guardrails(self, executor):
+        result = executor._build_preamble("GUARD_CONTENT", "", design="DESIGN_CONTENT")
+        assert result.index("GUARD_CONTENT") < result.index("DESIGN_CONTENT")
+
+
+# ---------------------------------------------------------------------------
+# _load_design
+# ---------------------------------------------------------------------------
+
+class TestLoadDesign:
+    def test_loads_skill_and_guide(self, executor, tmp_project, design_skill):
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_design()
+        assert "적용 절차" in result
+        assert "강조는 앰버 하나" in result
+
+    def test_strips_skill_frontmatter(self, executor, tmp_project, design_skill):
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_design()
+        assert "description: 트리거 설명" not in result
+
+    def test_skill_before_guide(self, executor, tmp_project, design_skill):
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_design()
+        assert result.index("적용 절차") < result.index("강조는 앰버 하나")
+
+    def test_ignores_docs_ui_guide(self, executor, tmp_project, design_skill):
+        (tmp_project / "docs" / "UI_GUIDE.md").write_text("# 옛 가이드\naccent #58a6ff", encoding="utf-8")
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_design()
+        assert "#58a6ff" not in result
+
+    def test_missing_guide_exits(self, executor, tmp_project, design_skill):
+        (design_skill / "guide.md").unlink()
+        with patch.object(ex, "ROOT", tmp_project):
+            with pytest.raises(SystemExit) as exc_info:
+                executor._load_design()
+        assert exc_info.value.code == 1
+
+    def test_missing_skill_exits(self, executor, tmp_project, design_skill):
+        (design_skill / "SKILL.md").unlink()
+        with patch.object(ex, "ROOT", tmp_project):
+            with pytest.raises(SystemExit) as exc_info:
+                executor._load_design()
+        assert exc_info.value.code == 1
+
+
+# ---------------------------------------------------------------------------
+# UI step 디자인 주입 (_execute_single_step)
+# ---------------------------------------------------------------------------
+
+class TestDesignInjection:
+    @staticmethod
+    def _run_step(executor, tmp_project, step):
+        """codex 대신 프롬프트만 받아 두고, step을 completed로 끝낸다."""
+        captured = {}
+
+        def fake_invoke(step_arg, preamble):
+            captured["preamble"] = preamble
+            index = json.loads(executor._index_file.read_text())
+            for s in index["steps"]:
+                if s["step"] == step_arg["step"]:
+                    s["status"] = "completed"
+            executor._index_file.write_text(json.dumps(index))
+            return {}
+
+        with patch.object(ex, "ROOT", tmp_project), \
+             patch.object(executor, "_invoke_codex", side_effect=fake_invoke), \
+             patch.object(executor, "_commit_step"):
+            executor._execute_single_step(step, "GUARD")
+        return captured["preamble"]
+
+    def test_ui_step_gets_design(self, executor, tmp_project, design_skill):
+        step = {"step": 2, "name": "ui", "status": "pending", "ui": True}
+        preamble = self._run_step(executor, tmp_project, step)
+        assert "강조는 앰버 하나" in preamble
+
+    def test_non_ui_step_has_no_design(self, executor, tmp_project, design_skill):
+        step = {"step": 2, "name": "ui", "status": "pending"}
+        preamble = self._run_step(executor, tmp_project, step)
+        assert "강조는 앰버 하나" not in preamble
+
+    def test_ui_step_without_skill_exits_before_codex(self, executor, tmp_project):
+        step = {"step": 2, "name": "ui", "status": "pending", "ui": True}
+        with patch.object(ex, "ROOT", tmp_project), \
+             patch.object(executor, "_invoke_codex") as mock_invoke:
+            with pytest.raises(SystemExit) as exc_info:
+                executor._execute_single_step(step, "GUARD")
+        assert exc_info.value.code == 1
+        mock_invoke.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

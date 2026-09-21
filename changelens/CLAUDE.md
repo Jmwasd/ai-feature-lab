@@ -17,7 +17,7 @@
 - CRITICAL: 이 도구는 localhost 전용이다. 로그인은 접근 제어가 아니라 화면 흐름이다 (`docs/ADR.md` ADR-2). 인증을 근거로 보안 기능을 추가로 만들지 마라.
 - git 접근은 `lib/git/` 한 곳에 모은다. 다른 레이어에서 `child_process`를 직접 부르지 마라.
 - 타입은 `types/`, 컴포넌트는 `components/`, 서버 유틸은 `lib/`에 둔다.
-- UI 작업 시 `docs/UI_GUIDE.md`가 있으면 작업 전에 읽고 따른다. 세부 디자인 규칙은 이 파일에 중복해서 작성하지 않는다.
+- UI 작업 시 `design` 스킬(`.claude/skills/design/`)을 작업 전에 불러 따른다. 디자인 규칙의 원본은 `.claude/skills/design/guide.md` 하나이며 `docs/UI_GUIDE.md`는 옮겼다는 안내만 남은 파일이다. 세부 디자인 규칙은 이 파일에 중복해서 작성하지 않는다.
 
 ## 개발 프로세스
 - CRITICAL: 새 기능 구현 시 반드시 테스트를 먼저 작성하고, 테스트가 통과하는 구현을 작성할 것 (TDD)
