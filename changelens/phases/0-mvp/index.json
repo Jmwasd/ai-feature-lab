@@ -31,7 +31,8 @@
       "name": "summary",
       "status": "completed",
       "summary": "UTF-8 200KB diff 제한·Claude 구조화 요약·전체 SHA 디스크 캐시·요약 API 라우트 구현; TDD 신규 46개와 기존 88개 테스트 및 lint/build/test 통과, 실제 API 호출 없이 검증",
-      "started_at": "2026-09-21T15:25:54+0900"
+      "started_at": "2026-09-21T15:25:54+0900",
+      "completed_at": "2026-09-21T15:32:11+0900"
     },
     {
       "step": 4,
