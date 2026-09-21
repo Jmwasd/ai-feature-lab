@@ -9,7 +9,6 @@ Usage:
 import argparse
 import contextlib
 import json
-import os
 import subprocess
 import sys
 import threading
@@ -182,6 +181,8 @@ class StepExecutor:
         docs_dir = ROOT / "docs"
         if docs_dir.is_dir():
             for doc in sorted(docs_dir.glob("*.md")):
+                if doc.name == "UI_GUIDE.md":
+                    continue
                 sections.append(f"## {doc.stem}\n\n{doc.read_text()}")
         return "\n\n---\n\n".join(sections) if sections else ""
 
@@ -290,8 +291,8 @@ class StepExecutor:
 
     # --- 실행 루프 ---
 
-    def _execute_single_step(self, step: dict, guardrails: str) -> bool:
-        """단일 step 실행 (재시도 포함). 완료되면 True, 실패/차단이면 False."""
+    def _execute_single_step(self, step: dict, guardrails: str) -> None:
+        """단일 step을 실행하고 실패하거나 차단되면 프로세스를 종료한다."""
         step_num, step_name = step["step"], step["name"]
         done = sum(1 for s in self._read_json(self._index_file)["steps"] if s["status"] == "completed")
         prev_error = None
@@ -320,7 +321,7 @@ class StepExecutor:
                 self._write_json(self._index_file, index)
                 self._commit_step(step_num, step_name)
                 print(f"  ✓ Step {step_num}: {step_name} [{elapsed}s]")
-                return True
+                return
 
             if status == "blocked":
                 for s in index["steps"]:
@@ -358,8 +359,6 @@ class StepExecutor:
                 print(f"    Error: {err_msg}")
                 self._update_top_index("error")
                 sys.exit(1)
-
-        return False  # unreachable
 
     def _execute_all_steps(self, guardrails: str):
         while True:

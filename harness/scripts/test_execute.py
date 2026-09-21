@@ -166,6 +166,15 @@ class TestLoadGuardrails:
         guide_pos = result.index("guide")
         assert arch_pos < guide_pos
 
+    def test_excludes_ui_guide_from_default_guardrails(self, executor, tmp_project):
+        ui_guide = tmp_project / "docs" / "UI_GUIDE.md"
+        ui_guide.write_text("# UI Guide\nDo not inject by default")
+
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_guardrails()
+
+        assert "Do not inject by default" not in result
+
     def test_no_claude_md(self, executor, tmp_project):
         (tmp_project / "CLAUDE.md").unlink()
         with patch.object(ex, "ROOT", tmp_project):
