@@ -1,0 +1,69 @@
+/* design 스킬 --print-tokens 출력 — guide.md §2에서 뽑았다. 값은 guide.md를 고친 뒤 다시 뽑는다. */
+@import "tailwindcss";
+
+@theme {
+  --color-*: initial; /* 기본 팔레트를 지운다 — 토큰 밖의 색은 클래스로도 못 만든다 */
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-body-dim: var(--body-dim);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-add: var(--add);
+  --color-del: var(--del);
+  --color-diff-add-bg: var(--diff-add-bg);
+  --color-diff-del-bg: var(--diff-del-bg);
+  --color-diff-add-fg: var(--diff-add-fg);
+  --color-diff-del-fg: var(--diff-del-fg);
+  --font-sans: var(--font-plex-sans), var(--font-plex-kr), sans-serif;
+  --font-mono: var(--font-plex-mono), var(--font-plex-kr), monospace;
+}
+
+:root {
+  color-scheme: dark;
+  --canvas: #0d1013;
+  --surface: #16191e;
+  --surface-raised: #22262d;
+  --hairline: #262b33;
+  --hairline-soft: #1e222a;
+  --ink: #ffffff;
+  --body: #e6e8eb;
+  --body-dim: #b4bcc6;
+  --muted: #7b848f;
+  --accent: #ffb020;
+  --accent-ink: #0d1013;
+  --add: #3fb950;
+  --del: #f0616d;
+  --diff-add-bg: #11261a;
+  --diff-del-bg: #2a1418;
+  --diff-add-fg: #5ddb8a;
+  --diff-del-fg: #ff8a94;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--body);
+  font-family: var(--font-plex-sans), var(--font-plex-kr), sans-serif;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--font-plex-mono), var(--font-plex-kr), monospace;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

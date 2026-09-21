@@ -2,13 +2,74 @@
   "project": "changelens",
   "phase": "0-mvp",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "git-layer", "status": "pending" },
-    { "step": 2, "name": "auth", "status": "pending" },
-    { "step": 3, "name": "summary", "status": "pending" },
-    { "step": 4, "name": "landing", "status": "pending", "ui": true },
-    { "step": 5, "name": "repo-list", "status": "pending", "ui": true },
-    { "step": 6, "name": "commit-detail", "status": "pending", "ui": true },
-    { "step": 7, "name": "cli", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "summary": "Next.js 15·React 19·TypeScript strict·Tailwind v4·Vitest 설정과 최소 앱, lockfile 작성; install/lint/build/test 통과(테스트 없음); 디자인 검사 오류 20 · 경고 0은 Step 4로 명시 유예된 토큰·폰트 누락이며 브라우저 검수 미실시.",
+      "started_at": "2026-09-21T15:04:33+0900",
+      "completed_at": "2026-09-21T15:07:59+0900"
+    },
+    {
+      "step": 1,
+      "name": "git-layer",
+      "status": "completed",
+      "summary": "git CLI 실행·저장소 상태·커밋 목록/상세·파일별 diff·HEAD 기반 지표 캐시 구현; 전역 설정과 분리한 실제 저장소 테스트 18개 및 lint/build/test 통과",
+      "started_at": "2026-09-21T15:07:59+0900",
+      "completed_at": "2026-09-21T15:18:56+0900"
+    },
+    {
+      "step": 2,
+      "name": "auth",
+      "status": "completed",
+      "summary": "Google ID 토큰 검증·Web Crypto 서명 세션 쿠키·next 경로 검증·미들웨어 게이트·기동 시 AUTH_SECRET 검사 구현; TDD 인증 테스트 70개와 기존 git 테스트 18개, lint 및 AUTH_SECRET 유무별 build 통과",
+      "started_at": "2026-09-21T15:18:56+0900",
+      "completed_at": "2026-09-21T15:25:54+0900"
+    },
+    {
+      "step": 3,
+      "name": "summary",
+      "status": "completed",
+      "summary": "UTF-8 200KB diff 제한·Claude 구조화 요약·전체 SHA 디스크 캐시·요약 API 라우트 구현; TDD 신규 46개와 기존 88개 테스트 및 lint/build/test 통과, 실제 API 호출 없이 검증",
+      "started_at": "2026-09-21T15:25:54+0900",
+      "completed_at": "2026-09-21T15:32:11+0900"
+    },
+    {
+      "step": 4,
+      "name": "landing",
+      "status": "completed",
+      "ui": true,
+      "started_at": "2026-09-21T15:32:11+0900",
+      "summary": "디자인 토큰·Plex 3종·공용 UI와 랜딩/차단/로그인·GIS 세션 연결 구현; TDD 신규 13개 포함 147개 테스트와 lint/build 통과, HTTP 화면 분기·링크 6건 확인; 파일 14개 · 오류 0 · 경고 0; 코드 검수로 앰버 랜딩 2곳·차단/로그인 각 1곳, 숫자·경로·명령 Mono, 일반 상태 초록/빨강 미사용 확인; 가이드 우선순위에 따라 로그인 카드 공통 여백·차단 중립색 적용; 연결 가능한 브라우저가 없어 1080px·375px 시각 검수 및 실제 GIS 로그인 미실시, 지표·diff 반응형은 다음 step 범위; 가이드 미정: 기능 설명·실패 안내 카피를 작성하고 기존 중립 토큰 사용",
+      "completed_at": "2026-09-21T15:37:39+0900"
+    },
+    {
+      "step": 5,
+      "name": "repo-list",
+      "status": "completed",
+      "ui": true,
+      "started_at": "2026-09-21T15:37:39+0900",
+      "summary": "포맷 함수·커밋 페이지 API·동적 /repo 지표/목록·더 보기·로그아웃·저장소 상태별 안내 구현; TDD 신규 37개 포함 184개 테스트 및 lint/build 통과; 파일 21개 · 오류 0 · 경고 0; npm run dev와 임시 저장소·서명 쿠키로 1080px·375px Chromium 시각 검수, 지표 4열/2×2·가로 넘침 없음·숫자/SHA/경로/날짜 Mono·앰버 2곳·증감 외 초록/빨강 미사용 확인; 더 보기 실패/재시도/로딩/마지막 페이지·개수 갱신·로그아웃/세션 게이트와 HTTP 저장소 없음/빈 이력/detached HEAD/git stderr 검증; diff 검수는 Step 6 범위; 375px AC에 맞춰 모바일 지표 2열 적용; 가이드 미정: 줄 변경 없음·실패 안내 카피와 좁은 화면 상단/메타 줄바꿈에 기존 중립 토큰 사용",
+      "completed_at": "2026-09-21T23:09:18+0900"
+    },
+    {
+      "step": 6,
+      "name": "commit-detail",
+      "status": "completed",
+      "ui": true,
+      "started_at": "2026-09-21T23:09:18+0900",
+      "summary": "커밋 상세·404/git 오류 화면, 비동기 요약 상태와 파일 목록·접이식 diff 구현; TDD 신규 24개 포함 208개 테스트 및 lint/build 통과; 파일 28개 · 오류 0 · 경고 2(DiffFile의 DiffBlock 렌더 위임을 추적하지 못한 diff-wrap 오탐, 이유 주석 기록); npm run dev와 실제 임시 저장소·서명 쿠키로 1080px·375px Chromium 시각 검수, 페이지 넘침 없이 diff 가로 스크롤·숫자/SHA/경로/날짜/diff Mono·앰버 1곳·증감/diff 외 초록/빨강 미사용·목록 지표 4열/2×2 확인; 300/301줄 경계·접힌 줄 DOM 제외·바이너리·이름 변경·256KB 생략/명령·빈 커밋·404·stderr 첫 줄 검증; 요약 로딩/성공/3개 제한/잘림/비활성/오류/네트워크 실패의 git 화면 유지와 키 부재 시 요청 없음 확인, Anthropic 응답은 모킹하고 실제 API 호출은 미실시; 가이드 미정: 접기/펼치기·생략/실패/빈 파일 안내 카피와 모바일 헝크 줄배치에 기존 중립 토큰 사용",
+      "completed_at": "2026-09-21T23:21:47+0900"
+    },
+    {
+      "step": 7,
+      "name": "cli",
+      "status": "completed",
+      "summary": "localhost:3000 전용 CLI·경로 해석·포트/빌드 확인·브라우저 열기·종료 신호 전달과 bin 등록 구현; TDD 신규 14개 포함 222개 테스트 및 lint/build/문법 검사 통과; 지시에 따라 CLI 실제 실행 미실시",
+      "started_at": "2026-09-21T23:21:47+0900",
+      "completed_at": "2026-09-21T23:25:55+0900"
+    }
+  ],
+  "created_at": "2026-09-21T15:04:33+0900",
+  "completed_at": "2026-09-21T23:25:55+0900"
 }

@@ -3,6 +3,7 @@ execute.py 리팩터링 안전망 테스트.
 리팩터링 전후 동작이 동일한지 검증한다.
 """
 
+import io
 import json
 import os
 import subprocess
@@ -29,12 +30,12 @@ def tmp_project(tmp_path):
     phases_dir.mkdir()
 
     claude_md = tmp_path / "CLAUDE.md"
-    claude_md.write_text("# Rules\n- rule one\n- rule two")
+    claude_md.write_text("# Rules\n- rule one\n- rule two", encoding="utf-8")
 
     docs_dir = tmp_path / "docs"
     docs_dir.mkdir()
-    (docs_dir / "arch.md").write_text("# Architecture\nSome content")
-    (docs_dir / "guide.md").write_text("# Guide\nAnother doc")
+    (docs_dir / "arch.md").write_text("# Architecture\nSome content", encoding="utf-8")
+    (docs_dir / "guide.md").write_text("# Guide\nAnother doc", encoding="utf-8")
 
     return tmp_path
 
@@ -54,8 +55,8 @@ def phase_dir(tmp_project):
             {"step": 2, "name": "ui", "status": "pending"},
         ],
     }
-    (d / "index.json").write_text(json.dumps(index, indent=2, ensure_ascii=False))
-    (d / "step2.md").write_text("# Step 2: UI\n\nUI를 구현하세요.")
+    (d / "index.json").write_text(json.dumps(index, indent=2, ensure_ascii=False), encoding="utf-8")
+    (d / "step2.md").write_text("# Step 2: UI\n\nUI를 구현하세요.", encoding="utf-8")
 
     return d
 
@@ -70,7 +71,7 @@ def top_index(tmp_project):
         ]
     }
     p = tmp_project / "phases" / "index.json"
-    p.write_text(json.dumps(top, indent=2))
+    p.write_text(json.dumps(top, indent=2), encoding="utf-8")
     return p
 
 
@@ -139,14 +140,14 @@ class TestJsonHelpers:
     def test_save_ensures_ascii_false(self, tmp_path):
         p = tmp_path / "test.json"
         ex.StepExecutor._write_json(p, {"한글": "테스트"})
-        raw = p.read_text()
+        raw = p.read_text(encoding="utf-8")
         assert "한글" in raw
         assert "\\u" not in raw
 
     def test_save_indented(self, tmp_path):
         p = tmp_path / "test.json"
         ex.StepExecutor._write_json(p, {"a": 1})
-        raw = p.read_text()
+        raw = p.read_text(encoding="utf-8")
         assert "\n" in raw
 
     def test_load_nonexistent_raises(self, tmp_path):
@@ -181,12 +182,21 @@ class TestLoadGuardrails:
 
     def test_excludes_ui_guide_from_default_guardrails(self, executor, tmp_project):
         ui_guide = tmp_project / "docs" / "UI_GUIDE.md"
-        ui_guide.write_text("# UI Guide\nDo not inject by default")
+        ui_guide.write_text("# UI Guide\nDo not inject by default", encoding="utf-8")
 
         with patch.object(ex, "ROOT", tmp_project):
             result = executor._load_guardrails()
 
         assert "Do not inject by default" not in result
+
+    def test_reads_utf8_regardless_of_locale(self, executor, tmp_project):
+        """Windows 한국어 로캘의 기본 인코딩(cp949)으로 읽으면 UTF-8 한글 문서에서 UnicodeDecodeError가 난다."""
+        (tmp_project / "CLAUDE.md").write_text("# 규칙\n서버에서만 호출한다 — 예외 없음", encoding="utf-8")
+        (tmp_project / "docs" / "ADR.md").write_text("# 결정\n포트는 3000 → 고정", encoding="utf-8")
+        with patch.object(ex, "ROOT", tmp_project):
+            result = executor._load_guardrails()
+        assert "서버에서만 호출한다 — 예외 없음" in result
+        assert "포트는 3000 → 고정" in result
 
     def test_no_claude_md(self, executor, tmp_project):
         (tmp_project / "CLAUDE.md").unlink()
@@ -209,7 +219,7 @@ class TestLoadGuardrails:
             phases_dir = tmp_path / "phases" / "dummy"
             phases_dir.mkdir(parents=True)
             idx = {"project": "T", "phase": "t", "steps": []}
-            (phases_dir / "index.json").write_text(json.dumps(idx))
+            (phases_dir / "index.json").write_text(json.dumps(idx), encoding="utf-8")
             inst = ex.StepExecutor.__new__(ex.StepExecutor)
             result = inst._load_guardrails()
         assert result == ""
@@ -221,18 +231,18 @@ class TestLoadGuardrails:
 
 class TestBuildStepContext:
     def test_includes_completed_with_summary(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         result = ex.StepExecutor._build_step_context(index)
         assert "Step 0 (setup): 프로젝트 초기화 완료" in result
         assert "Step 1 (core): 핵심 로직 구현" in result
 
     def test_excludes_pending(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         result = ex.StepExecutor._build_step_context(index)
         assert "ui" not in result
 
     def test_excludes_completed_without_summary(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         del index["steps"][0]["summary"]
         result = ex.StepExecutor._build_step_context(index)
         assert "setup" not in result
@@ -244,7 +254,7 @@ class TestBuildStepContext:
         assert result == ""
 
     def test_has_header(self, phase_dir):
-        index = json.loads((phase_dir / "index.json").read_text())
+        index = json.loads((phase_dir / "index.json").read_text(encoding="utf-8"))
         result = ex.StepExecutor._build_step_context(index)
         assert result.startswith("## 이전 Step 산출물")
 
@@ -361,11 +371,11 @@ class TestDesignInjection:
 
         def fake_invoke(step_arg, preamble):
             captured["preamble"] = preamble
-            index = json.loads(executor._index_file.read_text())
+            index = json.loads(executor._index_file.read_text(encoding="utf-8"))
             for s in index["steps"]:
                 if s["step"] == step_arg["step"]:
                     s["status"] = "completed"
-            executor._index_file.write_text(json.dumps(index))
+            executor._index_file.write_text(json.dumps(index), encoding="utf-8")
             return {}
 
         with patch.object(ex, "ROOT", tmp_project), \
@@ -402,7 +412,7 @@ class TestUpdateTopIndex:
     def test_completed(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("completed")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         mvp = next(p for p in data["phases"] if p["dir"] == "0-mvp")
         assert mvp["status"] == "completed"
         assert "completed_at" in mvp
@@ -410,7 +420,7 @@ class TestUpdateTopIndex:
     def test_error(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("error")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         mvp = next(p for p in data["phases"] if p["dir"] == "0-mvp")
         assert mvp["status"] == "error"
         assert "failed_at" in mvp
@@ -418,7 +428,7 @@ class TestUpdateTopIndex:
     def test_blocked(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("blocked")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         mvp = next(p for p in data["phases"] if p["dir"] == "0-mvp")
         assert mvp["status"] == "blocked"
         assert "blocked_at" in mvp
@@ -426,16 +436,16 @@ class TestUpdateTopIndex:
     def test_other_phases_unchanged(self, executor, top_index):
         executor._top_index_file = top_index
         executor._update_top_index("completed")
-        data = json.loads(top_index.read_text())
+        data = json.loads(top_index.read_text(encoding="utf-8"))
         polish = next(p for p in data["phases"] if p["dir"] == "1-polish")
         assert polish["status"] == "pending"
 
     def test_nonexistent_dir_is_noop(self, executor, top_index):
         executor._top_index_file = top_index
         executor._phase_dir_name = "no-such-dir"
-        original = json.loads(top_index.read_text())
+        original = json.loads(top_index.read_text(encoding="utf-8"))
         executor._update_top_index("completed")
-        after = json.loads(top_index.read_text())
+        after = json.loads(top_index.read_text(encoding="utf-8"))
         for p_before, p_after in zip(original["phases"], after["phases"]):
             assert p_before["status"] == p_after["status"]
 
@@ -586,6 +596,14 @@ class TestFinalize:
         assert all(c == ("add", "-A", "--", ".") for c in add_calls)
 
 
+class TestRunGit:
+    def test_decodes_output_as_utf8(self, executor):
+        """git 출력(한글 경로·커밋 메시지)을 로캘 인코딩으로 풀면 cp949 PC에서 깨지거나 예외가 난다."""
+        with patch("subprocess.run", return_value=MagicMock(returncode=0)) as mock_run:
+            executor._run_git("status")
+        assert mock_run.call_args[1]["encoding"] == "utf-8"
+
+
 # ---------------------------------------------------------------------------
 # _invoke_codex (mocked)
 # ---------------------------------------------------------------------------
@@ -620,7 +638,7 @@ class TestInvokeCodex:
 
         output_file = executor._phase_dir / "step2-output.json"
         assert output_file.exists()
-        data = json.loads(output_file.read_text())
+        data = json.loads(output_file.read_text(encoding="utf-8"))
         assert data["step"] == 2
         assert data["name"] == "ui"
         assert data["exitCode"] == 0
@@ -639,6 +657,131 @@ class TestInvokeCodex:
             executor._invoke_codex(step, "preamble")
 
         assert mock_run.call_args[1]["timeout"] == 1800
+
+    def test_exchanges_utf8_with_codex(self, executor):
+        """codex는 stdin·stdout을 UTF-8로 다룬다. 로캘 인코딩(cp949)으로 넘기면 프롬프트 한글이 깨진다."""
+        mock_result = MagicMock(returncode=0, stdout="{}", stderr="")
+        step = {"step": 2, "name": "ui"}
+
+        with patch("subprocess.run", return_value=mock_result) as mock_run:
+            executor._invoke_codex(step, "preamble")
+
+        assert mock_run.call_args[1]["encoding"] == "utf-8"
+
+    def test_saves_output_outside_cp949(self, executor):
+        """codex 출력에는 cp949에 없는 글자(✓ 등)가 섞인다. 로캘 인코딩으로 쓰면 UnicodeEncodeError가 난다."""
+        stdout = json.dumps(
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "✓ 완료"}},
+            ensure_ascii=False,
+        )
+        mock_result = MagicMock(returncode=0, stdout=stdout, stderr="")
+        step = {"step": 2, "name": "ui"}
+
+        with patch("subprocess.run", return_value=mock_result):
+            executor._invoke_codex(step, "preamble")
+
+        data = json.loads((executor._phase_dir / "step2-output.json").read_text(encoding="utf-8"))
+        assert data["messages"] == ["✓ 완료"]
+
+    def test_drops_raw_stdout(self, executor):
+        """원본 stdout은 step당 200KB를 넘고 대부분이 저장소에 이미 있는 파일 내용이다."""
+        stdout = json.dumps({
+            "type": "item.completed",
+            "item": {"type": "command_execution", "command": "cat lib/git/run.ts", "aggregated_output": "X" * 5000},
+        })
+        mock_result = MagicMock(returncode=0, stdout=stdout, stderr="")
+
+        with patch("subprocess.run", return_value=mock_result):
+            executor._invoke_codex({"step": 2, "name": "ui"}, "preamble")
+
+        raw = (executor._phase_dir / "step2-output.json").read_text(encoding="utf-8")
+        assert "stdout" not in json.loads(raw)
+        assert "X" * 100 not in raw
+        assert json.loads(raw)["commands"] == ["cat lib/git/run.ts"]
+
+
+# ---------------------------------------------------------------------------
+# _summarize_stdout
+# ---------------------------------------------------------------------------
+
+class TestSummarizeStdout:
+    @staticmethod
+    def _events(*events):
+        return "\n".join(json.dumps(e, ensure_ascii=False) for e in events)
+
+    def test_keeps_agent_messages_in_order(self, executor):
+        """실패한 step은 summary가 쓰이지 않으므로 agent_message가 유일한 단서다."""
+        stdout = self._events(
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "먼저"}},
+            {"type": "item.started", "item": {"type": "agent_message", "text": "무시"}},
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "나중"}},
+        )
+        assert executor._summarize_stdout(stdout)["messages"] == ["먼저", "나중"]
+
+    def test_keeps_usage(self, executor):
+        stdout = self._events({"type": "turn.completed", "usage": {"input_tokens": 12, "output_tokens": 3}})
+        assert executor._summarize_stdout(stdout)["usage"] == {"input_tokens": 12, "output_tokens": 3}
+
+    def test_truncates_long_commands(self, executor):
+        stdout = self._events(
+            {"type": "item.completed", "item": {"type": "command_execution", "command": "echo " + "a" * 500}}
+        )
+        cmd = executor._summarize_stdout(stdout)["commands"][0]
+        assert len(cmd) == ex.StepExecutor.CMD_MAX + 1
+        assert cmd.endswith("…")
+
+    def test_relativizes_changed_paths_and_dedupes(self, executor):
+        root = executor._root
+        stdout = self._events(
+            {"type": "item.completed", "item": {"type": "file_change", "changes": [
+                {"path": f"{root}/lib/format.ts", "kind": "add"},
+                {"path": f"{root}/lib/format.ts", "kind": "update"},
+            ]}},
+            {"type": "item.completed", "item": {"type": "file_change", "changes": [
+                {"path": "/elsewhere/other.ts", "kind": "add"},
+            ]}},
+        )
+        assert executor._summarize_stdout(stdout)["files_changed"] == ["lib/format.ts", "/elsewhere/other.ts"]
+
+    def test_survives_malformed_lines(self, executor):
+        """codex가 중간에 죽으면 마지막 줄이 잘린 채 남는다. 그 때문에 요약이 실패하면 안 된다."""
+        stdout = "\n".join([
+            "",
+            "not json",
+            '"문자열"',
+            json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "살아남음"}}),
+            '{"type": "item.comp',
+        ])
+        assert executor._summarize_stdout(stdout)["messages"] == ["살아남음"]
+
+    def test_empty_stdout_yields_empty_summary(self, executor):
+        assert executor._summarize_stdout("") == {
+            "usage": None, "messages": [], "commands": [], "files_changed": []
+        }
+
+
+# ---------------------------------------------------------------------------
+# use_utf8_stdio
+# ---------------------------------------------------------------------------
+
+class TestUtf8Stdio:
+    def test_switches_stdout_and_stderr_to_utf8(self):
+        """파이프로 실행하면 stdout·stderr가 로캘 인코딩(cp949)이라 ✓·↻ 출력에서 UnicodeEncodeError가 난다."""
+        out = io.TextIOWrapper(io.BytesIO(), encoding="cp949")
+        err = io.TextIOWrapper(io.BytesIO(), encoding="cp949")
+        with patch.object(sys, "stdout", out), patch.object(sys, "stderr", err):
+            ex.use_utf8_stdio()
+            print("✓ ↻")
+            print("◐", file=sys.stderr)
+            out.flush()
+            err.flush()
+        assert "✓ ↻" in out.buffer.getvalue().decode("utf-8")
+        assert "◐" in err.buffer.getvalue().decode("utf-8")
+
+    def test_skips_missing_stream(self):
+        """pythonw 등에서는 sys.stdout이 None이다."""
+        with patch.object(sys, "stdout", None):
+            ex.use_utf8_stdio()  # should not raise
 
 
 # ---------------------------------------------------------------------------
@@ -670,6 +813,12 @@ class TestMainCli:
                 ex.main()
             assert exc_info.value.code == 2  # argparse exits with 2
 
+    def test_switches_stdio_to_utf8_first(self):
+        with patch("sys.argv", ["execute.py"]), patch.object(ex, "use_utf8_stdio") as mock_stdio:
+            with pytest.raises(SystemExit):
+                ex.main()
+        mock_stdio.assert_called_once()
+
     def test_invalid_phase_dir_exits(self):
         with patch("sys.argv", ["execute.py", "nonexistent"]):
             with patch.object(ex, "ROOT", Path("/tmp/fake_nonexistent")):
@@ -695,7 +844,7 @@ class TestCheckBlockers:
         d = tmp_project / "phases" / "test-phase"
         d.mkdir(exist_ok=True)
         index = {"project": "T", "phase": "test", "steps": steps}
-        (d / "index.json").write_text(json.dumps(index))
+        (d / "index.json").write_text(json.dumps(index), encoding="utf-8")
 
         with patch.object(ex, "ROOT", tmp_project):
             inst = ex.StepExecutor.__new__(ex.StepExecutor)

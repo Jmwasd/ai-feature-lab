@@ -22,6 +22,13 @@ from typing import Optional
 ROOT = Path(__file__).resolve().parent.parent
 
 
+def use_utf8_stdio():
+    """stdout·stderr를 UTF-8로 바꾼다. 파이프로 실행하면 로캘 인코딩(Windows 한국어는 cp949)이라 ✓·↻ 출력에서 죽는다."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
+
 @contextlib.contextmanager
 def progress_indicator(label: str):
     """터미널 진행 표시기. with 문으로 사용하며 .elapsed 로 경과 시간을 읽는다."""
@@ -108,7 +115,7 @@ class StepExecutor:
 
     def _run_git(self, *args) -> subprocess.CompletedProcess:
         cmd = ["git"] + list(args)
-        return subprocess.run(cmd, cwd=self._root, capture_output=True, text=True)
+        return subprocess.run(cmd, cwd=self._root, capture_output=True, encoding="utf-8", errors="replace")
 
     @property
     def _branch(self) -> str:
@@ -183,13 +190,13 @@ class StepExecutor:
         sections = []
         claude_md = ROOT / "CLAUDE.md"
         if claude_md.exists():
-            sections.append(f"## 프로젝트 규칙 (CLAUDE.md)\n\n{claude_md.read_text()}")
+            sections.append(f"## 프로젝트 규칙 (CLAUDE.md)\n\n{claude_md.read_text(encoding='utf-8')}")
         docs_dir = ROOT / "docs"
         if docs_dir.is_dir():
             for doc in sorted(docs_dir.glob("*.md")):
                 if doc.name == "UI_GUIDE.md":
                     continue
-                sections.append(f"## {doc.stem}\n\n{doc.read_text()}")
+                sections.append(f"## {doc.stem}\n\n{doc.read_text(encoding='utf-8')}")
         return "\n\n---\n\n".join(sections) if sections else ""
 
     def _load_design(self) -> str:
@@ -255,6 +262,50 @@ class StepExecutor:
 
     # --- Codex 호출 ---
 
+    CMD_MAX = 200
+
+    def _summarize_stdout(self, stdout: str) -> dict:
+        """codex --json 이벤트 스트림을 진단에 필요한 만큼만 접는다.
+
+        원본은 step당 200KB를 넘는데 그 대부분이 에이전트가 소스를 읽은 명령 출력이라
+        저장소에 원본이 있다. 반면 agent_message는 실패한 step에서 summary가 쓰이지
+        않으므로 유일한 단서다. 사람이 열어볼 수 있는 크기만 남긴다.
+        """
+        messages, commands, files, usage = [], [], [], None
+
+        for line in stdout.splitlines():
+            try:
+                event = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if not isinstance(event, dict):
+                continue
+
+            if event.get("type") == "turn.completed":
+                usage = event.get("usage")
+                continue
+            if event.get("type") != "item.completed":
+                continue
+
+            item = event.get("item") or {}
+            kind = item.get("type")
+
+            if kind == "agent_message":
+                messages.append(item.get("text", ""))
+            elif kind == "command_execution":
+                # 명령만 남기고 출력은 버린다 — 여기가 원본 용량의 대부분이다.
+                cmd = (item.get("command") or "").strip()
+                commands.append(cmd[: self.CMD_MAX] + "…" if len(cmd) > self.CMD_MAX else cmd)
+            elif kind == "file_change":
+                for change in item.get("changes") or []:
+                    path = change.get("path", "")
+                    with contextlib.suppress(ValueError):
+                        path = str(Path(path).relative_to(self._root))
+                    if path not in files:
+                        files.append(path)
+
+        return {"usage": usage, "messages": messages, "commands": commands, "files_changed": files}
+
     def _invoke_codex(self, step: dict, preamble: str) -> dict:
         step_num, step_name = step["step"], step["name"]
         step_file = self._phase_dir / f"step{step_num}.md"
@@ -263,11 +314,13 @@ class StepExecutor:
             print(f"  ERROR: {step_file} not found")
             sys.exit(1)
 
-        prompt = preamble + step_file.read_text()
+        prompt = preamble + step_file.read_text(encoding="utf-8")
         # 프롬프트는 stdin("-")으로 넘긴다. 인자로 넘기면 UI step 프롬프트가 Windows 명령줄 상한(32,767자)을 넘는다.
+        # 인코딩은 UTF-8로 고정한다. 로캘 인코딩(cp949)으로 넘기면 codex가 깨진 한글을 받는다.
         result = subprocess.run(
             ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox", "--json", "-"],
-            input=prompt, cwd=self._root, capture_output=True, text=True, timeout=1800,
+            input=prompt, cwd=self._root, capture_output=True,
+            encoding="utf-8", errors="replace", timeout=1800,
         )
 
         if result.returncode != 0:
@@ -278,10 +331,11 @@ class StepExecutor:
         output = {
             "step": step_num, "name": step_name,
             "exitCode": result.returncode,
-            "stdout": result.stdout, "stderr": result.stderr,
+            "stderr": result.stderr,
+            **self._summarize_stdout(result.stdout),
         }
         out_path = self._phase_dir / f"step{step_num}-output.json"
-        with open(out_path, "w") as f:
+        with open(out_path, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=2, ensure_ascii=False)
 
         return output
@@ -434,6 +488,7 @@ class StepExecutor:
 
 
 def main():
+    use_utf8_stdio()
     parser = argparse.ArgumentParser(description="Harness Step Executor")
     parser.add_argument("phase_dir", help="Phase directory name (e.g. 0-mvp)")
     parser.add_argument("--push", action="store_true", help="Push branch after completion")
