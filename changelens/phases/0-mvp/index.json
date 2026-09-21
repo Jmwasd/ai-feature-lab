@@ -21,7 +21,9 @@
     {
       "step": 2,
       "name": "auth",
-      "status": "pending"
+      "status": "completed",
+      "summary": "Google ID 토큰 검증·Web Crypto 서명 세션 쿠키·next 경로 검증·미들웨어 게이트·기동 시 AUTH_SECRET 검사 구현; TDD 인증 테스트 70개와 기존 git 테스트 18개, lint 및 AUTH_SECRET 유무별 build 통과",
+      "started_at": "2026-09-21T15:18:56+0900"
     },
     {
       "step": 3,
