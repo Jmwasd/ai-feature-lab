@@ -2,13 +2,51 @@
   "project": "changelens",
   "phase": "0-mvp",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "git-layer", "status": "pending" },
-    { "step": 2, "name": "auth", "status": "pending" },
-    { "step": 3, "name": "summary", "status": "pending" },
-    { "step": 4, "name": "landing", "status": "pending", "ui": true },
-    { "step": 5, "name": "repo-list", "status": "pending", "ui": true },
-    { "step": 6, "name": "commit-detail", "status": "pending", "ui": true },
-    { "step": 7, "name": "cli", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "summary": "Next.js 15·React 19·TypeScript strict·Tailwind v4·Vitest 설정과 최소 앱, lockfile 작성; install/lint/build/test 통과(테스트 없음); 디자인 검사 오류 20 · 경고 0은 Step 4로 명시 유예된 토큰·폰트 누락이며 브라우저 검수 미실시.",
+      "started_at": "2026-09-21T15:04:33+0900"
+    },
+    {
+      "step": 1,
+      "name": "git-layer",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "auth",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "summary",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "landing",
+      "status": "pending",
+      "ui": true
+    },
+    {
+      "step": 5,
+      "name": "repo-list",
+      "status": "pending",
+      "ui": true
+    },
+    {
+      "step": 6,
+      "name": "commit-detail",
+      "status": "pending",
+      "ui": true
+    },
+    {
+      "step": 7,
+      "name": "cli",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-21T15:04:33+0900"
 }
