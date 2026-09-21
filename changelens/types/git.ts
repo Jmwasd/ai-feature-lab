@@ -16,6 +16,11 @@ export type CommitSummary = {
   isMerge: boolean;
 };
 
+export type CommitPage = {
+  commits: CommitSummary[];
+  nextSkip: number | null;
+};
+
 export type RepoStatus =
   | { kind: "git-missing" }
   | { kind: "not-repo"; path: string }
