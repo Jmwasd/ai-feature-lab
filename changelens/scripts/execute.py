@@ -262,6 +262,50 @@ class StepExecutor:
 
     # --- Codex 호출 ---
 
+    CMD_MAX = 200
+
+    def _summarize_stdout(self, stdout: str) -> dict:
+        """codex --json 이벤트 스트림을 진단에 필요한 만큼만 접는다.
+
+        원본은 step당 200KB를 넘는데 그 대부분이 에이전트가 소스를 읽은 명령 출력이라
+        저장소에 원본이 있다. 반면 agent_message는 실패한 step에서 summary가 쓰이지
+        않으므로 유일한 단서다. 사람이 열어볼 수 있는 크기만 남긴다.
+        """
+        messages, commands, files, usage = [], [], [], None
+
+        for line in stdout.splitlines():
+            try:
+                event = json.loads(line)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if not isinstance(event, dict):
+                continue
+
+            if event.get("type") == "turn.completed":
+                usage = event.get("usage")
+                continue
+            if event.get("type") != "item.completed":
+                continue
+
+            item = event.get("item") or {}
+            kind = item.get("type")
+
+            if kind == "agent_message":
+                messages.append(item.get("text", ""))
+            elif kind == "command_execution":
+                # 명령만 남기고 출력은 버린다 — 여기가 원본 용량의 대부분이다.
+                cmd = (item.get("command") or "").strip()
+                commands.append(cmd[: self.CMD_MAX] + "…" if len(cmd) > self.CMD_MAX else cmd)
+            elif kind == "file_change":
+                for change in item.get("changes") or []:
+                    path = change.get("path", "")
+                    with contextlib.suppress(ValueError):
+                        path = str(Path(path).relative_to(self._root))
+                    if path not in files:
+                        files.append(path)
+
+        return {"usage": usage, "messages": messages, "commands": commands, "files_changed": files}
+
     def _invoke_codex(self, step: dict, preamble: str) -> dict:
         step_num, step_name = step["step"], step["name"]
         step_file = self._phase_dir / f"step{step_num}.md"
@@ -287,7 +331,8 @@ class StepExecutor:
         output = {
             "step": step_num, "name": step_name,
             "exitCode": result.returncode,
-            "stdout": result.stdout, "stderr": result.stderr,
+            "stderr": result.stderr,
+            **self._summarize_stdout(result.stdout),
         }
         out_path = self._phase_dir / f"step{step_num}-output.json"
         with open(out_path, "w", encoding="utf-8") as f:

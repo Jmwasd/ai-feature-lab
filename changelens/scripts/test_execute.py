@@ -670,14 +670,94 @@ class TestInvokeCodex:
 
     def test_saves_output_outside_cp949(self, executor):
         """codex 출력에는 cp949에 없는 글자(✓ 등)가 섞인다. 로캘 인코딩으로 쓰면 UnicodeEncodeError가 난다."""
-        mock_result = MagicMock(returncode=0, stdout="✓ 완료", stderr="")
+        stdout = json.dumps(
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "✓ 완료"}},
+            ensure_ascii=False,
+        )
+        mock_result = MagicMock(returncode=0, stdout=stdout, stderr="")
         step = {"step": 2, "name": "ui"}
 
         with patch("subprocess.run", return_value=mock_result):
             executor._invoke_codex(step, "preamble")
 
         data = json.loads((executor._phase_dir / "step2-output.json").read_text(encoding="utf-8"))
-        assert data["stdout"] == "✓ 완료"
+        assert data["messages"] == ["✓ 완료"]
+
+    def test_drops_raw_stdout(self, executor):
+        """원본 stdout은 step당 200KB를 넘고 대부분이 저장소에 이미 있는 파일 내용이다."""
+        stdout = json.dumps({
+            "type": "item.completed",
+            "item": {"type": "command_execution", "command": "cat lib/git/run.ts", "aggregated_output": "X" * 5000},
+        })
+        mock_result = MagicMock(returncode=0, stdout=stdout, stderr="")
+
+        with patch("subprocess.run", return_value=mock_result):
+            executor._invoke_codex({"step": 2, "name": "ui"}, "preamble")
+
+        raw = (executor._phase_dir / "step2-output.json").read_text(encoding="utf-8")
+        assert "stdout" not in json.loads(raw)
+        assert "X" * 100 not in raw
+        assert json.loads(raw)["commands"] == ["cat lib/git/run.ts"]
+
+
+# ---------------------------------------------------------------------------
+# _summarize_stdout
+# ---------------------------------------------------------------------------
+
+class TestSummarizeStdout:
+    @staticmethod
+    def _events(*events):
+        return "\n".join(json.dumps(e, ensure_ascii=False) for e in events)
+
+    def test_keeps_agent_messages_in_order(self, executor):
+        """실패한 step은 summary가 쓰이지 않으므로 agent_message가 유일한 단서다."""
+        stdout = self._events(
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "먼저"}},
+            {"type": "item.started", "item": {"type": "agent_message", "text": "무시"}},
+            {"type": "item.completed", "item": {"type": "agent_message", "text": "나중"}},
+        )
+        assert executor._summarize_stdout(stdout)["messages"] == ["먼저", "나중"]
+
+    def test_keeps_usage(self, executor):
+        stdout = self._events({"type": "turn.completed", "usage": {"input_tokens": 12, "output_tokens": 3}})
+        assert executor._summarize_stdout(stdout)["usage"] == {"input_tokens": 12, "output_tokens": 3}
+
+    def test_truncates_long_commands(self, executor):
+        stdout = self._events(
+            {"type": "item.completed", "item": {"type": "command_execution", "command": "echo " + "a" * 500}}
+        )
+        cmd = executor._summarize_stdout(stdout)["commands"][0]
+        assert len(cmd) == ex.StepExecutor.CMD_MAX + 1
+        assert cmd.endswith("…")
+
+    def test_relativizes_changed_paths_and_dedupes(self, executor):
+        root = executor._root
+        stdout = self._events(
+            {"type": "item.completed", "item": {"type": "file_change", "changes": [
+                {"path": f"{root}/lib/format.ts", "kind": "add"},
+                {"path": f"{root}/lib/format.ts", "kind": "update"},
+            ]}},
+            {"type": "item.completed", "item": {"type": "file_change", "changes": [
+                {"path": "/elsewhere/other.ts", "kind": "add"},
+            ]}},
+        )
+        assert executor._summarize_stdout(stdout)["files_changed"] == ["lib/format.ts", "/elsewhere/other.ts"]
+
+    def test_survives_malformed_lines(self, executor):
+        """codex가 중간에 죽으면 마지막 줄이 잘린 채 남는다. 그 때문에 요약이 실패하면 안 된다."""
+        stdout = "\n".join([
+            "",
+            "not json",
+            '"문자열"',
+            json.dumps({"type": "item.completed", "item": {"type": "agent_message", "text": "살아남음"}}),
+            '{"type": "item.comp',
+        ])
+        assert executor._summarize_stdout(stdout)["messages"] == ["살아남음"]
+
+    def test_empty_stdout_yields_empty_summary(self, executor):
+        assert executor._summarize_stdout("") == {
+            "usage": None, "messages": [], "commands": [], "files_changed": []
+        }
 
 
 # ---------------------------------------------------------------------------

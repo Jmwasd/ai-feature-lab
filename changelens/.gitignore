@@ -9,3 +9,6 @@ phases/**/step*-output.json
 
 # 로컬 환경
 .env*.local
+
+# 하네스 테스트 부산물
+__pycache__/
