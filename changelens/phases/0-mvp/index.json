@@ -15,7 +15,8 @@
       "name": "git-layer",
       "status": "completed",
       "summary": "git CLI 실행·저장소 상태·커밋 목록/상세·파일별 diff·HEAD 기반 지표 캐시 구현; 전역 설정과 분리한 실제 저장소 테스트 18개 및 lint/build/test 통과",
-      "started_at": "2026-09-21T15:07:59+0900"
+      "started_at": "2026-09-21T15:07:59+0900",
+      "completed_at": "2026-09-21T15:18:56+0900"
     },
     {
       "step": 2,
