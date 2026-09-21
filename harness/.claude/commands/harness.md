@@ -25,6 +25,8 @@
 5. **AC는 실행 가능한 커맨드** — "~가 동작해야 한다" 같은 추상적 서술이 아닌 `npm run build && npm test` 같은 실제 실행 가능한 검증 커맨드를 포함한다.
 6. **주의사항은 구체적으로** — "조심해라" 대신 "X를 하지 마라. 이유: Y" 형식으로 적는다.
 7. **네이밍** — step name은 kebab-case slug로, 해당 step의 핵심 모듈/작업을 한두 단어로 표현한다 (예: `project-setup`, `api-layer`, `auth-flow`).
+8. **문서 선택** — `ARCHITECTURE.md`는 항상 읽고, ADR은 관련 결정이 있을 때, `UI_GUIDE.md`는 UI를 수정하며 해당 파일이 있을 때만 읽는다.
+9. **UI 규칙 단일화** — UI 가이드의 내용을 step 파일에 복사하지 말고 `/docs/UI_GUIDE.md` 경로만 참조한다.
 
 ### D. 파일 생성
 
@@ -93,7 +95,8 @@
 먼저 아래 파일들을 읽고 프로젝트의 아키텍처와 설계 의도를 파악하라:
 
 - `/docs/ARCHITECTURE.md`
-- `/docs/ADR.md`
+- {관련 기술 결정이 있으면 `/docs/ADR.md`}
+- {UI 작업이고 파일이 있으면 `/docs/UI_GUIDE.md`}
 - {이전 step에서 생성/수정된 파일 경로}
 
 이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
@@ -111,18 +114,6 @@ npm run build   # 컴파일 에러 없음
 npm test        # 테스트 통과
 ```
 
-## 검증 절차
-
-1. 위 AC 커맨드를 실행한다.
-2. 아키텍처 체크리스트를 확인한다:
-   - ARCHITECTURE.md 디렉토리 구조를 따르는가?
-   - ADR 기술 스택을 벗어나지 않았는가?
-   - CLAUDE.md CRITICAL 규칙을 위반하지 않았는가?
-3. 결과에 따라 `phases/{task-name}/index.json`의 해당 step을 업데이트한다:
-   - 성공 → `"status": "completed"`, `"summary": "산출물 한 줄 요약"`
-   - 수정 3회 시도 후에도 실패 → `"status": "error"`, `"error_message": "구체적 에러 내용"`
-   - 사용자 개입 필요 (API 키, 외부 인증, 수동 설정 등) → `"status": "blocked"`, `"blocked_reason": "구체적 사유"` 후 즉시 중단
-
 ## 금지사항
 
 - {이 step에서 하지 말아야 할 것. "X를 하지 마라. 이유: Y" 형식}
@@ -139,7 +130,8 @@ python3 scripts/execute.py {task-name} --push  # 실행 후 push
 execute.py가 자동으로 처리하는 것:
 
 - `feat-{task-name}` 브랜치 생성/checkout
-- 가드레일 주입 — CLAUDE.md + docs/*.md 내용을 매 step 프롬프트에 포함
+- 기본 가드레일 주입 — CLAUDE.md + docs 문서를 매 step 프롬프트에 포함하되 UI_GUIDE.md는 제외
+- 선택 문서 사용 — UI 작업 step은 파일이 있을 때 읽어야 할 파일에 UI_GUIDE.md를 명시하고 내용을 복제하지 않음
 - 컨텍스트 누적 — 완료된 step의 summary를 다음 step 프롬프트에 전달
 - 자가 교정 — 실패 시 최대 3회 재시도하며, 이전 에러 메시지를 프롬프트에 피드백
 - 2단계 커밋 — 코드 변경(`feat`)과 메타데이터(`chore`)를 분리 커밋
