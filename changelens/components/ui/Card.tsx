@@ -1,5 +1,5 @@
 import type { ComponentProps } from "react";
 
-export function Card({ className = "", ...props }: ComponentProps<"div">) {
-  return <div {...props} className={`rounded-xl border border-hairline bg-surface p-6 ${className}`} />;
+export function Card({ className = "", padded = true, ...props }: ComponentProps<"div"> & { padded?: boolean }) {
+  return <div {...props} className={`rounded-xl border border-hairline bg-surface ${padded ? "p-6" : ""} ${className}`} />;
 }
