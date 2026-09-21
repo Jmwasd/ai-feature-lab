@@ -461,9 +461,25 @@ class TestCheckoutBranch:
 
     def test_already_on_branch(self, executor):
         self._mock_git(executor, [
-            MagicMock(returncode=0, stdout="feat-mvp\n", stderr=""),
+            MagicMock(returncode=0, stdout="feat/TestProject/0-mvp\n", stderr=""),
         ])
         executor._checkout_branch()  # should return without checkout
+
+    def test_branch_name_follows_repo_rule(self, executor):
+        """저장소 branch 규칙: harness phase는 feat/<project>/<phase 디렉토리명>."""
+        calls = []
+        def fake_git(*args):
+            calls.append(args)
+            if args[:2] == ("rev-parse", "--abbrev-ref"):
+                return MagicMock(returncode=0, stdout="main\n", stderr="")
+            if args[:2] == ("rev-parse", "--verify"):
+                return MagicMock(returncode=1, stdout="", stderr="not found")
+            return MagicMock(returncode=0, stdout="", stderr="")
+        executor._run_git = fake_git
+
+        executor._checkout_branch()
+
+        assert ("checkout", "-b", "feat/TestProject/0-mvp") in calls
 
     def test_branch_exists_checkout(self, executor):
         self._mock_git(executor, [
