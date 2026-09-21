@@ -25,8 +25,8 @@
 5. **AC는 실행 가능한 커맨드** — "~가 동작해야 한다" 같은 추상적 서술이 아닌 `npm run build && npm test` 같은 실제 실행 가능한 검증 커맨드를 포함한다.
 6. **주의사항은 구체적으로** — "조심해라" 대신 "X를 하지 마라. 이유: Y" 형식으로 적는다.
 7. **네이밍** — step name은 kebab-case slug로, 해당 step의 핵심 모듈/작업을 한두 단어로 표현한다 (예: `project-setup`, `api-layer`, `auth-flow`).
-8. **문서 선택** — `ARCHITECTURE.md`는 항상 읽고, ADR은 관련 결정이 있을 때, `UI_GUIDE.md`는 UI를 수정하며 해당 파일이 있을 때만 읽는다.
-9. **UI 규칙 단일화** — UI 가이드의 내용을 step 파일에 복사하지 말고 `/docs/UI_GUIDE.md` 경로만 참조한다.
+8. **문서 선택** — `ARCHITECTURE.md`는 항상 읽고, ADR은 관련 결정이 있을 때 읽는다. 디자인 기준은 `docs/UI_GUIDE.md`가 아니라 design 스킬(`.claude/skills/design/`)에 있다.
+9. **UI step 표시** — UI를 만들거나 고치는 step은 `index.json`에서 `"ui": true`로 표시한다. execute.py가 그 step 프롬프트에만 design 스킬을 넣는다. 디자인 규칙을 step 파일에 복사하지 마라 — 원본은 `.claude/skills/design/guide.md` 하나다. 이유: codex는 `.claude/skills`를 스스로 불러오지 않으므로, 표시가 없으면 디자인 기준 없이 화면을 만든다.
 
 ### D. 파일 생성
 
@@ -60,7 +60,8 @@
   "steps": [
     { "step": 0, "name": "project-setup", "status": "pending" },
     { "step": 1, "name": "core-types", "status": "pending" },
-    { "step": 2, "name": "api-layer", "status": "pending" }
+    { "step": 2, "name": "api-layer", "status": "pending" },
+    { "step": 3, "name": "commit-list-ui", "status": "pending", "ui": true }
   ]
 }
 ```
@@ -72,6 +73,7 @@
 - `steps[].step`: 0부터 시작하는 순번.
 - `steps[].name`: kebab-case slug.
 - `steps[].status`: 초기값은 모두 `"pending"`.
+- `steps[].ui`: UI를 만들거나 고치는 step에만 `true`. 없으면 UI step이 아니다. execute.py가 이 값을 보고 design 스킬을 프롬프트에 넣는다.
 
 상태 전이와 자동 기록 필드:
 
@@ -96,7 +98,6 @@
 
 - `/docs/ARCHITECTURE.md`
 - {관련 기술 결정이 있으면 `/docs/ADR.md`}
-- {UI 작업이고 파일이 있으면 `/docs/UI_GUIDE.md`}
 - {이전 step에서 생성/수정된 파일 경로}
 
 이전 step에서 만들어진 코드를 꼼꼼히 읽고, 설계 의도를 이해한 뒤 작업하라.
@@ -112,6 +113,7 @@
 ```bash
 npm run build   # 컴파일 에러 없음
 npm test        # 테스트 통과
+node .claude/skills/design/check_ui.mjs   # "ui": true step만 — 디자인 위반 0
 ```
 
 ## 금지사항
@@ -130,8 +132,8 @@ python3 scripts/execute.py {task-name} --push  # 실행 후 push
 execute.py가 자동으로 처리하는 것:
 
 - `feat-{task-name}` 브랜치 생성/checkout
-- 기본 가드레일 주입 — CLAUDE.md + docs 문서를 매 step 프롬프트에 포함하되 UI_GUIDE.md는 제외
-- 선택 문서 사용 — UI 작업 step은 파일이 있을 때 읽어야 할 파일에 UI_GUIDE.md를 명시하고 내용을 복제하지 않음
+- 기본 가드레일 주입 — CLAUDE.md + docs 문서를 매 step 프롬프트에 포함한다 (`docs/UI_GUIDE.md`는 제외)
+- 디자인 주입 — `"ui": true` step에만 design 스킬의 `SKILL.md`(frontmatter 제외)와 `guide.md`를 프롬프트에 넣는다. 스킬 파일이 없으면 codex를 부르기 전에 멈춘다
 - 컨텍스트 누적 — 완료된 step의 summary를 다음 step 프롬프트에 전달
 - 자가 교정 — 실패 시 최대 3회 재시도하며, 이전 에러 메시지를 프롬프트에 피드백
 - 2단계 커밋 — 코드 변경(`feat`)과 메타데이터(`chore`)를 분리 커밋

@@ -9,6 +9,7 @@ Usage:
 import argparse
 import contextlib
 import json
+import re
 import subprocess
 import sys
 import threading
@@ -186,6 +187,21 @@ class StepExecutor:
                 sections.append(f"## {doc.stem}\n\n{doc.read_text()}")
         return "\n\n---\n\n".join(sections) if sections else ""
 
+    def _load_design(self) -> str:
+        """UI step(`"ui": true`)에 넣을 디자인 기준. docs/UI_GUIDE.md가 아니라 design 스킬에서 읽는다.
+
+        codex는 .claude/skills를 스스로 불러오지 않으므로 여기서 직접 프롬프트에 넣는다.
+        """
+        skill_dir = ROOT / ".claude" / "skills" / "design"
+        skill_md, guide_md = skill_dir / "SKILL.md", skill_dir / "guide.md"
+        missing = [p for p in (skill_md, guide_md) if not p.exists()]
+        if missing:
+            print(f"  ERROR: UI step인데 design 스킬 파일이 없습니다: {', '.join(str(p) for p in missing)}")
+            sys.exit(1)
+        skill = re.sub(r"\A---\r?\n.*?\r?\n---\r?\n", "", skill_md.read_text(encoding="utf-8"), flags=re.S)
+        guide = guide_md.read_text(encoding="utf-8")
+        return f"{skill.strip()}\n\n---\n\n{guide.strip()}"
+
     @staticmethod
     def _build_step_context(index: dict) -> str:
         lines = [
@@ -198,7 +214,7 @@ class StepExecutor:
         return "## 이전 Step 산출물\n\n" + "\n".join(lines) + "\n\n"
 
     def _build_preamble(self, guardrails: str, step_context: str,
-                        prev_error: Optional[str] = None) -> str:
+                        prev_error: Optional[str] = None, design: str = "") -> str:
         commit_example = self.FEAT_MSG.format(
             phase=self._phase_name, num="N", name="<step-name>"
         )
@@ -208,9 +224,16 @@ class StepExecutor:
                 f"\n## ⚠ 이전 시도 실패 — 아래 에러를 반드시 참고하여 수정하라\n\n"
                 f"{prev_error}\n\n---\n\n"
             )
+        design_section = ""
+        if design:
+            design_section = (
+                f"## 디자인 기준 (design 스킬 — 이 step은 UI 작업이다)\n\n"
+                f"{design}\n\n---\n\n"
+            )
         return (
             f"당신은 {self._project} 프로젝트의 개발자입니다. 아래 step을 수행하세요.\n\n"
             f"{guardrails}\n\n---\n\n"
+            f"{design_section}"
             f"{step_context}{retry_section}"
             f"## 작업 규칙\n\n"
             f"1. 이전 step에서 작성된 코드를 확인하고 일관성을 유지하라.\n"
@@ -295,12 +318,13 @@ class StepExecutor:
         """단일 step을 실행하고 실패하거나 차단되면 프로세스를 종료한다."""
         step_num, step_name = step["step"], step["name"]
         done = sum(1 for s in self._read_json(self._index_file)["steps"] if s["status"] == "completed")
+        design = self._load_design() if step.get("ui") else ""
         prev_error = None
 
         for attempt in range(1, self.MAX_RETRIES + 1):
             index = self._read_json(self._index_file)
             step_context = self._build_step_context(index)
-            preamble = self._build_preamble(guardrails, step_context, prev_error)
+            preamble = self._build_preamble(guardrails, step_context, prev_error, design)
 
             tag = f"Step {step_num}/{self._total - 1} ({done} done): {step_name}"
             if attempt > 1:

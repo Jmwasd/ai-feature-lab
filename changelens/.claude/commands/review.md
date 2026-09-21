@@ -4,7 +4,7 @@
 - `/CLAUDE.md`
 - `/docs/ARCHITECTURE.md`
 - 변경과 관련된 결정이 있으면 `/docs/ADR.md`
-- UI 변경이고 파일이 있으면 `/docs/UI_GUIDE.md`
+- UI 변경이면 `/.claude/skills/design/SKILL.md`와 `/.claude/skills/design/guide.md` (`docs/UI_GUIDE.md`가 아니다)
 
 그런 다음 변경된 파일들을 확인하고, 아래 체크리스트로 검증하라:
 
@@ -16,6 +16,7 @@
 4. **테스트 존재**: 새로운 기능에 대한 테스트가 작성되어 있는가?
 5. **CRITICAL 규칙**: CLAUDE.md의 CRITICAL 규칙을 위반하지 않았는가?
 6. **검증 통과**: lint, build, test 명령어가 에러 없이 통과하는가?
+7. **디자인 준수**: UI 변경이면 `node .claude/skills/design/check_ui.mjs`가 오류 0이고, `guide.md` §7 체크리스트 중 검사기가 못 보는 항목(화면당 앰버 개수, Mono 사용, 초록·빨강의 뜻, 좁은 폭)을 통과하는가? UI 변경이 없으면 `—`.
 
 ## 출력 형식
 
@@ -27,5 +28,6 @@
 | 테스트 존재 | ✅/❌ | {상세} |
 | CRITICAL 규칙 | ✅/❌ | {상세} |
 | 검증 통과 | ✅/❌ | {상세} |
+| 디자인 준수 | ✅/❌/— | {상세} |
 
 위반 사항이 있으면 수정 방안을 구체적으로 제시하라.
