@@ -54,6 +54,9 @@ types/                    공유 타입
 - 커밋 해시는 `^[0-9a-f]{7,40}$`를 통과한 값만 git에 넘긴다.
 - 출력 파싱은 사람이 읽는 기본 포맷에 기대지 않는다. `--pretty=format:` 에 `%x1f`(단위 구분자)와 `%x1e`(레코드 구분자)를 써서 필드를 자른다. 커밋 메시지에 개행·탭이 들어와도 깨지지 않아야 한다.
 - 모든 호출에 작업 디렉터리를 명시한다(`cwd: repoPath`). 전역 git 설정에 기대지 마라.
+- 출력 형식을 바꾸는 설정은 명령마다 플래그로 고정한다: `-c core.quotePath=false`(한글 경로가 8진수로 이스케이프되지 않게), `--no-color`, `--no-ext-diff`, `-M`(이름 변경 탐지), diff에는 `--src-prefix=a/ --dst-prefix=b/`.
+- `execFile`의 `maxBuffer`를 넉넉히 준다(기본 1MB면 전체 이력 스캔이 끊긴다).
+- 날짜는 `%aI`로 받고, 화면에도 커밋에 기록된 시간대 그대로 표시한다(`git log` 기본과 같다).
 
 필요한 호출은 네 가지다.
 
@@ -64,17 +67,21 @@ types/                    공유 타입
 | 커밋 상세 메타 + 파일 목록 | `git show --stat --pretty=format:... <sha>` |
 | 파일별 diff | `git show --format= --unified=3 <sha>` |
 
-머지 커밋은 목록에 **포함**하되 통계(파일 수·추가·삭제 줄)는 첫 번째 부모 기준으로 계산한다(`git show -m --first-parent`). 바이너리 파일은 numstat이 `-`를 주므로 줄 수 대신 "바이너리"로 표시한다.
+머지 커밋은 목록에 **포함**하되 통계(파일 수·추가·삭제 줄)는 첫 번째 부모 기준으로 계산한다(`--diff-merges=first-parent`). `git log`에 `--first-parent`를 넣지 마라 — 이력 순회 자체가 첫 부모 사슬로 줄어든다. 바이너리 파일은 numstat이 `-`를 주므로 줄 수 대신 "바이너리"로 표시한다.
 
-지표 4종은 전체 이력 1회 스캔으로 한꺼번에 계산하고 **서버 프로세스 메모리에 캐시**한다(키: 저장소 경로 + HEAD sha). HEAD가 바뀌면 다시 계산한다.
+지표 4종은 전체 이력 1회 스캔으로 한꺼번에 계산하고 **서버 프로세스 메모리에 캐시**한다(키: 저장소 경로 + HEAD sha). HEAD가 바뀌면 다시 계산한다. 지표의 추가·삭제 줄 합계에는 머지 커밋의 diff를 넣지 않는다(같은 변경이 두 번 세어진다).
+
+화면에 그리는 diff는 **파일당 256KB**까지다. 넘는 파일은 본문 대신 생략 안내와 `git show <sha> -- <경로>` 명령을 보여준다. 이 상한은 화면용이고, 요약 입력 상한(200KB, ADR-4)과 별개다.
 
 ## 인증 계층 (`lib/auth/`)
 
-1. 랜딩에서 GIS 버튼(`NEXT_PUBLIC_GOOGLE_CLIENT_ID`)이 ID 토큰을 준다. 클라이언트 ID가 없으면 버튼 자리에 발급 방법 안내를 띄우고 로그인을 막는다.
+1. `/`는 쿼리로 세 화면을 나눈다: 쿼리 없음 → 랜딩, `?next=<경로>` → 차단 화면(`401 · 세션 없음`), `?login` → 로그인 카드. 랜딩과 차단 화면의 로그인 버튼은 `?login`(있으면 `next` 유지)으로 보낸다. 로그인 카드의 GIS 버튼(`NEXT_PUBLIC_GOOGLE_CLIENT_ID`)이 ID 토큰을 준다. 클라이언트 ID가 없으면 버튼 자리에 발급 방법 안내를 띄우고 로그인을 막는다.
 2. 클라이언트가 그 토큰을 `POST /api/session`으로 보낸다.
 3. 서버가 `google-auth-library`의 `OAuth2Client.verifyIdToken`으로 서명·`aud`·만료를 검증한다. 허용 계정 제한은 두지 않는다.
-4. 통과하면 `{ sub, email, name, picture, exp }`를 `AUTH_SECRET`으로 서명해 **HttpOnly, SameSite=Lax, Path=/** 쿠키로 굽는다. 쿠키 만료는 ID 토큰의 `exp`와 같다(약 1시간).
-5. `middleware.ts`가 `/repo` 이하 요청마다 쿠키 서명과 만료를 검사한다. 실패하면 `/?next=<원래 경로>`로 303 리다이렉트한다. `next` 값은 `/`로 시작하는 내부 경로만 허용한다(`//`나 `http`로 시작하면 버린다). 로그인 성공 후 그 경로로 돌아간다.
+4. 통과하면 `{ sub, email, name, picture, exp }`를 `AUTH_SECRET`으로 서명해 **HttpOnly, SameSite=Lax, Path=/** 쿠키로 굽는다. 쿠키 만료는 ID 토큰의 `exp`와 같다(약 1시간). 서명은 Web Crypto(`crypto.subtle`) HMAC-SHA256으로 한다 — 미들웨어가 Edge 런타임이라 Node `crypto`를 쓸 수 없다. 서명 비교는 `crypto.subtle.verify`로 한다.
+5. `middleware.ts`가 보호 경로 요청마다 쿠키 서명과 만료를 검사한다. 실패하면 `/repo` 이하 화면은 `/?next=<원래 경로>`로 303 리다이렉트하고, API(`/api/commits`, `/api/summary/*`, `DELETE /api/session`)는 401 JSON을 돌려준다 — fetch가 리다이렉트를 따라가 HTML을 JSON 자리에 받지 않게. `next` 값은 `/`로 시작하는 내부 경로만 허용한다(`//`나 `http`로 시작하면 버린다). 로그인 성공 후 그 경로로 돌아간다.
+
+`AUTH_SECRET` 검사는 `instrumentation.ts`의 `register()`에서 서버가 뜰 때 한다. `next build`에서는 검사하지 않는다 — 빌드는 `.env.local` 없이도 통과해야 한다.
 
 세션 저장소는 없다. 상태는 서명된 쿠키 안에만 있으므로 서버를 재시작해도 로그인이 유지된다.
 
@@ -86,16 +93,16 @@ types/                    공유 타입
 - 요청: `max_tokens: 4096`, `thinking: { type: "adaptive" }`, `output_config: { effort: "low" }`. `budget_tokens`는 이 모델에서 400을 받으므로 쓰지 마라. 어시스턴트 프리필도 400이다.
 - 클라이언트는 `new Anthropic({ timeout: 30_000, maxRetries: 1 })`로 만든다. SDK 기본 타임아웃(10분)은 페이지 렌더를 붙잡는다.
 - 입력: 커밋 메시지, 파일 목록과 numstat 전체 + diff 본문. **diff 본문은 200KB까지만** 보낸다(ADR-4). 잘렸으면 프롬프트에 그 사실을 적고, 화면 요약 아래에도 "diff 일부만 읽고 쓴 요약"이라고 표시한다. 조용히 자르지 마라.
-- 출력: 한 문단 요약과 3줄 이내의 변경 포인트. 커밋 메시지를 그대로 옮겨 적지 말고 diff가 실제로 한 일을 쓰라고 지시한다.
+- 출력: 한 문단 요약과 3줄 이내의 변경 포인트. 커밋 메시지를 그대로 옮겨 적지 말고 diff가 실제로 한 일을 쓰라고 지시한다. 형식은 `output_config.format`(`{ type: "json_schema", schema }`, `effort`와 같은 객체)으로 고정하고 응답 텍스트를 `JSON.parse`한다.
 - 캐시: `~/.changelens/<저장소경로 해시>/<sha>.json`. 커밋은 불변이므로 무효화 규칙이 없다. 읽기 실패는 캐시 미스로 취급한다.
 - 실패 처리: `Anthropic.AuthenticationError` → "API 키를 확인하라", `Anthropic.RateLimitError` → "잠시 후 다시", 그 밖의 `Anthropic.APIError`와 타임아웃 → 일반 안내. 어느 경우에도 **요약 칸만 접히고 git 화면은 그대로 렌더된다**. `ANTHROPIC_API_KEY`가 없으면 아예 호출하지 않고 요약 칸을 숨긴다.
-- `response.stop_reason`을 먼저 확인한다. `refusal`이면 요약 없이 안내만 띄운다.
+- `response.stop_reason`을 먼저 확인한다. `refusal`이면 요약 없이 안내만 띄운다. `max_tokens`(출력이 잘림)는 일반 실패로 다룬다.
 
 ## 라우트와 환경변수
 
 | 경로 | 보호 | 하는 일 |
 |---|---|---|
-| `/` | 공개 | 랜딩, 기능 소개, GIS 로그인 버튼 |
+| `/` | 공개 | 랜딩 · `?next=` 차단 화면 · `?login` 로그인 카드(GIS) |
 | `/repo` | 미들웨어 | 지표 4종 + 커밋 카드 50개 |
 | `/repo/[sha]` | 미들웨어 | 커밋 메타, 파일 목록, 파일별 diff, 요약 |
 | `POST /api/session` | 공개 | ID 토큰 검증 → 세션 쿠키 |
@@ -121,6 +128,8 @@ types/                    공유 타입
 
 ## 테스트 전략
 
-Vitest. `lib/git/` 테스트는 임시 디렉터리에 실제 저장소를 만들어(`git init`, 파일 쓰기, `git commit`) 검증한다. 최소한 이 네 가지는 픽스처로 덮는다: 여러 줄 메시지를 가진 커밋, 파일 이름 변경, 바이너리 파일, 머지 커밋. Anthropic 호출과 캐시 입출력은 모킹한다.
+Vitest. `lib/git/` 테스트는 임시 디렉터리에 실제 저장소를 만들어(`git init`, 파일 쓰기, `git commit`) 검증한다. 최소한 이 다섯 가지는 픽스처로 덮는다: 여러 줄 메시지를 가진 커밋, 파일 이름 변경, 바이너리 파일, 머지 커밋, 한글 파일명. 픽스처는 전역 git 설정과 분리한다(`GIT_CONFIG_GLOBAL`을 빈 파일로, `GIT_CONFIG_NOSYSTEM=1`, 작성자·날짜는 환경변수로 고정) — 개발자 PC의 `commit.gpgsign` 같은 설정이 테스트를 깨뜨리지 않게. Anthropic 호출과 캐시 입출력은 모킹한다.
+
+화면 컴포넌트는 렌더 테스트를 하지 않는다(테스트 라이브러리를 더하지 않는다). 대신 화면이 쓰는 순수 로직(숫자·날짜·기간 포맷, `next` 검증 등)을 `lib/`로 빼서 테스트하고, 화면은 `npm run build`와 design 검사기로 확인한다.
 
 AC 커맨드: `npm run build && npm test`

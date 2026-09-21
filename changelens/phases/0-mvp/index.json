@@ -1,0 +1,14 @@
+{
+  "project": "changelens",
+  "phase": "0-mvp",
+  "steps": [
+    { "step": 0, "name": "project-setup", "status": "pending" },
+    { "step": 1, "name": "git-layer", "status": "pending" },
+    { "step": 2, "name": "auth", "status": "pending" },
+    { "step": 3, "name": "summary", "status": "pending" },
+    { "step": 4, "name": "landing", "status": "pending", "ui": true },
+    { "step": 5, "name": "repo-list", "status": "pending", "ui": true },
+    { "step": 6, "name": "commit-detail", "status": "pending", "ui": true },
+    { "step": 7, "name": "cli", "status": "pending" }
+  ]
+}
