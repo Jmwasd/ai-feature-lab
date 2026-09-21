@@ -131,7 +131,7 @@ python3 scripts/execute.py {task-name} --push  # 실행 후 push
 
 execute.py가 자동으로 처리하는 것:
 
-- `feat-{task-name}` 브랜치 생성/checkout
+- `feat/{project}/{task-name}` 브랜치 생성/checkout (저장소 branch 규칙)
 - 기본 가드레일 주입 — CLAUDE.md + docs 문서를 매 step 프롬프트에 포함한다 (`docs/UI_GUIDE.md`는 제외)
 - 디자인 주입 — `"ui": true` step에만 design 스킬의 `SKILL.md`(frontmatter 제외)와 `guide.md`를 프롬프트에 넣는다. 스킬 파일이 없으면 codex를 부르기 전에 멈춘다
 - 컨텍스트 누적 — 완료된 step의 summary를 다음 step 프롬프트에 전달

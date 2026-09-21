@@ -461,9 +461,25 @@ class TestCheckoutBranch:
 
     def test_already_on_branch(self, executor):
         self._mock_git(executor, [
-            MagicMock(returncode=0, stdout="feat-mvp\n", stderr=""),
+            MagicMock(returncode=0, stdout="feat/TestProject/0-mvp\n", stderr=""),
         ])
         executor._checkout_branch()  # should return without checkout
+
+    def test_branch_name_follows_repo_rule(self, executor):
+        """저장소 branch 규칙: harness phase는 feat/<project>/<phase 디렉토리명>."""
+        calls = []
+        def fake_git(*args):
+            calls.append(args)
+            if args[:2] == ("rev-parse", "--abbrev-ref"):
+                return MagicMock(returncode=0, stdout="main\n", stderr="")
+            if args[:2] == ("rev-parse", "--verify"):
+                return MagicMock(returncode=1, stdout="", stderr="not found")
+            return MagicMock(returncode=0, stdout="", stderr="")
+        executor._run_git = fake_git
+
+        executor._checkout_branch()
+
+        assert ("checkout", "-b", "feat/TestProject/0-mvp") in calls
 
     def test_branch_exists_checkout(self, executor):
         self._mock_git(executor, [
@@ -540,6 +556,35 @@ class TestCommitStep:
         assert len(commit_msgs) == 1
         assert "chore" in commit_msgs[0]
 
+    def test_stages_only_project_dir(self, executor):
+        """`git add -A`는 경로가 없으면 저장소 전체를 올린다. 모노레포의 다른 프로젝트가 섞이면 안 된다."""
+        calls = []
+        def fake_git(*args):
+            calls.append(args)
+            return MagicMock(returncode=1 if args[:2] == ("diff", "--cached") else 0, stdout="", stderr="")
+        executor._run_git = fake_git
+
+        executor._commit_step(2, "ui")
+
+        add_calls = [c for c in calls if c[0] == "add"]
+        assert add_calls
+        assert all(c == ("add", "-A", "--", ".") for c in add_calls)
+
+
+class TestFinalize:
+    def test_stages_only_project_dir(self, executor):
+        calls = []
+        def fake_git(*args):
+            calls.append(args)
+            return MagicMock(returncode=1 if args[:2] == ("diff", "--cached") else 0, stdout="", stderr="")
+        executor._run_git = fake_git
+
+        executor._finalize()
+
+        add_calls = [c for c in calls if c[0] == "add"]
+        assert add_calls
+        assert all(c == ("add", "-A", "--", ".") for c in add_calls)
+
 
 # ---------------------------------------------------------------------------
 # _invoke_codex (mocked)
@@ -559,8 +604,12 @@ class TestInvokeCodex:
         assert "exec" in cmd
         assert "--dangerously-bypass-approvals-and-sandbox" in cmd
         assert "--json" in cmd
-        assert "PREAMBLE" in cmd[-1]
-        assert "UI를 구현하세요" in cmd[-1]
+        # 프롬프트는 stdin으로 넘긴다. Windows 명령줄 상한(32,767자)을 UI step 프롬프트가 넘는다.
+        assert cmd[-1] == "-"
+        prompt = mock_run.call_args[1]["input"]
+        assert "PREAMBLE" in prompt
+        assert "UI를 구현하세요" in prompt
+        assert all("PREAMBLE" not in arg for arg in cmd)
 
     def test_saves_output_json(self, executor):
         mock_result = MagicMock(returncode=0, stdout='{"ok": true}', stderr="")

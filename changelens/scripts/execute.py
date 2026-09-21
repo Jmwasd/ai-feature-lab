@@ -110,8 +110,13 @@ class StepExecutor:
         cmd = ["git"] + list(args)
         return subprocess.run(cmd, cwd=self._root, capture_output=True, text=True)
 
+    @property
+    def _branch(self) -> str:
+        """저장소 branch 규칙: harness phase 브랜치는 feat/<project>/<phase 디렉토리명>."""
+        return f"feat/{self._project}/{self._phase_dir_name}"
+
     def _checkout_branch(self):
-        branch = f"feat-{self._phase_name}"
+        branch = self._branch
 
         r = self._run_git("rev-parse", "--abbrev-ref", "HEAD")
         if r.returncode != 0:
@@ -137,7 +142,7 @@ class StepExecutor:
         output_rel = f"phases/{self._phase_dir_name}/step{step_num}-output.json"
         index_rel = f"phases/{self._phase_dir_name}/index.json"
 
-        self._run_git("add", "-A")
+        self._run_git("add", "-A", "--", ".")
         self._run_git("reset", "HEAD", "--", output_rel)
         self._run_git("reset", "HEAD", "--", index_rel)
 
@@ -149,7 +154,7 @@ class StepExecutor:
             else:
                 print(f"  WARN: 코드 커밋 실패: {r.stderr.strip()}")
 
-        self._run_git("add", "-A")
+        self._run_git("add", "-A", "--", ".")
         if self._run_git("diff", "--cached", "--quiet").returncode != 0:
             msg = self.CHORE_MSG.format(phase=self._phase_name, num=step_num)
             r = self._run_git("commit", "-m", msg)
@@ -259,9 +264,10 @@ class StepExecutor:
             sys.exit(1)
 
         prompt = preamble + step_file.read_text()
+        # 프롬프트는 stdin("-")으로 넘긴다. 인자로 넘기면 UI step 프롬프트가 Windows 명령줄 상한(32,767자)을 넘는다.
         result = subprocess.run(
-            ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox", "--json", prompt],
-            cwd=self._root, capture_output=True, text=True, timeout=1800,
+            ["codex", "exec", "--dangerously-bypass-approvals-and-sandbox", "--json", "-"],
+            input=prompt, cwd=self._root, capture_output=True, text=True, timeout=1800,
         )
 
         if result.returncode != 0:
@@ -407,7 +413,7 @@ class StepExecutor:
         self._write_json(self._index_file, index)
         self._update_top_index("completed")
 
-        self._run_git("add", "-A")
+        self._run_git("add", "-A", "--", ".")
         if self._run_git("diff", "--cached", "--quiet").returncode != 0:
             msg = f"chore({self._phase_name}): mark phase completed"
             r = self._run_git("commit", "-m", msg)
@@ -415,7 +421,7 @@ class StepExecutor:
                 print(f"  ✓ {msg}")
 
         if self._auto_push:
-            branch = f"feat-{self._phase_name}"
+            branch = self._branch
             r = self._run_git("push", "-u", "origin", branch)
             if r.returncode != 0:
                 print(f"\n  ERROR: git push 실패: {r.stderr.strip()}")
