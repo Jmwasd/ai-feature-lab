@@ -66,7 +66,8 @@
       "name": "cli",
       "status": "completed",
       "summary": "localhost:3000 전용 CLI·경로 해석·포트/빌드 확인·브라우저 열기·종료 신호 전달과 bin 등록 구현; TDD 신규 14개 포함 222개 테스트 및 lint/build/문법 검사 통과; 지시에 따라 CLI 실제 실행 미실시",
-      "started_at": "2026-09-21T23:21:47+0900"
+      "started_at": "2026-09-21T23:21:47+0900",
+      "completed_at": "2026-09-21T23:25:55+0900"
     }
   ],
   "created_at": "2026-09-21T15:04:33+0900"
