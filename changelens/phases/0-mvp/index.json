@@ -7,7 +7,8 @@
       "name": "project-setup",
       "status": "completed",
       "summary": "Next.js 15·React 19·TypeScript strict·Tailwind v4·Vitest 설정과 최소 앱, lockfile 작성; install/lint/build/test 통과(테스트 없음); 디자인 검사 오류 20 · 경고 0은 Step 4로 명시 유예된 토큰·폰트 누락이며 브라우저 검수 미실시.",
-      "started_at": "2026-09-21T15:04:33+0900"
+      "started_at": "2026-09-21T15:04:33+0900",
+      "completed_at": "2026-09-21T15:07:59+0900"
     },
     {
       "step": 1,
