@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+next-env.d.ts
+tsconfig.tsbuildinfo
+
+# env (공공데이터 서비스키, OAuth secret, DATABASE_URL)
+.env*
+!.env.example
+
+# phase execution outputs
+phases/**/step*-output.json
