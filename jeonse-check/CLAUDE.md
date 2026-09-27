@@ -4,7 +4,7 @@
 - Next.js (App Router) 풀스택 — 화면과 Route Handler·Server Action을 한 앱에 둔다
 - TypeScript strict mode
 - Auth.js v5 (NextAuth) — Google OAuth
-- PostgreSQL + Prisma
+- PostgreSQL + Prisma — 운영 DB는 Supabase(Postgres만 사용), 로컬은 Docker Postgres
 - Vitest
 - npm
 

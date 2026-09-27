@@ -32,3 +32,12 @@
 - **결정**: HUG 보증 기준 비율, 최우선변제금, 전세가율 임계치 같은 정책 수치를 코드 상수 파일 하나에 모으고, 값마다 시행일과 출처를 주석으로 단다.
 - **근거**: 버전 관리와 테스트가 되고, 바뀌었을 때 고칠 곳이 한 군데다. DB 설정 테이블은 관리자 UI와 시드가 필요해 MVP에는 과하다.
 - **영향/제약**: 수치를 바꾸려면 배포해야 한다. 다른 파일에 같은 값을 하드코딩하지 않는다(CLAUDE.md CRITICAL).
+
+## ADR-006: 운영 PostgreSQL은 Supabase
+
+- **결정**: 운영 DB는 Supabase의 PostgreSQL을 쓴다. Supabase는 DB 호스팅으로만 쓰고, 접근은 ADR-003대로 Prisma, 인증은 ADR-002대로 Auth.js로 한다.
+- **근거**: 관리형 Postgres를 무료 티어부터 바로 쓸 수 있고, Prisma가 표준 Postgres로 붙는다.
+- **영향/제약**:
+  - `supabase-js` 클라이언트, Supabase Auth, RLS에 기대는 접근을 쓰지 않는다. 이유: 데이터 접근 경로가 Prisma와 둘로 갈리고 `src/server/` 경계 밖에서 DB에 닿는 길이 생긴다.
+  - 연결 문자열은 둘로 나눈다. 앱 런타임은 풀러(Supavisor transaction 모드, 6543 포트, `?pgbouncer=true`)를 쓰는 `DATABASE_URL`, 마이그레이션은 직접·session 연결(5432 포트)을 쓰는 `DIRECT_URL`(Prisma `directUrl`)이다. 연결 방식은 구현할 때 Supabase 최신 문서로 확인한다.
+  - 로컬 개발과 테스트는 Docker Postgres를 쓰고, 운영 Supabase에 붙여 테스트하지 않는다.
