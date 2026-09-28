@@ -443,6 +443,38 @@ class TestCommitStep:
         assert len(commit_msgs) == 1
         assert "chore" in commit_msgs[0]
 
+    def test_add_is_scoped_to_project_dir(self, executor):
+        """저장소 루트의 다른 프로젝트 변경이 step 커밋에 섞이지 않아야 한다."""
+        calls = []
+        def fake_git(*args):
+            calls.append(args)
+            if args[:2] == ("diff", "--cached"):
+                return MagicMock(returncode=1)
+            return MagicMock(returncode=0, stdout="", stderr="")
+        executor._run_git = fake_git
+
+        executor._commit_step(2, "ui")
+
+        add_calls = [c for c in calls if c[0] == "add"]
+        assert len(add_calls) == 2
+        assert all(c == ("add", "-A", "--", ".") for c in add_calls)
+
+
+class TestFinalize:
+    def test_add_is_scoped_to_project_dir(self, executor, top_index):
+        calls = []
+        def fake_git(*args):
+            calls.append(args)
+            if args[:2] == ("diff", "--cached"):
+                return MagicMock(returncode=0)
+            return MagicMock(returncode=0, stdout="", stderr="")
+        executor._run_git = fake_git
+
+        executor._finalize()
+
+        add_calls = [c for c in calls if c[0] == "add"]
+        assert add_calls == [("add", "-A", "--", ".")]
+
 
 # ---------------------------------------------------------------------------
 # _invoke_claude (mocked)
