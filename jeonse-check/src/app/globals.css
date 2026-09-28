@@ -1,0 +1,248 @@
+/*
+ * jeonse-check 디자인 토큰 — 값의 단일 원본.
+ * 사용 규칙(어디에 무엇을 쓰는지, 금지 패턴)은 docs/UI_GUIDE.md를 따른다.
+ *
+ * Tailwind CSS v4 @theme: 각 변수는 CSS 변수(:root)와 유틸리티 클래스를 함께 만든다.
+ *   --color-ink            → text-ink, bg-ink, border-ink ...
+ *   --text-display-xl      → text-display-xl (크기·행간·굵기·자간 한 번에)
+ *   --spacing-lg           → p-lg, gap-lg, mt-lg ...
+ *   --radius-card          → rounded-card
+ *   --shadow-float         → shadow-float
+ *   --breakpoint-desktop   → desktop:...
+ * 기본 팔레트·스케일은 initial로 비운다. 토큰 밖의 색(초록 등)이나 그림자를 클래스로 쓸 수 없게 막기 위해서다.
+ */
+@import "tailwindcss";
+
+/* next/font/local이 <html>에 --font-pretendard를 심는다. 런타임 변수를 참조하므로 inline으로 둔다. */
+@theme inline {
+  --font-*: initial;
+  --font-sans: var(--font-pretendard), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+}
+
+@theme {
+  /* ── Color ─────────────────────────────────────────── */
+  --color-*: initial;
+
+  /* Brand — one voltage only */
+  --color-primary: #ff385c;
+  --color-primary-active: #e00b41;
+  --color-primary-disabled: #ffd1da;
+  --color-on-primary: #ffffff;
+
+  /* Surface */
+  --color-canvas: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-surface-strong: #f2f2f2;
+
+  /* Hairlines & borders */
+  --color-hairline: #dddddd;
+  --color-hairline-soft: #ebebeb;
+  --color-border-strong: #c1c1c1;
+
+  /* Text */
+  --color-ink: #222222;
+  --color-body: #3f3f3f;
+  --color-muted: #6a6a6a;
+  --color-muted-soft: #929292;
+
+  /* Semantic */
+  --color-error-text: #c13515;
+  --color-error-text-hover: #b32505;
+  --color-legal-link: #428bff;
+  --color-scrim: rgb(0 0 0 / 0.5);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* ── Typography ────────────────────────────────────── */
+  --font-weight-*: initial;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --text-*: initial;
+
+  /* 랜딩 히어로 h1 전용 */
+  --text-hero: clamp(28px, 4vw, 48px);
+  --text-hero--line-height: 1.25;
+  --text-hero--letter-spacing: -1.2px;
+  --text-hero--font-weight: 700;
+
+  /* 랜딩 히어로 리드 문단 */
+  --text-lead: 18px;
+  --text-lead--line-height: 1.6;
+  --text-lead--font-weight: 400;
+
+  /* 위험 신호 개수 숫자 */
+  --text-rating-display: 64px;
+  --text-rating-display--line-height: 1.1;
+  --text-rating-display--letter-spacing: -1px;
+  --text-rating-display--font-weight: 700;
+
+  /* 비율 막대의 큰 퍼센트 */
+  --text-ratio-display: 48px;
+  --text-ratio-display--line-height: 1.1;
+  --text-ratio-display--letter-spacing: -1px;
+  --text-ratio-display--font-weight: 700;
+
+  --text-display-xl: 28px;
+  --text-display-xl--line-height: 1.43;
+  --text-display-xl--font-weight: 700;
+
+  --text-display-lg: 22px;
+  --text-display-lg--line-height: 1.18;
+  --text-display-lg--letter-spacing: -0.44px;
+  --text-display-lg--font-weight: 500;
+
+  --text-display-md: 21px;
+  --text-display-md--line-height: 1.43;
+  --text-display-md--font-weight: 700;
+
+  --text-display-sm: 20px;
+  --text-display-sm--line-height: 1.2;
+  --text-display-sm--letter-spacing: -0.18px;
+  --text-display-sm--font-weight: 600;
+
+  --text-title-md: 16px;
+  --text-title-md--line-height: 1.25;
+  --text-title-md--font-weight: 600;
+
+  --text-title-sm: 16px;
+  --text-title-sm--line-height: 1.25;
+  --text-title-sm--font-weight: 500;
+
+  --text-body-md: 16px;
+  --text-body-md--line-height: 1.5;
+  --text-body-md--font-weight: 400;
+
+  --text-body-sm: 14px;
+  --text-body-sm--line-height: 1.43;
+  --text-body-sm--font-weight: 400;
+
+  --text-caption: 14px;
+  --text-caption--line-height: 1.29;
+  --text-caption--font-weight: 500;
+
+  --text-caption-sm: 13px;
+  --text-caption-sm--line-height: 1.23;
+  --text-caption-sm--font-weight: 400;
+
+  --text-micro-label: 12px;
+  --text-micro-label--line-height: 1.33;
+  --text-micro-label--font-weight: 700;
+
+  --text-badge: 11px;
+  --text-badge--line-height: 1.18;
+  --text-badge--font-weight: 600;
+
+  --text-button-md: 16px;
+  --text-button-md--line-height: 1.25;
+  --text-button-md--font-weight: 500;
+
+  --text-button-sm: 14px;
+  --text-button-sm--line-height: 1.29;
+  --text-button-sm--font-weight: 500;
+
+  /* ── Spacing — 4px base, 2px micro-step ────────────── */
+  --spacing: 4px; /* p-1 = 4px, p-5 = 20px(좌우 거터) */
+  --spacing-xxs: 2px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-base: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 64px;
+  --spacing-gutter: 20px;
+
+  /* 고정 높이 — h-nav, h-search, min-h-control, h-input */
+  --spacing-nav: 80px;
+  --spacing-search: 64px;
+  --spacing-control: 48px;
+  --spacing-input: 56px;
+
+  /* ── Layout — max-w-editorial ... ──────────────────── */
+  --container-*: initial;
+  --container-editorial: 1280px;
+  --container-detail: 1080px;
+  --container-wide: 1440px;
+  --container-prose: 640px;
+
+  --breakpoint-*: initial;
+  --breakpoint-tablet: 744px;
+  --breakpoint-desktop: 1128px;
+  --breakpoint-wide: 1440px;
+
+  /* ── Radius ────────────────────────────────────────── */
+  --radius-*: initial;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+  --radius-button: 8px;
+  --radius-input: 8px;
+  --radius-card: 14px;
+
+  /* ── Shadow — the single tier ──────────────────────── */
+  --shadow-*: initial;
+  --shadow-float: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
+
+  /* ── Motion (UI_GUIDE §9) ──────────────────────────── */
+  --ease-*: initial;
+  --ease-fade: cubic-bezier(0.33, 0, 0.2, 1);   /* opacity·blur */
+  --ease-rise: cubic-bezier(0.22, 0.61, 0.36, 1); /* transform */
+  --ease-fill: cubic-bezier(0.2, 0.7, 0.2, 1);  /* 막대 채움 */
+
+  --animate-float: float 4.2s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    margin: 0;
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    line-height: var(--text-body-md--line-height);
+    word-break: keep-all; /* 한글 어절 단위 줄바꿈 */
+    overflow-wrap: break-word;
+  }
+  a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+  input[type="range"] {
+    accent-color: var(--color-ink);
+    width: 100%;
+    height: 24px;
+    margin: 0;
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+  }
+  /* 텍스트 입력은 바깥 ring 대신 컴포넌트의 2px 잉크 테두리로 포커스를 표시한다(UI_GUIDE §4 TextInput). */
+  :where(input:not([type="range"]):not([type="checkbox"]):not([type="radio"]), textarea, select):focus-visible {
+    outline: none;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

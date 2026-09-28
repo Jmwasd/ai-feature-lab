@@ -6,6 +6,7 @@
 
 - `/CLAUDE.md` ("안전" 단정 표현 금지, 면책 문구·데이터 기준일·출처 표시 CRITICAL)
 - `/docs/ARCHITECTURE.md` (결과 표시 규칙, feature 레이어 규칙)
+- `/docs/UI_GUIDE.md` §6 (금지 표현 목록. 문구·테스트의 기준)
 - `/docs/PRD.md` (종합 판정, 데이터 제약: 최근 30일 신고 지연)
 - `/src/consts/policy.ts` (step 2: 신축 기간, 소유자 변동 기간, 신고 지연 기간)
 - `/src/features/judgment/types.ts`, `price-estimate.ts` (step 3)
@@ -94,8 +95,8 @@ export function buildRiskReport(input: {
 
 핵심 규칙 (CLAUDE.md CRITICAL):
 
-- 신호가 0개여도 headline은 "위험 신호 0개"다. "안전", "문제없음", "괜찮" 같은 단정 표현을 쓰지 마라.
-- disclaimer에는 참고용 정보라는 점, 권리관계는 사용자 입력에 의존한다는 점, 공공데이터에는 신고 지연이 있다는 점, 계약 전 등기부등본과 전문가 확인을 권한다는 점을 담는다. 이때 disclaimer에도 "안전"이라는 단어를 쓰지 않는다. 예: "위험이 없음을 보장하지 않는다".
+- 신호가 0개여도 headline은 "위험 신호 0개"다. `docs/UI_GUIDE.md` §6의 **금지 표현** 목록에 있는 표현을 쓰지 마라.
+- disclaimer에는 참고용 정보라는 점, 권리관계는 사용자 입력에 의존한다는 점, 공공데이터에는 신고 지연이 있다는 점, 계약 전 등기부등본과 전문가 확인을 권한다는 점을 담는다. 이때 disclaimer에도 금지 표현을 쓰지 않는다. 예: "위험이 없음을 보장하지 않는다".
 
 ### 4. 테스트 (`src/features/judgment/risk-report.test.ts`)
 
@@ -103,7 +104,7 @@ export function buildRiskReport(input: {
 - 입력이 모두 정상이면 `signalCount` 0, headline "위험 신호 0개"
 - HUG `"unknown"`이면 신호가 아니라 notes로 들어간다
 - notes에 신고 지연 안내가 항상 있다
-- **금지 표현 검사**: 가능한 모든 신호가 켜진 보고서와 0개인 보고서에서 headline, notes, disclaimer, 모든 title·detail 문자열에 "안전"이 포함되지 않는다. `copy.ts`가 export하는 모든 문자열 템플릿도 같은 방식으로 검사한다.
+- **금지 표현 검사**: `docs/UI_GUIDE.md` §6 금지 표현 목록을 테스트 상수로 옮기고, 출처 주석을 단다. 가능한 모든 신호가 켜진 보고서와 신호가 0개인 보고서에서 headline, notes, disclaimer, 모든 title·detail 문자열에 목록의 표현이 하나도 없는지 검사한다. `copy.ts`가 export하는 모든 문자열 템플릿도 같은 방식으로 검사한다.
 
 ## Acceptance Criteria
 

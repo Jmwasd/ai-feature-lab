@@ -5,6 +5,7 @@
 - TypeScript strict mode
 - Auth.js v5 (NextAuth) — Google OAuth
 - PostgreSQL + Prisma — 운영 DB는 Supabase(Postgres만 사용), 로컬은 Docker Postgres
+- Tailwind CSS v4 — 디자인 토큰은 `src/app/globals.css`의 `@theme`, 사용 규칙은 `docs/UI_GUIDE.md`
 - Vitest
 - npm
 
