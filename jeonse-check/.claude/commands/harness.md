@@ -129,7 +129,7 @@ python3 scripts/execute.py {task-name} --push  # 실행 후 push
 
 실행 전 확인:
 
-- 저장소 루트(`lab-ai/`)의 워킹 트리를 먼저 깨끗하게 만든다. execute.py는 `git add -A`를 pathspec 없이 실행하므로, 다른 프로젝트나 루트 `.claude/`의 미커밋 변경이 step 커밋에 그대로 섞여 들어간다. `git status`로 jeonse-check 밖의 변경이 없는지 확인한 뒤 실행한다.
+- execute.py는 `git add -A -- .`로 jeonse-check 폴더만 스테이징하므로, 저장소 루트의 다른 프로젝트 변경은 step 커밋에 섞이지 않는다. 단, jeonse-check 밖 파일을 미리 `git add`해 두었다면 커밋에 함께 들어가니 `git diff --cached`가 비어 있는지 확인한다.
 
 execute.py가 자동으로 처리하는 것:
 
