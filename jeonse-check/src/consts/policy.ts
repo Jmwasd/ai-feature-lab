@@ -279,3 +279,9 @@ export const RISK_SIGNAL = {
   // 출처: jeonse-check 제품 기준
   recentOwnerChangeMonths: 3,
 } as const;
+
+// 건축물대장 주용도명(mainPurpsCdNm)에 이 중 하나가 들어 있으면 주거용으로 본다(예: "공동주택", "공동주택(아파트)").
+// 그 밖의 주용도(근린생활시설·업무시설 등)는 비주거 용도 위험 신호다. MVP 범위(아파트·연립다세대)의 용도만 적는다.
+// 출처: 건축법 시행령 [별표 1] 제2호 공동주택(아파트·연립주택·다세대주택) https://www.law.go.kr/법령/건축법시행령
+//       jeonse-check 제품 기준(공동주택 외 용도는 신호로 본다)
+export const RESIDENTIAL_MAIN_PURPOSES = ["공동주택", "아파트", "연립주택", "다세대주택"] as const;
