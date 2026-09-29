@@ -2,12 +2,44 @@
   "project": "jeonse-check",
   "phase": "1-auth-landing",
   "steps": [
-    { "step": 0, "name": "ui-setup", "status": "pending" },
-    { "step": 1, "name": "base-components", "status": "pending" },
-    { "step": 2, "name": "landing-hero", "status": "pending" },
-    { "step": 3, "name": "landing-try", "status": "pending" },
-    { "step": 4, "name": "landing-content", "status": "pending" },
-    { "step": 5, "name": "auth-setup", "status": "pending" },
-    { "step": 6, "name": "auth-ui", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "ui-setup",
+      "status": "completed",
+      "started_at": "2026-09-30T00:01:16+0900",
+      "completed_at": "2026-09-30T00:03:00+0900",
+      "summary": "Vitest projects(node 기본 + *.test.tsx만 jsdom)와 setup-dom.ts(jest-dom·cleanup), vitest.config.mts 전환으로 ESM 경고 제거, Pretendard 가변 폰트를 next/font/local로 셀프 호스팅(--font-pretendard), lucide-react 설치, 히어로 이미지를 public/images/landing-hero.webp로 변환"
+    },
+    {
+      "step": 1,
+      "name": "base-components",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "landing-hero",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "landing-try",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "landing-content",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "auth-setup",
+      "status": "pending"
+    },
+    {
+      "step": 6,
+      "name": "auth-ui",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-30T00:01:16+0900"
 }
