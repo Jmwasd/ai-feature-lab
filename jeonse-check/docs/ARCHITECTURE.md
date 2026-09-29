@@ -12,7 +12,7 @@
 
 | 레이어 (Type) | 패턴 (Pattern) | 설명 |
 |---|---|---|
-| `root` | `src/app/layout.tsx`, `src/app/globals.css`, `src/middleware.ts` | 루트 레이아웃, 전역 스타일, 인증 미들웨어 |
+| `root` | `src/app/layout.tsx`, `src/app/globals.css`, `src/proxy.ts` | 루트 레이아웃, 전역 스타일, 인증 proxy(Next 16에서 `middleware.ts`가 `proxy.ts`로 바뀌었다) |
 | `routes` | `src/app/**/*` (root 파일 제외) | 페이지, Route Handler(`route.ts`), 라우트 전용 내부 모듈 |
 | `feature` | `src/features/*/**/*` | 도메인·기능별 모듈 (`src/features/{featureName}/...`) |
 | `server` | `src/server/**/*` | 서버 전용 모듈: 공공데이터 API 어댑터, Prisma 클라이언트·repository, Auth.js 설정, 실거래가 수집 로직 |
@@ -27,7 +27,7 @@
 
 ```text
 src/
-├── middleware.ts
+├── proxy.ts
 ├── app/
 │   ├── layout.tsx
 │   ├── globals.css
@@ -85,7 +85,7 @@ cli ──► server
 
 ### server (서버 전용 모듈)
 
-- 모든 파일 첫 줄에 `import "server-only";`를 둔다. Client Component의 의존성 그래프에 들어오면 빌드가 실패한다. 단, `cli`에서 import하는 수집 로직은 Next 런타임 밖에서 돌므로 `server-only`를 두지 않고, 대신 Client Component에서 import하지 않는다.
+- 모든 파일 첫 줄에 `import "server-only";`를 둔다. Client Component의 의존성 그래프에 들어오면 빌드가 실패한다. `cli`에서 import하는 수집 로직도 예외가 아니다. CLI는 `tsx --conditions=react-server`로 실행해 `server-only`가 빈 모듈로 풀리게 한다(`server-only` 패키지의 `react-server` export 조건).
 - 공공데이터 서비스키, OAuth secret, `DATABASE_URL` 같은 환경변수는 `server`에서만 읽는다.
 - Prisma 클라이언트는 `src/server/db.ts` 하나에서만 생성한다.
 - 공공데이터 API 응답(XML/JSON)을 파싱해 도메인 타입으로 바꾸는 일은 어댑터(`src/server/public-data/`)가 맡는다. 위쪽 레이어는 원본 응답 형식을 모른다.
@@ -130,7 +130,7 @@ cli ──► server
 
 - Server Component를 기본으로 사용하고 브라우저 API, 이벤트 처리, 로컬 상태가 필요한 경계에만 `"use client"`를 선언한다.
 - Route Handler는 해당 URL 구조의 `route.ts`에 두고 핵심 로직은 `feature` 또는 `server`로 분리한다.
-- 인증이 필요한 페이지 보호는 `src/middleware.ts`와 `src/server/auth.ts`(Auth.js v5)로 한다(ADR-002).
+- 인증이 필요한 페이지 보호는 `src/proxy.ts`와 `src/server/auth.ts`(Auth.js v5)로 한다(ADR-002). proxy는 요청 앞단의 1차 차단일 뿐이므로, 보호 페이지는 서버에서 `auth()`로 세션을 다시 확인한다.
 
 ## 5. 테스트
 
@@ -142,7 +142,7 @@ cli ──► server
 코드를 수정하거나 파일을 생성하기 전에 이 문서의 아키텍처 경계 규칙을 먼저 검토한다.
 
 - 서비스키, 외부 API, Prisma 접근이 `src/server/` 밖에 있지 않은가?
-- `src/server/` 파일에 `import "server-only";`가 있는가? (cli 전용 수집 로직 예외)
+- `src/server/` 파일에 `import "server-only";`가 있는가? (Prisma 생성 코드 `src/server/generated/`만 예외)
 - Client Component가 `server` 레이어를 import하지 않는가?
 - 정책 수치를 `src/consts/policy.ts` 밖에 하드코딩하지 않았는가?
 - 특정 라우트 전용 코드를 해당 라우트 폴더 안에 배치했는가?

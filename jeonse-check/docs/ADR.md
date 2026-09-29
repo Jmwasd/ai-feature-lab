@@ -14,6 +14,8 @@
 - **결정**: Auth.js v5(NextAuth)의 Google provider와 Prisma adapter로 로그인과 세션을 처리한다.
 - **근거**: App Router와 가장 널리 쓰이는 조합이고 Google provider가 내장돼 있다. Supabase Auth는 특정 BaaS에 묶이고 로컬 테스트가 어렵다.
 - **영향/제약**: v4 문서와 섞지 않는다. 설정은 v5 API(`auth()`, `handlers`) 기준으로 작성한다.
+  - 세션은 database 전략(`Session` 테이블)을 쓴다. 이유: 로그아웃하면 서버에서 세션이 바로 무효가 된다. JWT는 만료 전까지 끊을 수 없다. 대가로 세션 확인마다 DB를 조회하므로 `src/proxy.ts`의 matcher는 보호 경로로만 좁힌다.
+  - proxy만으로 보호하지 않는다. 보호 페이지와 Server Action은 서버에서 `auth()`로 다시 확인한다.
 
 ## ADR-003: PostgreSQL + Prisma
 

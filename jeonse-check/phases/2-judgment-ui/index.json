@@ -1,0 +1,21 @@
+{
+  "project": "jeonse-check",
+  "phase": "2-judgment-ui",
+  "steps": [
+    {
+      "step": 0,
+      "name": "result-components",
+      "status": "pending"
+    },
+    {
+      "step": 1,
+      "name": "lookup-form",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "rights-form",
+      "status": "pending"
+    }
+  ]
+}

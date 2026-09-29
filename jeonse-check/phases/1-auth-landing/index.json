@@ -1,0 +1,13 @@
+{
+  "project": "jeonse-check",
+  "phase": "1-auth-landing",
+  "steps": [
+    { "step": 0, "name": "ui-setup", "status": "pending" },
+    { "step": 1, "name": "base-components", "status": "pending" },
+    { "step": 2, "name": "landing-hero", "status": "pending" },
+    { "step": 3, "name": "landing-try", "status": "pending" },
+    { "step": 4, "name": "landing-content", "status": "pending" },
+    { "step": 5, "name": "auth-setup", "status": "pending" },
+    { "step": 6, "name": "auth-ui", "status": "pending" }
+  ]
+}

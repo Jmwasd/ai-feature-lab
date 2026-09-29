@@ -1,0 +1,36 @@
+{
+  "project": "jeonse-check",
+  "phase": "3-public-data",
+  "steps": [
+    {
+      "step": 0,
+      "name": "api-client",
+      "status": "pending"
+    },
+    {
+      "step": 1,
+      "name": "address-normalize",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "region-tiers",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "trade-adapter",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "official-price-adapter",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "building-adapter",
+      "status": "pending"
+    }
+  ]
+}

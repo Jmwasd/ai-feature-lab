@@ -1,0 +1,31 @@
+{
+  "project": "jeonse-check",
+  "phase": "5-check-flow",
+  "steps": [
+    {
+      "step": 0,
+      "name": "lookup-service",
+      "status": "pending"
+    },
+    {
+      "step": 1,
+      "name": "judgment-run",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "check-actions",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "check-page",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "error-states",
+      "status": "pending"
+    }
+  ]
+}
