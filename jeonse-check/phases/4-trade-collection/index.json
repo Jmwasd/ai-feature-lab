@@ -24,7 +24,7 @@
       "status": "completed",
       "started_at": "2026-09-30T01:27:53+0900",
       "summary": "npm run collect(tsx --conditions=react-server, dotenv/config) CLI를 추가: src/cli/collect-args.ts의 parseCollectArgs(--lawd 복수·5자리 검증, --from/--to는 monthRange 규칙, --type 기본 두 유형, --kind 기본 sale, --force, --dry-run, 오류 시 사용법+종료 코드 1)와 src/cli/collect.ts(dry-run은 DB·API 모듈을 import하지 않고 단위 목록만 출력, 실행 시 Prisma repo+fetchTrades로 ensureCollected 또는 --force면 collectUnit 반복, 단위별 받음·새로·갱신 출력, 실패 목록·종료 코드 1, $disconnect), CLAUDE.md 사용 예 갱신",
-      "completed_at": "2026-09-30T01:29:47+0900"
+      "completed_at": "2026-09-30T01:30:12+0900"
     },
     {
       "step": 3,
