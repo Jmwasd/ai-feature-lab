@@ -135,6 +135,11 @@ def find_project(name: str) -> tuple[Path, str] | list[tuple[Path, str]]:
     return found
 
 
+def find_transcripts(prefix: str) -> list[Path]:
+    """세션 ID 앞부분과 일치하는 Claude Code 트랜스크립트를 모든 세션 디렉터리에서 찾는다."""
+    return [t for d in session_dirs() for t in d.glob(f"{prefix}*.jsonl")]
+
+
 # ---------------------------------------------------------------- Codex
 
 
@@ -748,6 +753,13 @@ def main() -> int:
     parser.add_argument("project", nargs="?", help="프로젝트 폴더명 (예: peerlens)")
     parser.add_argument("--out", type=Path, help="출력 HTML 경로")
     parser.add_argument("--list", action="store_true", help="변환 가능한 프로젝트 목록")
+    parser.add_argument(
+        "--session",
+        action="append",
+        default=[],
+        metavar="ID",
+        help="다른 cwd(예: 모노레포 루트)에서 진행한 Claude Code 세션을 ID(앞부분 가능)로 지정해 포함한다. 여러 번 쓸 수 있다",
+    )
     args = parser.parse_args()
 
     if args.list or not args.project:
@@ -774,6 +786,22 @@ def main() -> int:
             sessions.append({"sid": transcript.stem[:8], "pairs": pairs, "meta": meta})
 
     sessions.extend(codex_sessions_for(args.project, project_path))
+
+    included = {s["meta"].get("session") for s in sessions}
+    for prefix in args.session:
+        found = find_transcripts(prefix)
+        if len(found) != 1:
+            state = "없다" if not found else f"{len(found)}개다 — ID를 더 길게 적어라"
+            print(f"--session {prefix}: 일치하는 세션이 {state}.", file=sys.stderr)
+            return 1
+        transcript = found[0]
+        if transcript.stem in included:
+            continue
+        pairs, meta = parse_session(transcript)
+        if pairs:
+            meta.setdefault("source", "Claude Code")
+            sessions.append({"sid": transcript.stem[:8], "pairs": pairs, "meta": meta})
+            included.add(transcript.stem)
 
     if not sessions:
         print(f"'{args.project}'에서 질문·답변을 찾지 못했다.", file=sys.stderr)

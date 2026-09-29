@@ -21,6 +21,12 @@ python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py $ARGUMENTS
 python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py --list
 ```
 
+프로젝트 작업을 모노레포 루트 등 다른 cwd의 Claude Code 세션에서 했다면 세션 ID(앞부분 가능)로 지정해 함께 넣는다. 여러 번 쓸 수 있다.
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py $ARGUMENTS --session <세션ID>
+```
+
 ## 규칙
 
 - **HTML을 직접 작성하지 마라.** 생성기는 이 스크립트 하나다. 결과가 마음에 안 들면 스크립트를 고치고 다시 실행하라. 손으로 HTML을 쓰면 다음 실행에서 덮어써진다.
