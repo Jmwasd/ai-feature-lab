@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "collect-service",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T01:24:59+0900",
+      "summary": "src/server/trades/collect.ts에 collectUnit(API→upsert→로그, 실패 시 무기록)·needsRefresh(최근 월 recentRefreshDays, 신고 기간 중 수집분은 기간 종료 후 재수집, 과거 월 pastRefreshDays)·ensureCollected(동시성 기본 2, 부분 실패 수집, quota 시 중단, oldestCollectedAt)와 months.ts(monthRange·lookbackMonths)를 추가하고 policy.ts에 COLLECTION 상수를 둠",
+      "completed_at": "2026-09-30T01:27:26+0900"
     },
     {
       "step": 2,
