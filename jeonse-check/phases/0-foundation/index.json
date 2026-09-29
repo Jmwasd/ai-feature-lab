@@ -48,7 +48,7 @@
       "status": "completed",
       "started_at": "2026-09-29T20:22:42+0900",
       "summary": "src/features/judgment에 BuildingInfo·RightsInput 타입, buildRiskReport(비율 caution/danger·HUG false 신호·unknown은 notes·비주거 용도·위반·신축/소유자 변동(policy 기간, asOf 기준 경계 포함)·신탁·시세 low/none 신호, 신고 지연 note 상시, 출처 4종·면책·기준일)와 copy.ts(headline·disclaimer·출처·신호별 title/detail 템플릿, 수치는 policy에서 채움)를 추가하고, UI_GUIDE §6 금지 표현 검사 포함 테스트를 작성했다",
-      "completed_at": "2026-09-29T20:26:00+0900"
+      "completed_at": "2026-09-29T20:25:52+0900"
     }
   ],
   "created_at": "2026-09-29T20:13:04+0900"
