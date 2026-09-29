@@ -45,7 +45,10 @@
     {
       "step": 5,
       "name": "auth-setup",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:21:57+0900",
+      "summary": "next-auth 5.0.0-beta.32·@auth/prisma-adapter 2.11.3 설치(peer @prisma/client >=6로 Prisma 7 포함, PrismaAdapter(db) 타입 단언 불필요), src/server/auth.ts(Google provider·AUTH_* 자동 인식, database 세션, pages.signIn '/', session 콜백 user.id)와 src/types/next-auth.d.ts(Session.user.id), api/auth/[...nextauth]/route.ts(handlers GET/POST), src/server/protected-paths.ts(PROTECTED_PREFIXES /check·/saved, 접두어 정확 일치 또는 '/' 경계만 보호)와 경계 테스트, src/proxy.ts(auth 래퍼로 세션 없으면 /?callbackUrl=경로+쿼리 리다이렉트, matcher /check/:path*·/saved/:path*만, runtime 미설정), .env.example에 프로덕션 모드 로컬 실행 시 AUTH_TRUST_HOST 안내 추가",
+      "completed_at": "2026-09-30T00:24:30+0900"
     },
     {
       "step": 6,
