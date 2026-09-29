@@ -3,6 +3,7 @@
 // 기준 수치는 @/consts/policy에서 가져와 채운다.
 
 import { DEBT_RATIO_THRESHOLD, HUG_GUARANTEE, JEONSE_RATIO_THRESHOLD } from "@/consts/policy";
+import { formatPercent } from "@/utils/format";
 import type { HugReason } from "./ratios";
 import type { RiskSignalCode } from "./risk-report";
 
@@ -125,22 +126,19 @@ const MISSING_LABEL: Record<MissingReason, string> = {
 
 const EXCEED_TEXT: Record<ExceedReason, string> = {
   "exceeds-price-cap": `보증금과 선순위채권 합계가 공시가격의 ${formatPercent(HUG_GUARANTEE.combinedRatio)}를 넘습니다.`,
-  "exceeds-deposit-limit": `보증금이 보증 한도(수도권 ${formatWon(HUG_GUARANTEE.depositCap.capitalArea)}, 그 외 ${formatWon(HUG_GUARANTEE.depositCap.nonCapitalArea)})를 넘습니다.`,
+  "exceeds-deposit-limit": `보증금이 보증 한도(수도권 ${formatWonExact(HUG_GUARANTEE.depositCap.capitalArea)}, 그 외 ${formatWonExact(HUG_GUARANTEE.depositCap.nonCapitalArea)})를 넘습니다.`,
 };
 
 function debtBasis({ ratio, maxClaimAmount, seniorDeposits, deposit }: DebtDetailInput): string {
   return (
-    `입력한 등기부 기준 근저당 채권최고액 ${formatWon(maxClaimAmount)}, 선순위 보증금 ${formatWon(seniorDeposits)}에 ` +
-    `보증금 ${formatWon(deposit)}을 더하면 추정 시세의 ${formatPercent(ratio)}로`
+    `입력한 등기부 기준 근저당 채권최고액 ${formatWonExact(maxClaimAmount)}, 선순위 보증금 ${formatWonExact(seniorDeposits)}에 ` +
+    `보증금 ${formatWonExact(deposit)}을 더하면 추정 시세의 ${formatPercent(ratio)}로`
   );
 }
 
-// 0.745 → "74.5%", 0.7 → "70%"
-function formatPercent(ratio: number): string {
-  return `${Math.round(ratio * 1000) / 10}%`;
-}
-
-function formatWon(amount: number): string {
+// 판정 근거 문구는 금액을 원 단위까지 그대로 쓴다(예: "120,000,000원").
+// 만 원 단위로 반올림하는 @/utils/format의 formatWon과 다르다.
+function formatWonExact(amount: number): string {
   return `${amount.toLocaleString("ko-KR")}원`;
 }
 
