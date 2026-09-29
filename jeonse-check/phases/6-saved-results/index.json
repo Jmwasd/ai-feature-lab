@@ -1,0 +1,21 @@
+{
+  "project": "jeonse-check",
+  "phase": "6-saved-results",
+  "steps": [
+    {
+      "step": 0,
+      "name": "saved-repository",
+      "status": "pending"
+    },
+    {
+      "step": 1,
+      "name": "save-action",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "saved-pages",
+      "status": "pending"
+    }
+  ]
+}

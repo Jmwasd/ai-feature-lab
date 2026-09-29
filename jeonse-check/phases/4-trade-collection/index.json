@@ -1,0 +1,26 @@
+{
+  "project": "jeonse-check",
+  "phase": "4-trade-collection",
+  "steps": [
+    {
+      "step": 0,
+      "name": "trade-repository",
+      "status": "pending"
+    },
+    {
+      "step": 1,
+      "name": "collect-service",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "collect-cli",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "db-integration-test",
+      "status": "pending"
+    }
+  ]
+}

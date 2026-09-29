@@ -4,6 +4,30 @@
       "dir": "0-foundation",
       "status": "completed",
       "completed_at": "2026-09-29T20:25:52+0900"
+    },
+    {
+      "dir": "1-auth-landing",
+      "status": "pending"
+    },
+    {
+      "dir": "2-judgment-ui",
+      "status": "pending"
+    },
+    {
+      "dir": "3-public-data",
+      "status": "pending"
+    },
+    {
+      "dir": "4-trade-collection",
+      "status": "pending"
+    },
+    {
+      "dir": "5-check-flow",
+      "status": "pending"
+    },
+    {
+      "dir": "6-saved-results",
+      "status": "pending"
     }
   ]
 }
