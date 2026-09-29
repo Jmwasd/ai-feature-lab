@@ -1,0 +1,71 @@
+{
+  "results": {
+    "common": {
+      "errorMessage": "정상",
+      "countPerPage": "10",
+      "totalCount": "2",
+      "errorCode": "0",
+      "currentPage": "1"
+    },
+    "juso": [
+      {
+        "roadAddr": "서울특별시 마포구 월드컵로13길 15 (망원동)",
+        "roadAddrPart1": "서울특별시 마포구 월드컵로13길 15",
+        "roadAddrPart2": " (망원동)",
+        "jibunAddr": "서울특별시 마포구 망원동 412-3",
+        "engAddr": "15, World Cup-ro 13-gil, Mapo-gu, Seoul",
+        "zipNo": "04003",
+        "admCd": "1144012300",
+        "rnMgtSn": "114403113013",
+        "bdMgtSn": "1144012300104120003000001",
+        "detBdNmList": "",
+        "bdNm": "",
+        "bdKdcd": "0",
+        "siNm": "서울특별시",
+        "sggNm": "마포구",
+        "emdNm": "망원동",
+        "liNm": "",
+        "rn": "월드컵로13길",
+        "udrtYn": "0",
+        "buldMnnm": "15",
+        "buldSlno": "0",
+        "mtYn": "0",
+        "lnbrMnnm": "412",
+        "lnbrSlno": "3",
+        "emdNo": "01",
+        "hstryYn": "0",
+        "relJibun": "",
+        "hemdNm": "망원1동"
+      },
+      {
+        "roadAddr": "서울특별시 마포구 월드컵로13길 19 (망원동, 망원하이빌)",
+        "roadAddrPart1": "서울특별시 마포구 월드컵로13길 19",
+        "roadAddrPart2": " (망원동, 망원하이빌)",
+        "jibunAddr": "서울특별시 마포구 망원동 412-7 망원하이빌",
+        "engAddr": "19, World Cup-ro 13-gil, Mapo-gu, Seoul",
+        "zipNo": "04003",
+        "admCd": "1144012300",
+        "rnMgtSn": "114403113013",
+        "bdMgtSn": "1144012300104120007000001",
+        "detBdNmList": "",
+        "bdNm": "망원하이빌",
+        "bdKdcd": "1",
+        "siNm": "서울특별시",
+        "sggNm": "마포구",
+        "emdNm": "망원동",
+        "liNm": "",
+        "rn": "월드컵로13길",
+        "udrtYn": "0",
+        "buldMnnm": "19",
+        "buldSlno": "0",
+        "mtYn": "0",
+        "lnbrMnnm": "412",
+        "lnbrSlno": "7",
+        "emdNo": "01",
+        "hstryYn": "0",
+        "relJibun": "",
+        "hemdNm": "망원1동"
+      }
+    ]
+  }
+}

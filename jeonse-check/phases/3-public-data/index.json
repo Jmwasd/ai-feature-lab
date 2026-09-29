@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "address-normalize",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:53:09+0900",
+      "summary": "src/server/public-data/juso.ts(searchAddress: 검색어 정리·미달 시 미호출, errorCode→PublicDataError(api)/검색어 오류코드는 빈 배열, NormalizedAddress 매핑·lawdCd·umdName '읍면 리' 규칙, 순수 함수 buildPnu·formatJibun) + __fixtures__/juso/ 6종(일반·산·부번없음·리·결과없음·오류) + juso.test.ts",
+      "completed_at": "2026-09-30T00:57:00+0900"
     },
     {
       "step": 2,

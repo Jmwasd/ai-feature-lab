@@ -1,0 +1,42 @@
+{
+  "results": {
+    "common": {
+      "errorMessage": "정상",
+      "countPerPage": "10",
+      "totalCount": "1",
+      "errorCode": "0",
+      "currentPage": "1"
+    },
+    "juso": [
+      {
+        "roadAddr": "서울특별시 강남구 테헤란로 152 (역삼동, 강남파이낸스센터)",
+        "roadAddrPart1": "서울특별시 강남구 테헤란로 152",
+        "roadAddrPart2": " (역삼동, 강남파이낸스센터)",
+        "jibunAddr": "서울특별시 강남구 역삼동 737 강남파이낸스센터",
+        "engAddr": "152, Teheran-ro, Gangnam-gu, Seoul",
+        "zipNo": "06236",
+        "admCd": "1168010100",
+        "rnMgtSn": "116803122010",
+        "bdMgtSn": "1168010100107370000000001",
+        "detBdNmList": "",
+        "bdNm": "강남파이낸스센터",
+        "bdKdcd": "0",
+        "siNm": "서울특별시",
+        "sggNm": "강남구",
+        "emdNm": "역삼동",
+        "liNm": "",
+        "rn": "테헤란로",
+        "udrtYn": "0",
+        "buldMnnm": "152",
+        "buldSlno": "0",
+        "mtYn": "0",
+        "lnbrMnnm": "737",
+        "lnbrSlno": "0",
+        "emdNo": "01",
+        "hstryYn": "0",
+        "relJibun": "",
+        "hemdNm": "역삼1동"
+      }
+    ]
+  }
+}
