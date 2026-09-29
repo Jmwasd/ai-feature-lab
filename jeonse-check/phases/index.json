@@ -27,7 +27,8 @@
     },
     {
       "dir": "5-check-flow",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T05:40:13+0900"
     },
     {
       "dir": "6-saved-results",
