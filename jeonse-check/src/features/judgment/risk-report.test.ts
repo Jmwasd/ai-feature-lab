@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { PRICE_ESTIMATE, RISK_SIGNAL } from "@/consts/policy";
+import { expectNoForbiddenPhrases } from "@/test/forbidden-phrases";
 import * as copy from "./copy";
 import type { PriceEstimate } from "./price-estimate";
 import { checkHugEligibility, debtRatio, jeonseRatio } from "./ratios";
 import { buildRiskReport, type RiskReport, type RiskSignalCode } from "./risk-report";
 import type { BuildingInfo, RightsInput } from "./types";
-
-// 출처: docs/UI_GUIDE.md §6 "금지 표현" 목록. 원본 목록이 바뀌면 여기도 함께 고친다.
-const FORBIDDEN_PHRASES = ["안전", "안정", "양호", "문제없음", "괜찮", "위험 낮음"];
 
 const asOf = new Date("2026-09-29T00:00:00Z");
 const dataBaseDate = new Date("2026-09-01T00:00:00Z");
@@ -137,12 +135,6 @@ function reportStrings(report: RiskReport): string[] {
     ...report.sources,
     ...report.signals.flatMap((s) => [s.title, s.detail]),
   ];
-}
-
-function expectNoForbidden(text: string) {
-  for (const phrase of FORBIDDEN_PHRASES) {
-    expect(text, `"${phrase}" 포함: ${text}`).not.toContain(phrase);
-  }
 }
 
 describe("buildRiskReport — 정상 입력", () => {
@@ -342,7 +334,7 @@ describe("금지 표현 검사", () => {
 
   it("신호가 켜진 보고서와 0개인 보고서의 모든 문구에 금지 표현이 없다", () => {
     for (const report of [...allSignalReports(), build()]) {
-      for (const text of reportStrings(report)) expectNoForbidden(text);
+      for (const text of reportStrings(report)) expectNoForbiddenPhrases(text);
     }
   });
 
@@ -395,7 +387,7 @@ describe("금지 표현 검사", () => {
     ];
     for (const text of rendered) {
       expect(text.length).toBeGreaterThan(0);
-      expectNoForbidden(text);
+      expectNoForbiddenPhrases(text);
     }
   });
 
