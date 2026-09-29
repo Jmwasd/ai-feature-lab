@@ -37,7 +37,10 @@
     {
       "step": 4,
       "name": "landing-content",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:14:58+0900",
+      "summary": "src/hooks/use-content-swap(340ms 페이드아웃 뒤 교체·두 프레임 뒤 등장, reduced-motion이면 즉시)과 _components/use-roving-tabs(화살표 순환·Home/End, 자동 활성화), cases-data.ts(사례 5개 예시 입력, CASE_AS_OF·CASE_DATA_BASE_DATE 고정 UTC 날짜)와 CasesSection(client, 선택 탭 tablist/tab/tabpanel, estimateSalePrice→jeonseRatio·debtRatio·checkHugEligibility→buildRiskReport 결과로 개수·headline·신호 행 렌더링, 왼쪽 조건 요약+비교 막대(ratios 결과·policy 위험 기준선), '예시 데이터' 표기, 신호 4·2·2·4·0개), FlowSection(단계 진행 탭 3개 4.5초 자동 진행·클릭/키보드 시 정지·reduced-motion이면 정지, 미리보기 판 설명 카드), SourcesSection(세그먼트 토글 자동 조회/직접 입력/지원 안 함, 출처명은 copy.ts SOURCES, 수치는 policy), copy.ts에 RECHECK_REGISTRY_NOTE(등기부 재확인 안내, 금지 표현 검사 범위에 추가), 각 *.test.tsx",
+      "completed_at": "2026-09-30T00:21:31+0900"
     },
     {
       "step": 5,

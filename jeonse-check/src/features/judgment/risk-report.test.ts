@@ -345,6 +345,7 @@ describe("금지 표현 검사", () => {
       copy.headline(0),
       copy.headline(3),
       copy.DISCLAIMER,
+      copy.RECHECK_REGISTRY_NOTE,
       ...copy.SOURCES,
       copy.reportingDelayNote(PRICE_ESTIMATE.reportingDelayDays),
       copy.hugUnknownNote(["missing-official-price", "missing-region", "exceeds-deposit-limit"]),
@@ -396,6 +397,7 @@ describe("금지 표현 검사", () => {
     expect(Object.keys(copy).sort()).toEqual(
       [
         "DISCLAIMER",
+        "RECHECK_REGISTRY_NOTE",
         "SIGNAL_COPY",
         "SOURCES",
         "headline",

@@ -16,7 +16,7 @@ describe("랜딩 페이지", () => {
     expect(screen.getByRole("contentinfo")).toHaveTextContent("© 2026 jeonse-check");
   });
 
-  it("가운데 네 섹션은 제목만 둔 자리다", () => {
+  it("가운데 네 섹션에 제목이 있다", () => {
     const { container } = render(<Home />);
     const titles = ["try", "cases", "flow", "sources"].map(
       (id) => within(container.querySelector<HTMLElement>(`#${id}`)!).getByRole("heading", { level: 2 }).textContent,
