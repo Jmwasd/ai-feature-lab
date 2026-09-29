@@ -7,7 +7,8 @@
       "name": "lookup-service",
       "status": "completed",
       "started_at": "2026-09-30T05:23:40+0900",
-      "summary": "src/server/lookup/collect-inputs.ts — collectPublicInputs가 실거래(ensureCollected 후 같은 법정동 조회, 만원→원)·공시가격·건축물대장을 병렬 수집, 부분 실패는 warnings, 전부 실패 시 LookupFailedError. defaultLookupDeps는 default-deps.ts"
+      "summary": "src/server/lookup/collect-inputs.ts — collectPublicInputs가 실거래(ensureCollected 후 같은 법정동 조회, 만원→원)·공시가격·건축물대장을 병렬 수집, 부분 실패는 warnings, 전부 실패 시 LookupFailedError. defaultLookupDeps는 default-deps.ts",
+      "completed_at": "2026-09-30T05:27:12+0900"
     },
     {
       "step": 1,
