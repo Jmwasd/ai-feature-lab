@@ -24,7 +24,7 @@
       "status": "completed",
       "started_at": "2026-09-30T00:56:42+0900",
       "summary": "src/consts/policy.ts에 SIDO_CODES·CAPITAL_AREA_SIDO_CODES·PRIORITY_REPAYMENT_REGION_CODES(구간별 2/5/8자리 법정동코드, 광역시 군 OTHER, 인천 검단 8개 동 METROPOLITAN, 남양주 과밀 동 8자리, AMBIGUOUS: 영종구·송도·청라·남동산단 동·시흥·다산동·전남광주통합특별시) 추가, 코드 값은 code.go.kr 법정동코드 전체자료(2026-09-30)로 대조 + src/features/judgment/region.ts(priorityRegionTier·isCapitalArea, 10→8→5→2 최장 일치, 모호·미등록·형식 오류는 null) + region.test.ts",
-      "completed_at": "2026-09-30T01:03:10+0900"
+      "completed_at": "2026-09-30T01:03:42+0900"
     },
     {
       "step": 3,
