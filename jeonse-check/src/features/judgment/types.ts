@@ -12,6 +12,7 @@ export interface ComparableTrade {
   contractDate: Date;
   price: number; // 매매가, 원 단위 정수
   cancelled: boolean;
+  buildingName?: string | null; // 단지·건물명. 결과 화면 근거 표시용
 }
 
 export interface BuildingInfo {
@@ -27,3 +28,10 @@ export interface RightsInput {
   isTrust: boolean; // 신탁 등기 여부
   lastOwnershipChangeDate: Date | null;
 }
+
+// 공공데이터 부분 실패. server 조회 결과의 warnings와 구조가 같다.
+export type JudgmentWarning =
+  | { kind: "trades-partial"; failedMonths: string[] } // YYYYMM
+  | { kind: "trades-quota" }
+  | { kind: "official-price-unavailable"; reason: "no-ho" | "not-found" | "error" }
+  | { kind: "building-unavailable" };

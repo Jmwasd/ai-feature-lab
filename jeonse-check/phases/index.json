@@ -7,27 +7,33 @@
     },
     {
       "dir": "1-auth-landing",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T00:26:49+0900"
     },
     {
       "dir": "2-judgment-ui",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T00:48:51+0900"
     },
     {
       "dir": "3-public-data",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T01:20:13+0900"
     },
     {
       "dir": "4-trade-collection",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T01:33:22+0900"
     },
     {
       "dir": "5-check-flow",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T05:40:13+0900"
     },
     {
       "dir": "6-saved-results",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T05:57:12+0900"
     }
   ]
 }

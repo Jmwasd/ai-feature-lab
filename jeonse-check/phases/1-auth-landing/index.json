@@ -2,12 +2,63 @@
   "project": "jeonse-check",
   "phase": "1-auth-landing",
   "steps": [
-    { "step": 0, "name": "ui-setup", "status": "pending" },
-    { "step": 1, "name": "base-components", "status": "pending" },
-    { "step": 2, "name": "landing-hero", "status": "pending" },
-    { "step": 3, "name": "landing-try", "status": "pending" },
-    { "step": 4, "name": "landing-content", "status": "pending" },
-    { "step": 5, "name": "auth-setup", "status": "pending" },
-    { "step": 6, "name": "auth-ui", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "ui-setup",
+      "status": "completed",
+      "started_at": "2026-09-30T00:01:16+0900",
+      "completed_at": "2026-09-30T00:02:53+0900",
+      "summary": "Vitest projects(node 기본 + *.test.tsx만 jsdom)와 setup-dom.ts(jest-dom·cleanup), vitest.config.mts 전환으로 ESM 경고 제거, Pretendard 가변 폰트를 next/font/local로 셀프 호스팅(--font-pretendard), lucide-react 설치, 히어로 이미지를 public/images/landing-hero.webp로 변환"
+    },
+    {
+      "step": 1,
+      "name": "base-components",
+      "status": "completed",
+      "started_at": "2026-09-30T00:02:54+0900",
+      "summary": "src/utils/format.ts(formatWon 만 원 단위 반올림 '2억 8,000만'·formatPercent, 음수·NaN은 RangeError)와 copy.ts의 formatPercent 중복 제거(원 단위 전체 금액은 formatWonExact로 유지, 출력 동일), src/components에 Button(4변형, href면 next/link)·TopNav(client, 8px 초과 스크롤 shadow-float, tablet 미만 햄버거 aria-expanded/controls·Escape 닫기, brand 기본 워드마크)·FooterLight·IconButtonCircle·StatusPill과 각 *.test.tsx",
+      "completed_at": "2026-09-30T00:06:32+0900"
+    },
+    {
+      "step": 2,
+      "name": "landing-hero",
+      "status": "completed",
+      "started_at": "2026-09-30T00:06:32+0900",
+      "summary": "src/app/page.tsx를 UI_GUIDE §8 순서(TopNav·히어로·#try/#cases/#flow/#sources 자리 섹션·마지막 CTA·FooterLight)로 조합, src/hooks/use-reveal.ts(15% 진입 1회·delayMs, reduced-motion·관찰자 없음이면 즉시 visible), _components에 Hero(next/image fill priority 배경 scale 1.06→1, 상태 알약·3초 롤링 h1 aria-live·리드·CTA 2개, aria-hidden 신호 카드)·Reveal·LandingSection·FinalCta(copy.ts DISCLAIMER, 모션 없음), 금지 표현을 src/test/forbidden-phrases.ts로 옮겨 risk-report 테스트와 랜딩 테스트가 공유",
+      "completed_at": "2026-09-30T00:11:12+0900"
+    },
+    {
+      "step": 3,
+      "name": "landing-try",
+      "status": "completed",
+      "started_at": "2026-09-30T00:11:12+0900",
+      "summary": "src/components/RatioBar(client, 트랙 최대 120%·초과 시 끝까지 채움+실제 값, 임계치 이상 error-text/미만 ink 채움, 1px muted 기준선, role=meter·aria-valuetext, null이면 '계산할 수 없어요', width 1.2s ease-fill)와 src/hooks/use-tweened-number(숫자 트윈, reduced-motion이면 즉시), _components/TrySection(client, 보증금·채권최고액 슬라이더+프리셋 칩 3개, ratios.ts의 jeonseRatio·debtRatio·checkHugEligibility 그대로 호출, 기준 문구·기준선은 policy 상수+formatPercent, HUG 줄 '가입 기준 충족(공시가격 기준 추정)' 잉크 circle-check/'가입 어려움'+copy.ts 근거, 예시 안내)와 try-examples.ts(프리셋·슬라이더 범위), 각 *.test.tsx",
+      "completed_at": "2026-09-30T00:14:58+0900"
+    },
+    {
+      "step": 4,
+      "name": "landing-content",
+      "status": "completed",
+      "started_at": "2026-09-30T00:14:58+0900",
+      "summary": "src/hooks/use-content-swap(340ms 페이드아웃 뒤 교체·두 프레임 뒤 등장, reduced-motion이면 즉시)과 _components/use-roving-tabs(화살표 순환·Home/End, 자동 활성화), cases-data.ts(사례 5개 예시 입력, CASE_AS_OF·CASE_DATA_BASE_DATE 고정 UTC 날짜)와 CasesSection(client, 선택 탭 tablist/tab/tabpanel, estimateSalePrice→jeonseRatio·debtRatio·checkHugEligibility→buildRiskReport 결과로 개수·headline·신호 행 렌더링, 왼쪽 조건 요약+비교 막대(ratios 결과·policy 위험 기준선), '예시 데이터' 표기, 신호 4·2·2·4·0개), FlowSection(단계 진행 탭 3개 4.5초 자동 진행·클릭/키보드 시 정지·reduced-motion이면 정지, 미리보기 판 설명 카드), SourcesSection(세그먼트 토글 자동 조회/직접 입력/지원 안 함, 출처명은 copy.ts SOURCES, 수치는 policy), copy.ts에 RECHECK_REGISTRY_NOTE(등기부 재확인 안내, 금지 표현 검사 범위에 추가), 각 *.test.tsx",
+      "completed_at": "2026-09-30T00:21:57+0900"
+    },
+    {
+      "step": 5,
+      "name": "auth-setup",
+      "status": "completed",
+      "started_at": "2026-09-30T00:21:57+0900",
+      "summary": "next-auth 5.0.0-beta.32·@auth/prisma-adapter 2.11.3 설치(peer @prisma/client >=6로 Prisma 7 포함, PrismaAdapter(db) 타입 단언 불필요), src/server/auth.ts(Google provider·AUTH_* 자동 인식, database 세션, pages.signIn '/', session 콜백 user.id)와 src/types/next-auth.d.ts(Session.user.id), api/auth/[...nextauth]/route.ts(handlers GET/POST), src/server/protected-paths.ts(PROTECTED_PREFIXES /check·/saved, 접두어 정확 일치 또는 '/' 경계만 보호)와 경계 테스트, src/proxy.ts(auth 래퍼로 세션 없으면 /?callbackUrl=경로+쿼리 리다이렉트, matcher /check/:path*·/saved/:path*만, runtime 미설정), .env.example에 프로덕션 모드 로컬 실행 시 AUTH_TRUST_HOST 안내 추가",
+      "completed_at": "2026-09-30T00:23:57+0900"
+    },
+    {
+      "step": 6,
+      "name": "auth-ui",
+      "status": "completed",
+      "started_at": "2026-09-30T00:23:57+0900",
+      "summary": "src/features/auth에 callback-url.ts(safeCallbackUrl: '/'로 시작하고 '//'·'/\\'가 아닌 상대 경로만 허용, 아니면 /check)·actions.ts('use server' signInWithGoogle(formData callbackUrl 재검사 후 signIn google redirectTo)·signOutAction(redirectTo '/'))·AuthNavAction(Server Component, 비로그인 '지금 확인하기' secondary / 로그인 '내 조회' secondary+로그아웃 tertiary-text submit 폼), 랜딩 page.tsx를 async로 바꿔 TopNav action에 AuthNavAction 조합·callbackUrl 쿼리 있으면 히어로 앞에 _components/LoginNotice(비로그인만 '로그인이 필요해요'+primary 'Google로 로그인', hidden callbackUrl), src/app/check/page.tsx(첫 줄 auth() 없으면 redirect('/?callbackUrl=/check'), TopNav+사용자 이름·헤드라인·준비 중 안내 자리), 각 테스트(auth·next/navigation 모킹)",
+      "completed_at": "2026-09-30T00:26:49+0900"
+    }
+  ],
+  "created_at": "2026-09-30T00:01:16+0900",
+  "completed_at": "2026-09-30T00:26:49+0900"
 }

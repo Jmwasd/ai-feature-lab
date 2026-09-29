@@ -1,13 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { PRICE_ESTIMATE, RISK_SIGNAL } from "@/consts/policy";
+import { expectNoForbiddenPhrases } from "@/test/forbidden-phrases";
 import * as copy from "./copy";
 import type { PriceEstimate } from "./price-estimate";
 import { checkHugEligibility, debtRatio, jeonseRatio } from "./ratios";
 import { buildRiskReport, type RiskReport, type RiskSignalCode } from "./risk-report";
 import type { BuildingInfo, RightsInput } from "./types";
-
-// 출처: docs/UI_GUIDE.md §6 "금지 표현" 목록. 원본 목록이 바뀌면 여기도 함께 고친다.
-const FORBIDDEN_PHRASES = ["안전", "안정", "양호", "문제없음", "괜찮", "위험 낮음"];
 
 const asOf = new Date("2026-09-29T00:00:00Z");
 const dataBaseDate = new Date("2026-09-01T00:00:00Z");
@@ -137,12 +135,6 @@ function reportStrings(report: RiskReport): string[] {
     ...report.sources,
     ...report.signals.flatMap((s) => [s.title, s.detail]),
   ];
-}
-
-function expectNoForbidden(text: string) {
-  for (const phrase of FORBIDDEN_PHRASES) {
-    expect(text, `"${phrase}" 포함: ${text}`).not.toContain(phrase);
-  }
 }
 
 describe("buildRiskReport — 정상 입력", () => {
@@ -342,7 +334,7 @@ describe("금지 표현 검사", () => {
 
   it("신호가 켜진 보고서와 0개인 보고서의 모든 문구에 금지 표현이 없다", () => {
     for (const report of [...allSignalReports(), build()]) {
-      for (const text of reportStrings(report)) expectNoForbidden(text);
+      for (const text of reportStrings(report)) expectNoForbiddenPhrases(text);
     }
   });
 
@@ -353,10 +345,17 @@ describe("금지 표현 검사", () => {
       copy.headline(0),
       copy.headline(3),
       copy.DISCLAIMER,
+      copy.RECHECK_REGISTRY_NOTE,
       ...copy.SOURCES,
       copy.reportingDelayNote(PRICE_ESTIMATE.reportingDelayDays),
       copy.hugUnknownNote(["missing-official-price", "missing-region", "exceeds-deposit-limit"]),
       copy.hugUnknownNote(["missing-region", "exceeds-price-cap"]),
+      copy.lookupWarningNote({ kind: "trades-partial", failedMonths: ["202604"] }),
+      copy.lookupWarningNote({ kind: "trades-quota" }),
+      copy.lookupWarningNote({ kind: "official-price-unavailable", reason: "no-ho" }),
+      copy.lookupWarningNote({ kind: "official-price-unavailable", reason: "not-found" }),
+      copy.lookupWarningNote({ kind: "official-price-unavailable", reason: "error" }),
+      copy.lookupWarningNote({ kind: "building-unavailable" }),
       s["jeonse-ratio-caution"].title,
       s["jeonse-ratio-caution"].detail(0.75),
       s["jeonse-ratio-danger"].title,
@@ -392,10 +391,29 @@ describe("금지 표현 검사", () => {
       s["price-low-confidence"].detail(),
       s["price-unavailable"].title,
       s["price-unavailable"].detail(),
+      ...Object.values(copy.LEVEL_LABEL),
+      ...Object.values(copy.ESTIMATE_METHOD_LABEL),
+      ...Object.values(copy.CONFIDENCE_LABEL),
+      ...Object.values(copy.HUG_STATUS),
+      copy.EMPTY_SIGNALS_NOTE,
+      copy.DATA_LIMITED_NOTE,
+      copy.ratioStatusText({ ratio: 0.5, level: "normal" }, { caution: 0.7 }),
+      copy.ratioStatusText({ ratio: 0.75, level: "caution" }, { caution: 0.7 }),
+      copy.ratioStatusText({ ratio: 0.9, level: "danger" }, { caution: 0.7 }),
+      copy.priorityRepaymentText({ qualifies: true, amount: 55_000_000 }),
+      copy.priorityRepaymentText({ qualifies: false, amount: 0 }),
+      copy.priorityRepaymentText(null),
+      ...copy.rightsLines(normalRights),
+      ...copy.rightsLines({
+        maxClaimAmount: 100_000_000,
+        seniorDeposits: 20_000_000,
+        isTrust: true,
+        lastOwnershipChangeDate: null,
+      }),
     ];
     for (const text of rendered) {
       expect(text.length).toBeGreaterThan(0);
-      expectNoForbidden(text);
+      expectNoForbiddenPhrases(text);
     }
   });
 
@@ -403,12 +421,23 @@ describe("금지 표현 검사", () => {
     // 새 문구를 export하면 이 목록과 위 검사에 함께 추가한다.
     expect(Object.keys(copy).sort()).toEqual(
       [
+        "CONFIDENCE_LABEL",
+        "DATA_LIMITED_NOTE",
         "DISCLAIMER",
+        "EMPTY_SIGNALS_NOTE",
+        "ESTIMATE_METHOD_LABEL",
+        "HUG_STATUS",
+        "LEVEL_LABEL",
+        "RECHECK_REGISTRY_NOTE",
         "SIGNAL_COPY",
         "SOURCES",
         "headline",
         "hugUnknownNote",
+        "lookupWarningNote",
+        "priorityRepaymentText",
+        "ratioStatusText",
         "reportingDelayNote",
+        "rightsLines",
       ].sort(),
     );
   });
@@ -419,5 +448,30 @@ describe("금지 표현 검사", () => {
     expect(copy.DISCLAIMER).toContain("신고 지연");
     expect(copy.DISCLAIMER).toContain("등기부등본");
     expect(copy.DISCLAIMER).toContain("전문가");
+  });
+});
+
+describe("결과 화면 줄 문구", () => {
+  it("HUG 판단 불가는 사실만 쓴다", () => {
+    expect(copy.HUG_STATUS.unknown).toBe("입력이 부족해 판단할 수 없어요");
+    expect(copy.HUG_STATUS.eligible).toBe("가입 기준 충족(공시가격 기준 추정)");
+  });
+
+  it("비율 상태는 normal이면 주의 기준 미만, 아니면 수준 라벨이다", () => {
+    expect(copy.ratioStatusText({ ratio: 0.5, level: "normal" }, { caution: 0.7 })).toBe("70% 미만");
+    expect(copy.ratioStatusText({ ratio: 0.75, level: "caution" }, { caution: 0.7 })).toBe("주의");
+    expect(copy.ratioStatusText({ ratio: 0.9, level: "danger" }, { caution: 0.7 })).toBe("위험");
+  });
+
+  it("최우선변제 줄은 대상·비대상·판단 불가를 구분한다", () => {
+    expect(copy.priorityRepaymentText({ qualifies: true, amount: 55_000_000 })).toContain("5,500만");
+    expect(copy.priorityRepaymentText({ qualifies: false, amount: 0 })).toContain("대상이 아니에요");
+    expect(copy.priorityRepaymentText(null)).toBe("입력이 부족해 판단할 수 없어요");
+  });
+
+  it("권리 입력 값에는 '입력한 등기부 기준' 근거를 붙인다", () => {
+    const lines = copy.rightsLines(normalRights);
+    expect(lines).toContain("입력한 등기부 기준 근저당 채권최고액 0원");
+    for (const line of lines) expect(line.startsWith("입력한 등기부 기준")).toBe(true);
   });
 });

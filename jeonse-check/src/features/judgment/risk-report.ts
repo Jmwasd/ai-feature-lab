@@ -2,7 +2,7 @@
 // 클라이언트·서버 양쪽에서 쓰는 순수 로직이다. 기준일은 asOf로 받고 기간 기준은 @/consts/policy에서 가져온다.
 // 문구는 copy.ts에만 둔다.
 
-import { PRICE_ESTIMATE, RISK_SIGNAL } from "@/consts/policy";
+import { PRICE_ESTIMATE, RESIDENTIAL_MAIN_PURPOSES, RISK_SIGNAL } from "@/consts/policy";
 import {
   DISCLAIMER,
   SIGNAL_COPY,
@@ -45,9 +45,6 @@ export interface RiskReport {
   sources: string[]; // 데이터 출처 목록
   dataBaseDate: Date; // 데이터 기준일
 }
-
-// 건축물대장 주용도명에 이 중 하나가 들어 있으면 주거용으로 본다(예: "공동주택", "공동주택(아파트)").
-const RESIDENTIAL_PURPOSES = ["공동주택", "아파트", "연립주택", "다세대주택"] as const;
 
 export function buildRiskReport(input: {
   deposit: number;
@@ -93,7 +90,7 @@ export function buildRiskReport(input: {
   }
 
   const purpose = building.mainPurpose?.trim();
-  if (purpose && !RESIDENTIAL_PURPOSES.some((p) => purpose.includes(p))) {
+  if (purpose && !RESIDENTIAL_MAIN_PURPOSES.some((p) => purpose.includes(p))) {
     add("non-residential-use", "danger", SIGNAL_COPY["non-residential-use"].detail(purpose));
   }
 
