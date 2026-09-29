@@ -16,7 +16,7 @@
       "status": "completed",
       "started_at": "2026-09-30T00:37:33+0900",
       "summary": "src/features/lookup-input에 zod lookupInputSchema·AddressCandidate·LookupInput(HouseType 재정의)과 LookupForm(버튼·Enter 전용 주소 검색, 후보 선택 필수, 아파트/연립다세대 선택 탭, desktop SearchBarPill+오브·모바일 하단 고정 CTA, 필드별 오류, 동·호 안내), src/components TextInput·SearchBarPill, src/utils/parseWonInput(억·만·천만·만원 기본, 모호하면 null)과 테스트 추가, zod 4.6.5 설치",
-      "completed_at": "2026-09-30T00:44:00+0900"
+      "completed_at": "2026-09-30T00:43:51+0900"
     },
     {
       "step": 2,
