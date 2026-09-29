@@ -26,3 +26,6 @@ yarn-error.log*
 .pnpm-debug.log*
 .vercel
 *.tsbuildinfo
+
+# prisma generated client
+/src/server/generated/

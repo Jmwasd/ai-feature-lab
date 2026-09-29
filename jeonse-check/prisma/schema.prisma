@@ -1,0 +1,140 @@
+// jeonse-check DB 스키마 (ADR-003, ADR-006)
+// 연결 문자열은 prisma.config.ts(마이그레이션: DIRECT_URL)와 src/server/db.ts(런타임: DATABASE_URL)에서 넘긴다.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/server/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Auth.js v5 Prisma adapter 모델 (ADR-002)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  savedResults SavedResult[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// 실거래가 캐시 (ADR-004)
+// ---------------------------------------------------------------------------
+
+enum HouseType {
+  APARTMENT // 아파트
+  ROW_HOUSE // 연립다세대
+}
+
+enum DealKind {
+  SALE // 매매
+  LEASE // 전월세
+}
+
+// 거래 한 건. 금액은 공공데이터 원본 단위인 만원 정수로 저장한다(원 단위는 Int32를 넘는다).
+model Trade {
+  id                String    @id @default(cuid())
+  houseType         HouseType
+  dealKind          DealKind
+  lawdCd            String    @db.Char(5) // 법정동코드 앞 5자리
+  dealYmd           String    @db.Char(6) // 계약월 YYYYMM
+  umdName           String // 법정동명
+  jibun             String?
+  buildingName      String?
+  exclusiveArea     Decimal   @db.Decimal(10, 4) // 전용면적 ㎡
+  floor             Int?
+  contractDate      DateTime  @db.Date
+  priceManwon       Int? // 매매가 (SALE)
+  depositManwon     Int? // 보증금 (LEASE)
+  monthlyRentManwon Int? // 월세 (LEASE)
+  cancelled         Boolean   @default(false) // 해제 여부
+  cancelledDate     DateTime? @db.Date
+  buildingKey       String // 같은 건물 식별 키. 정규화 규칙은 phase 1 어댑터가 정한다.
+  // 거래 자연키를 이어 붙인 문자열. nullable 컬럼이 섞인 복합 unique는 NULL끼리 다른 값으로 취급돼
+  // 재수집 시 중복 행이 생기므로 단일 unique로 멱등 upsert를 보장한다(ADR-004).
+  dedupKey          String    @unique
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([lawdCd, dealYmd, houseType, dealKind])
+  @@index([buildingKey])
+}
+
+// 수집 단위(지역×계약월×주택유형×거래유형)당 한 행. 캐시 적중 여부를 판단한다.
+model CollectionLog {
+  id          String    @id @default(cuid())
+  lawdCd      String    @db.Char(5)
+  dealYmd     String    @db.Char(6)
+  houseType   HouseType
+  dealKind    DealKind
+  collectedAt DateTime  @default(now())
+  itemCount   Int
+
+  @@unique([lawdCd, dealYmd, houseType, dealKind])
+}
+
+// ---------------------------------------------------------------------------
+// 저장 결과
+// ---------------------------------------------------------------------------
+
+model SavedResult {
+  id           String   @id @default(cuid())
+  userId       String
+  input        Json
+  result       Json
+  dataBaseDate DateTime @db.Date // 판정에 쓴 데이터 기준일
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

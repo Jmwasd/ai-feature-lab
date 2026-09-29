@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // 하네스 실행기(Python)는 앱 코드가 아니다.
     "scripts/**",
+    // Prisma 생성 클라이언트
+    "src/server/generated/**",
   ]),
 ]);
 
