@@ -1,0 +1,42 @@
+{
+  "results": {
+    "common": {
+      "errorMessage": "정상",
+      "countPerPage": "10",
+      "totalCount": "1",
+      "errorCode": "0",
+      "currentPage": "1"
+    },
+    "juso": [
+      {
+        "roadAddr": "부산광역시 사하구 감내2로 203 (감천동)",
+        "roadAddrPart1": "부산광역시 사하구 감내2로 203",
+        "roadAddrPart2": " (감천동)",
+        "jibunAddr": "부산광역시 사하구 감천동 산10-5",
+        "engAddr": "203, Gamnae 2-ro, Saha-gu, Busan",
+        "zipNo": "49368",
+        "admCd": "2638010600",
+        "rnMgtSn": "263804000042",
+        "bdMgtSn": "2638010600200100005000001",
+        "detBdNmList": "",
+        "bdNm": "",
+        "bdKdcd": "0",
+        "siNm": "부산광역시",
+        "sggNm": "사하구",
+        "emdNm": "감천동",
+        "liNm": "",
+        "rn": "감내2로",
+        "udrtYn": "0",
+        "buldMnnm": "203",
+        "buldSlno": "0",
+        "mtYn": "1",
+        "lnbrMnnm": "10",
+        "lnbrSlno": "5",
+        "emdNo": "01",
+        "hstryYn": "0",
+        "relJibun": "",
+        "hemdNm": "감천2동"
+      }
+    ]
+  }
+}

@@ -18,6 +18,8 @@ export default defineConfig({
           name: "node",
           environment: "node",
           include: ["src/**/*.test.ts"],
+          // 실제 DB가 필요한 통합 테스트는 npm run test:db(vitest.db.config.mts)에서만 돈다.
+          exclude: ["src/**/*.db.test.ts", "**/node_modules/**"],
         },
       },
       {

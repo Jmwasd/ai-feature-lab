@@ -127,12 +127,15 @@ model CollectionLog {
 // ---------------------------------------------------------------------------
 
 model SavedResult {
-  id           String   @id @default(cuid())
-  userId       String
-  input        Json
-  result       Json
-  dataBaseDate DateTime @db.Date // 판정에 쓴 데이터 기준일
-  createdAt    DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  input          Json
+  result         Json
+  // 목록용 요약. 목록 조회가 result JSON 전체를 읽지 않도록 저장 시 result에서 뽑아 둔다.
+  addressDisplay String
+  signalCount    Int
+  dataBaseDate   DateTime @db.Date // 판정에 쓴 데이터 기준일
+  createdAt      DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

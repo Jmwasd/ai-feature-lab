@@ -39,3 +39,15 @@ function assertNonNegative(value: number, name: string): void {
     throw new RangeError(`${name}는 0 이상의 유한한 수여야 합니다: ${value}`);
   }
 }
+
+/** UTC 기준 YYYY-MM-DD. 예: 2026-09-01T00:00:00Z → "2026-09-01". */
+export function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+const seoulDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit" });
+
+/** 한국 시간 기준 YYYY-MM-DD. 저장 시각처럼 시각이 있는 값을 사용자가 본 날짜로 쓴다. 예: 2026-09-29T23:30:00Z → "2026-09-30". */
+export function formatSeoulDate(date: Date): string {
+  return seoulDate.format(date);
+}
