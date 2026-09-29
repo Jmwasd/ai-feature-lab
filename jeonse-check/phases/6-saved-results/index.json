@@ -16,7 +16,7 @@
       "status": "completed",
       "started_at": "2026-09-30T05:44:03+0900",
       "summary": "saveResultAction(auth()→서명 검증→저장) + 서명 토큰 방식 선택(runCheckAction이 결과·입력을 userId·1시간 유효로 RESULT_SIGNING_SECRET HMAC 서명해 saveToken으로 반환; 재실행은 juso·공시가격·건축물대장 재호출과 화면-저장 결과 불일치 때문에 제외) + src/server/saved/result-token.ts + CheckFlow 결과 화면 secondary '결과 저장'(SaveResultButton: 중복 방지·오류 안내·/saved 링크) + .env.example RESULT_SIGNING_SECRET",
-      "completed_at": "2026-09-30T05:50:00+0900"
+      "completed_at": "2026-09-30T05:50:24+0900"
     },
     {
       "step": 2,
