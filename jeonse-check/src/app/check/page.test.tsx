@@ -14,6 +14,7 @@ vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/features/auth/AuthNavAction", () => ({ AuthNavAction: () => <span>auth-nav-action</span> }));
 // 흐름 자체는 CheckFlow.test.tsx가 검증한다. 여기서는 Server Action을 넘기는지만 본다.
 vi.mock("./_actions/run-check", () => ({ runCheckAction: vi.fn() }));
+vi.mock("./_actions/save-result", () => ({ saveResultAction: vi.fn() }));
 vi.mock("./_actions/search-address", () => ({ searchAddressAction: vi.fn() }));
 
 import CheckPage from "./page";

@@ -9,8 +9,10 @@ import { LookupForm } from "@/features/lookup-input/LookupForm";
 import { type AddressCandidate, type LookupInput, lookupInputSchema } from "@/features/lookup-input/schema";
 import { RightsForm, type RightsFormValue } from "@/features/rights-input/RightsForm";
 import type { CheckError as CheckErrorCode, RunCheckResult } from "../_actions/run-check";
+import type { SaveResultResult } from "../_actions/save-result";
 import type { SearchAddressResult } from "../_actions/search-address";
 import { CheckError } from "./CheckError";
+import { SaveResultButton } from "./SaveResultButton";
 
 // lookup-input·rights-input·judgment feature는 서로 참조하지 않으므로 이 라우트에서 조합한다.
 // 서버 호출은 page.tsx가 넘긴 Server Action으로만 한다. 이 파일은 server 레이어를 import하지 않는다.
@@ -20,11 +22,16 @@ type CheckPayload = { lookup: LookupInput; rights: RightsFormValue };
 type CheckFlowProps = {
   searchAddress: (keyword: string) => Promise<SearchAddressResult>;
   runCheck: (payload: CheckPayload) => Promise<RunCheckResult>;
+  saveResult: (payload: { token: string }) => Promise<SaveResultResult>;
 };
 
 type Step = "lookup" | "rights" | "result";
 
-type RunState = { status: "pending" } | { status: "error"; code: CheckErrorCode } | { status: "done"; view: JudgmentView };
+// runId는 판정 요청마다 달라 결과가 바뀌면 저장 버튼 상태를 새로 시작하게 한다.
+type RunState =
+  | { status: "pending" }
+  | { status: "error"; code: CheckErrorCode }
+  | { status: "done"; runId: number; view: JudgmentView; saveToken: string | null };
 
 const STEPS: { key: Step; title: string; description: string; heading: string }[] = [
   { key: "lookup", title: "조회 조건", description: "주소·보증금·전용면적", heading: "주소와 보증금을 입력해 주세요" },
@@ -32,7 +39,7 @@ const STEPS: { key: Step; title: string; description: string; heading: string }[
   { key: "result", title: "결과", description: "위험 신호와 근거", heading: "조회 결과" },
 ];
 
-export function CheckFlow({ searchAddress, runCheck }: CheckFlowProps) {
+export function CheckFlow({ searchAddress, runCheck, saveResult }: CheckFlowProps) {
   const [step, setStep] = useState<Step>("lookup");
   // 앞 단계로 돌아가도 입력이 남도록 값을 여기에 둔다. URL·localStorage에는 남기지 않는다(개인 정보).
   const [lookup, setLookup] = useState<LookupInput | null>(null);
@@ -56,7 +63,7 @@ export function CheckFlow({ searchAddress, runCheck }: CheckFlowProps) {
   async function startCheck(payload: CheckPayload) {
     const requestId = ++latestRun.current;
     setRun({ status: "pending" });
-    const next = await runCheckSafely(runCheck, payload);
+    const next = await runCheckSafely(runCheck, payload, requestId);
     if (requestId === latestRun.current) setRun(next);
   }
 
@@ -140,7 +147,8 @@ export function CheckFlow({ searchAddress, runCheck }: CheckFlowProps) {
       {step === "result" && run.status === "done" ? (
         <>
           <ResultView view={run.view} />
-          <div className="mx-auto flex w-full max-w-editorial justify-center px-gutter pb-section">
+          <div className="mx-auto flex w-full max-w-editorial flex-col items-center gap-base px-gutter pb-section">
+            <SaveResultButton key={run.runId} token={run.saveToken} saveResult={saveResult} />
             <Button variant="secondary" onClick={restart}>
               조건 바꿔 다시 보기
             </Button>
@@ -198,11 +206,15 @@ async function searchCandidates(
 }
 
 // 오류 코드는 그대로 넘긴다. 호출 예외(네트워크 등)와 읽을 수 없는 결과는 원인을 보이지 않고 lookup-failed('다시 시도')로 둔다.
-async function runCheckSafely(runCheck: CheckFlowProps["runCheck"], payload: CheckPayload): Promise<RunState> {
+async function runCheckSafely(
+  runCheck: CheckFlowProps["runCheck"],
+  payload: CheckPayload,
+  runId: number,
+): Promise<RunState> {
   try {
     const result = await runCheck(payload);
     if (!result.ok) return { status: "error", code: result.error };
-    return { status: "done", view: deserializeJudgmentView(result.view) };
+    return { status: "done", runId, view: deserializeJudgmentView(result.view), saveToken: result.saveToken };
   } catch {
     return { status: "error", code: "lookup-failed" };
   }

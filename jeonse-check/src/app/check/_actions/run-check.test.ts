@@ -1,8 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { deserializeJudgmentView } from "@/features/judgment/serialize";
-import { LookupFailedError, type PublicInputs } from "@/server/lookup/collect-inputs";
+import { LookupFailedError } from "@/server/lookup/collect-inputs";
 import { PublicDataError } from "@/server/public-data/http";
-import type { NormalizedAddress } from "@/server/public-data/juso";
+import { verifyResultToken } from "@/server/saved/result-token";
 
 const { auth, searchAddress, collectPublicInputs } = vi.hoisted(() => ({
   auth: vi.fn(),
@@ -18,94 +18,18 @@ vi.mock("@/server/lookup/collect-inputs", async (importOriginal) => ({
 // 운영 의존성(Prisma)을 불러오지 않는다. collectPublicInputs가 모킹돼 있어 내용은 쓰이지 않는다.
 vi.mock("@/server/lookup/default-deps", () => ({ defaultLookupDeps: () => ({}) }));
 
+import { ADDRESS, checkPayload as payload, OTHER_ADDRESS, PUBLIC_INPUTS, SESSION } from "./__fixtures__/run-check";
 import { runCheckAction } from "./run-check";
-
-const SESSION = { user: { id: "u1" }, expires: "2099-01-01T00:00:00.000Z" };
-
-const ADDRESS: NormalizedAddress = {
-  id: "1144012400100120004000001",
-  roadAddress: "서울특별시 마포구 망원로 12",
-  jibunAddress: "서울특별시 마포구 망원동 123-4 망원빌라",
-  buildingName: "망원빌라",
-  admCd: "1144012400",
-  lawdCd: "11440",
-  sidoName: "서울특별시",
-  sigunguName: "마포구",
-  umdName: "망원동",
-  isMountain: false,
-  mainNo: 123,
-  subNo: 4,
-  jibun: "123-4",
-  pnu: "1144012400101230004",
-};
-
-// 같은 도로명주소로 검색되는 다른 건물
-const OTHER_ADDRESS: NormalizedAddress = { ...ADDRESS, id: "9999999999999999999999999" };
-
-const PUBLIC_INPUTS: PublicInputs = {
-  target: {
-    buildingKey: "11440-망원동-123-4",
-    lawdCd: "11440",
-    umdName: "망원동",
-    houseType: "row-house",
-    exclusiveArea: 59.8,
-  },
-  saleTrades: [
-    {
-      buildingKey: "11440-망원동-123-4",
-      lawdCd: "11440",
-      umdName: "망원동",
-      houseType: "row-house",
-      exclusiveArea: 59.8,
-      floor: 3,
-      contractDate: new Date("2026-05-10T00:00:00Z"),
-      price: 300_000_000,
-      cancelled: false,
-      buildingName: "망원빌라",
-    },
-  ],
-  officialPrice: 250_000_000,
-  officialPriceBaseYear: 2026,
-  building: {
-    mainPurpose: "공동주택(다세대주택)",
-    isViolation: false,
-    useApprovalDate: new Date("2012-04-10T00:00:00Z"),
-  },
-  dataBaseDate: new Date("2026-09-01T00:00:00Z"),
-  warnings: [{ kind: "building-unavailable" }],
-};
-
-function payload(overrides: { lookup?: Record<string, unknown>; rights?: Record<string, unknown> } = {}) {
-  return {
-    lookup: {
-      address: {
-        id: ADDRESS.id,
-        roadAddress: ADDRESS.roadAddress,
-        jibunAddress: ADDRESS.jibunAddress,
-        buildingName: ADDRESS.buildingName,
-        admCd: ADDRESS.admCd,
-      },
-      houseType: "row-house",
-      deposit: 150_000_000,
-      exclusiveArea: 59.8,
-      dong: "1동",
-      ho: "201호",
-      ...overrides.lookup,
-    },
-    rights: {
-      maxClaimAmount: 0,
-      seniorDeposits: 0,
-      isTrust: false,
-      lastOwnershipChangeDate: new Date("2019-03-15T00:00:00Z"),
-      ...overrides.rights,
-    },
-  };
-}
 
 beforeEach(() => {
   auth.mockReset().mockResolvedValue(SESSION);
   searchAddress.mockReset().mockResolvedValue([OTHER_ADDRESS, ADDRESS]);
   collectPublicInputs.mockReset().mockResolvedValue(PUBLIC_INPUTS);
+  vi.stubEnv("RESULT_SIGNING_SECRET", "test-result-signing-secret-0123456789abcdef");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("runCheckAction", () => {
@@ -181,6 +105,34 @@ describe("runCheckAction", () => {
     const restored = deserializeJudgmentView(view);
     expect(restored.report.dataBaseDate).toEqual(PUBLIC_INPUTS.dataBaseDate);
     expect(restored.rights.lastOwnershipChangeDate).toEqual(new Date("2019-03-15T00:00:00Z"));
+  });
+
+  it("성공하면 판정 결과와 입력을 묶은 저장 토큰을 함께 돌려준다", async () => {
+    const result = await runCheckAction(payload());
+
+    if (!result.ok) throw new Error(`실패: ${result.error}`);
+    expect(verifyResultToken(result.saveToken, SESSION.user.id)).toEqual({
+      input: {
+        address: { display: ADDRESS.roadAddress, dong: "1동", ho: "201호" },
+        houseType: "row-house",
+        deposit: 150_000_000,
+        exclusiveArea: 59.8,
+        rights: result.view.rights,
+      },
+      result: result.view,
+    });
+    // 다른 사용자는 이 토큰으로 저장할 수 없다
+    expect(verifyResultToken(result.saveToken, "someone-else")).toBeNull();
+  });
+
+  it("서명 비밀값이 없어도 판정 결과는 돌려주고 저장 토큰만 비운다", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.stubEnv("RESULT_SIGNING_SECRET", "");
+
+    const result = await runCheckAction(payload());
+
+    expect(result).toMatchObject({ ok: true, saveToken: null });
+    consoleError.mockRestore();
   });
 
   it("주소 재조회가 호출 한도에 걸리면 quota", async () => {

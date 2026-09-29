@@ -3,6 +3,7 @@ import { TopNav } from "@/components/TopNav";
 import { AuthNavAction } from "@/features/auth/AuthNavAction";
 import { auth } from "@/server/auth";
 import { runCheckAction } from "./_actions/run-check";
+import { saveResultAction } from "./_actions/save-result";
 import { searchAddressAction } from "./_actions/search-address";
 import { CheckFlow } from "./_components/CheckFlow";
 
@@ -26,7 +27,7 @@ export default async function CheckPage() {
       <TopNav links={NAV_LINKS} action={<AuthNavAction />} />
       <main>
         <p className="mx-auto max-w-editorial px-gutter pt-lg text-caption text-muted">{userName}님으로 로그인했어요</p>
-        <CheckFlow searchAddress={searchAddressAction} runCheck={runCheckAction} />
+        <CheckFlow searchAddress={searchAddressAction} runCheck={runCheckAction} saveResult={saveResultAction} />
       </main>
     </>
   );
