@@ -10,6 +10,7 @@ import { defaultLookupDeps } from "@/server/lookup/default-deps";
 import { PublicDataError } from "@/server/public-data/http";
 import { searchAddress } from "@/server/public-data/juso";
 import type { TradeHouseType } from "@/server/public-data/molit-trade";
+import { signResultToken } from "@/server/saved/result-token";
 
 // 주소 재조회 때 받는 결과 수. 같은 도로명주소에 건물이 여러 개(단지)여도 선택한 건물을 찾을 수 있게 넉넉히 받는다.
 const RELOOKUP_PER_PAGE = 20;
@@ -27,7 +28,10 @@ export type CheckError =
   | "lookup-failed"
   | "quota";
 
-export type RunCheckResult = { ok: true; view: SerializedJudgmentView } | { ok: false; error: CheckError };
+// saveToken은 결과 저장(save-result.ts)에 넘기는 서명 토큰이다. 서명 비밀값이 없으면 null이고 판정 결과는 그대로 보여 준다.
+export type RunCheckResult =
+  | { ok: true; view: SerializedJudgmentView; saveToken: string | null }
+  | { ok: false; error: CheckError };
 
 /**
  * 조회 조건과 권리 입력으로 공공데이터를 모아 판정한다. payload는 { lookup, rights }다.
@@ -74,9 +78,26 @@ export async function runCheckAction(payload: unknown): Promise<RunCheckResult> 
       publicData,
       asOf,
     });
-    return { ok: true, view: serializeJudgmentView(view) };
+    const serialized = serializeJudgmentView(view);
+    const input = {
+      address: serialized.address,
+      houseType: lookup.houseType,
+      deposit: serialized.deposit,
+      exclusiveArea: serialized.exclusiveArea,
+      rights: serialized.rights,
+    };
+    return { ok: true, view: serialized, saveToken: issueSaveToken(session.user.id, input, serialized, asOf) };
   } catch (error) {
     return { ok: false, error: toCheckError(error) };
+  }
+}
+
+function issueSaveToken(userId: string, input: unknown, result: SerializedJudgmentView, asOf: Date): string | null {
+  try {
+    return signResultToken(userId, { input, result }, asOf);
+  } catch (error) {
+    console.error("[runCheckAction] 저장 토큰 발급 실패", error);
+    return null;
   }
 }
 

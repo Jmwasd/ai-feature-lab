@@ -8,9 +8,11 @@ import type { AddressCandidate } from "@/features/lookup-input/schema";
 import { expectNoForbiddenPhrases } from "@/test/forbidden-phrases";
 import { wonToInputText } from "@/utils/parse-won-input";
 import type { CheckError as CheckErrorCode, RunCheckResult } from "../_actions/run-check";
+import type { SaveResultError, SaveResultResult } from "../_actions/save-result";
 import type { SearchAddressResult } from "../_actions/search-address";
 import { CheckFlow } from "./CheckFlow";
 import { CHECK_ERROR_COPY } from "./error-copy";
+import { SAVE_ERROR_COPY } from "./SaveResultButton";
 
 const candidate: AddressCandidate = {
   id: "a1",
@@ -21,15 +23,24 @@ const candidate: AddressCandidate = {
 };
 
 const okView = serializeJudgmentView(noSignalsView);
-const okResult: RunCheckResult = { ok: true, view: okView };
+const okResult: RunCheckResult = { ok: true, view: okView, saveToken: "token-1" };
 
 type User = ReturnType<typeof userEvent.setup>;
 
-function setup(runCheck = vi.fn(async (): Promise<RunCheckResult> => okResult)) {
+function setup(
+  runCheck = vi.fn(async (): Promise<RunCheckResult> => okResult),
+  saveResult = vi.fn(async (): Promise<SaveResultResult> => ({ ok: true, id: "saved-1" })),
+) {
   const searchAddress = vi.fn(async (): Promise<SearchAddressResult> => ({ ok: true, candidates: [candidate] }));
   const user = userEvent.setup();
-  render(<CheckFlow searchAddress={searchAddress} runCheck={runCheck} />);
-  return { user, searchAddress, runCheck };
+  render(<CheckFlow searchAddress={searchAddress} runCheck={runCheck} saveResult={saveResult} />);
+  return { user, searchAddress, runCheck, saveResult };
+}
+
+async function reachResult(user: User) {
+  await fillLookup(user);
+  await fillRights(user);
+  await screen.findByTestId("signal-count");
 }
 
 async function fillLookup(user: User) {
@@ -271,11 +282,157 @@ describe("CheckFlow", () => {
   it("주소 검색이 실패 코드를 돌려주면 검색 오류 안내를 보여 준다", async () => {
     const user = userEvent.setup();
     const searchAddress = vi.fn(async (): Promise<SearchAddressResult> => ({ ok: false, error: "unavailable" }));
-    render(<CheckFlow searchAddress={searchAddress} runCheck={vi.fn()} />);
+    render(<CheckFlow searchAddress={searchAddress} runCheck={vi.fn()} saveResult={vi.fn()} />);
 
     await user.type(screen.getByLabelText("주소"), "월드컵로");
     await user.click(screen.getByRole("button", { name: "주소 검색" }));
 
     expect(await screen.findByText(/주소를 불러오지 못했어요/)).toBeInTheDocument();
+  });
+
+  describe("결과 저장", () => {
+    it("'결과 저장'을 누르면 판정 때 받은 토큰으로 저장하고 저장 목록 링크를 보여 준다", async () => {
+      const { user, saveResult } = setup();
+      await reachResult(user);
+
+      const button = screen.getByRole("button", { name: "결과 저장" });
+      await user.click(button);
+
+      expect(saveResult).toHaveBeenCalledWith({ token: "token-1" });
+      const status = await screen.findByRole("status");
+      expect(status).toHaveTextContent("저장했어요");
+      expect(within(status).getByRole("link", { name: "저장 목록 보기" })).toHaveAttribute("href", "/saved");
+      // 같은 결과를 두 번 저장하지 않는다
+      expect(button).toBeDisabled();
+    });
+
+    it("저장하는 동안 버튼을 비활성화해 여러 번 눌러도 한 번만 저장한다", async () => {
+      let resolve!: (result: SaveResultResult) => void;
+      const saveResult = vi.fn(() => new Promise<SaveResultResult>((r) => (resolve = r)));
+      const { user } = setup(undefined, saveResult);
+      await reachResult(user);
+
+      const button = screen.getByRole("button", { name: "결과 저장" });
+      await user.click(button);
+      expect(button).toBeDisabled();
+      await user.dblClick(button);
+      expect(saveResult).toHaveBeenCalledTimes(1);
+
+      resolve({ ok: true, id: "saved-1" });
+      expect(await screen.findByText(/저장했어요/)).toBeInTheDocument();
+      await user.click(button);
+      expect(saveResult).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(Object.keys(SAVE_ERROR_COPY) as SaveResultError[])(
+      "%s — 저장 실패 안내를 보여 주고 다시 누를 수 있다",
+      async (code) => {
+        const saveResult = vi
+          .fn<() => Promise<SaveResultResult>>()
+          .mockResolvedValueOnce({ ok: false, error: code })
+          .mockResolvedValueOnce({ ok: true, id: "saved-1" });
+        const { user } = setup(undefined, saveResult);
+        await reachResult(user);
+
+        await user.click(screen.getByRole("button", { name: "결과 저장" }));
+
+        expect(await screen.findByRole("alert")).toHaveTextContent(SAVE_ERROR_COPY[code]);
+        expect(screen.queryByText(/저장했어요/)).not.toBeInTheDocument();
+        // 결과 화면은 그대로 둔다
+        expect(screen.getByTestId("signal-count")).toBeInTheDocument();
+        expectNoForbiddenPhrases(document.body.textContent ?? "");
+
+        const button = screen.getByRole("button", { name: "결과 저장" });
+        expect(button).toBeEnabled();
+        await user.click(button);
+        expect(await screen.findByText(/저장했어요/)).toBeInTheDocument();
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      },
+    );
+
+    it("저장 호출이 예외를 던지면 failed 안내를 보여 준다", async () => {
+      const { user } = setup(undefined, vi.fn(async (): Promise<SaveResultResult> => {
+        throw new Error("network down SECRET123");
+      }));
+      await reachResult(user);
+
+      await user.click(screen.getByRole("button", { name: "결과 저장" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(SAVE_ERROR_COPY.failed);
+      expect(document.body.textContent).not.toContain("SECRET123");
+    });
+
+    it("저장 토큰이 없으면 호출하지 않고 failed 안내를 보여 준다", async () => {
+      const saveResult = vi.fn(async (): Promise<SaveResultResult> => ({ ok: true, id: "saved-1" }));
+      const { user } = setup(vi.fn(async (): Promise<RunCheckResult> => ({ ...okResult, saveToken: null })), saveResult);
+      await reachResult(user);
+
+      await user.click(screen.getByRole("button", { name: "결과 저장" }));
+
+      expect(await screen.findByRole("alert")).toHaveTextContent(SAVE_ERROR_COPY.failed);
+      expect(saveResult).not.toHaveBeenCalled();
+    });
+
+    it("조건을 바꿔 다시 조회하면 새 결과를 다시 저장할 수 있다", async () => {
+      const runCheck = vi
+        .fn<() => Promise<RunCheckResult>>()
+        .mockResolvedValueOnce(okResult)
+        .mockResolvedValueOnce({ ...okResult, saveToken: "token-2" });
+      const { user, saveResult } = setup(runCheck);
+      await reachResult(user);
+      await user.click(screen.getByRole("button", { name: "결과 저장" }));
+      await screen.findByText(/저장했어요/);
+
+      await user.click(screen.getByRole("button", { name: "조건 바꿔 다시 보기" }));
+      await user.click(screen.getAllByRole("button", { name: "조회하기" })[0]);
+      await user.click(screen.getByRole("button", { name: "위험 신호 확인하기" }));
+      await screen.findByTestId("signal-count");
+
+      expect(screen.queryByText(/저장했어요/)).not.toBeInTheDocument();
+      const button = screen.getByRole("button", { name: "결과 저장" });
+      expect(button).toBeEnabled();
+      await user.click(button);
+      expect(saveResult).toHaveBeenLastCalledWith({ token: "token-2" });
+    });
+
+    it("결과 화면에 레드 CTA 버튼을 더하지 않는다", async () => {
+      const { user } = setup();
+      await reachResult(user);
+
+      expect(screen.getByRole("button", { name: "결과 저장" }).className).not.toContain("bg-primary");
+    });
+  });
+
+  it("prefill이 있으면 조회 조건과 권리관계를 미리 채우고, 주소는 검색어로만 채운다", async () => {
+    const runCheck = vi.fn(async (): Promise<RunCheckResult> => okResult);
+    const searchAddress = vi.fn(async (): Promise<SearchAddressResult> => ({ ok: true, candidates: [candidate] }));
+    const user = userEvent.setup();
+    render(
+      <CheckFlow
+        searchAddress={searchAddress}
+        runCheck={runCheck}
+        saveResult={vi.fn()}
+        prefill={{
+          addressKeyword: candidate.roadAddress,
+          lookup: { houseType: "row-house", deposit: 150_000_000, exclusiveArea: 59, dong: "1동" },
+          rights: { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: null },
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("주소")).toHaveValue(candidate.roadAddress);
+    expect(screen.getByLabelText("보증금")).toHaveValue(wonToInputText(150_000_000));
+    expect(screen.getByRole("radio", { name: "연립다세대" })).toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "주소 검색" }));
+    await user.click(await screen.findByRole("button", { name: /월드컵로 100/ }));
+    await user.click(screen.getAllByRole("button", { name: "조회하기" })[0]);
+    await user.click(screen.getByRole("button", { name: "위험 신호 확인하기" }));
+
+    await screen.findByTestId("signal-count");
+    expect(runCheck).toHaveBeenCalledWith({
+      lookup: expect.objectContaining({ address: candidate, deposit: 150_000_000, exclusiveArea: 59, dong: "1동" }),
+      rights: { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: null },
+    });
   });
 });
