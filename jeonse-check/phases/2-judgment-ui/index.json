@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "rights-form",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:43:52+0900",
+      "summary": "src/features/rights-input에 zod rightsInputSchema(RightsInput과 같은 구조)·validateRightsInput(input, asOf: 미래 소유권 이전일 거부)과 RightsForm(근저당 있음/없음 명시 선택·건별 추가/삭제·합계만 제출, 선순위 보증금, 신탁 예/아니오 기본값 없음, 소유권 이전일+'이전 없음' 체크, 필드별 등기부 위치 도움말, 상단 등기부 기준 안내, 누락 값은 오류로 둠), src/utils/parse-won-input에 wonToInputText 추가(LookupForm의 depositToText 대체)와 테스트 추가",
+      "completed_at": "2026-09-30T00:48:30+0900"
     }
   ],
   "created_at": "2026-09-30T00:32:20+0900"

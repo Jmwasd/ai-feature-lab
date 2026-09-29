@@ -1,5 +1,7 @@
 // 사용자가 쓴 금액 문자열을 원 단위 정수로 바꾼다. 도메인과 무관한 순수 함수다.
 
+import { formatWon } from "./format";
+
 const WON_PER_MAN = 10_000;
 const MAN_PER_EOK = 10_000;
 // 단위 없는 숫자는 만원으로 읽는다. 이 값(100억) 이상이면 원 단위로 쓴 것일 수 있어 모호하다.
@@ -41,4 +43,12 @@ export function parseWonInput(text: string): number | null {
 
 function toSafeInteger(value: number): number | null {
   return Number.isSafeInteger(value) ? value : null;
+}
+
+/**
+ * 원 단위 금액을 금액 입력창에 채울 문자열로 되돌린다. `parseWonInput`으로 다시 읽으면 같은 금액이 된다.
+ * 만원 단위로 떨어지면 "2억 8,000만", 아니면(0 포함) "12345원"처럼 원 단위 그대로 쓴다.
+ */
+export function wonToInputText(amount: number): string {
+  return amount > 0 && amount % WON_PER_MAN === 0 ? formatWon(amount) : `${amount}원`;
 }

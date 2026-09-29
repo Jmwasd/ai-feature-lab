@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseWonInput } from "./parse-won-input";
+import { parseWonInput, wonToInputText } from "./parse-won-input";
 
 describe("parseWonInput", () => {
   it.each([
@@ -51,5 +51,21 @@ describe("parseWonInput", () => {
     ["1e5"],
   ])("모호하거나 형식이 다른 입력 %j → null", (text) => {
     expect(parseWonInput(text)).toBeNull();
+  });
+});
+
+describe("wonToInputText", () => {
+  it("만원 단위로 떨어지면 억·만 표기로 쓴다", () => {
+    expect(wonToInputText(280_000_000)).toBe("2억 8,000만");
+    expect(wonToInputText(50_000_000)).toBe("5,000만");
+  });
+
+  it("0원과 만원 단위로 떨어지지 않는 금액은 원 단위 그대로 쓴다", () => {
+    expect(wonToInputText(0)).toBe("0원");
+    expect(wonToInputText(12_345)).toBe("12345원");
+  });
+
+  it.each([0, 12_345, 50_000_000, 280_000_000, 1_234_560_000])("다시 읽으면 같은 금액이 된다: %d", (amount) => {
+    expect(parseWonInput(wonToInputText(amount))).toBe(amount);
   });
 });

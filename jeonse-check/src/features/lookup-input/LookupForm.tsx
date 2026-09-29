@@ -6,7 +6,7 @@ import { Button } from "@/components/Button";
 import { SearchBarPill } from "@/components/SearchBarPill";
 import { TextInput } from "@/components/TextInput";
 import { formatWon } from "@/utils/format";
-import { parseWonInput } from "@/utils/parse-won-input";
+import { parseWonInput, wonToInputText } from "@/utils/parse-won-input";
 import { HOUSE_TYPE_LABEL, HOUSE_TYPES, lookupInputSchema, type AddressCandidate, type HouseType, type LookupInput } from "./schema";
 
 type LookupFormProps = {
@@ -32,7 +32,7 @@ export function LookupForm({ searchAddress, onSubmit, defaultValue }: LookupForm
   const [selected, setSelected] = useState<AddressCandidate | null>(defaultValue?.address ?? null);
   const [search, setSearch] = useState<SearchState>({ status: "idle" });
   const [houseType, setHouseType] = useState<HouseType | null>(defaultValue?.houseType ?? null);
-  const [depositText, setDepositText] = useState(depositToText(defaultValue?.deposit));
+  const [depositText, setDepositText] = useState(defaultValue?.deposit === undefined ? "" : wonToInputText(defaultValue.deposit));
   const [areaText, setAreaText] = useState(defaultValue?.exclusiveArea?.toString() ?? "");
   const [dong, setDong] = useState(defaultValue?.dong ?? "");
   const [ho, setHo] = useState(defaultValue?.ho ?? "");
@@ -277,12 +277,6 @@ function AddressResults({ state, onSelect }: { state: SearchState; onSelect: (ca
       ) : null}
     </div>
   );
-}
-
-// 원 단위 금액을 입력창 문자열로 되돌린다. 만원 단위로 떨어지지 않으면 원 단위 그대로 쓴다.
-function depositToText(deposit: number | undefined): string {
-  if (deposit === undefined) return "";
-  return deposit > 0 && deposit % 10_000 === 0 ? formatWon(deposit) : `${deposit}원`;
 }
 
 // 전용면적 입력(㎡). 숫자와 소수점만 받고, 그 밖은 NaN으로 두어 스키마가 오류를 내게 한다.
