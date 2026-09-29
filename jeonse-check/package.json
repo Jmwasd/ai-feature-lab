@@ -8,12 +8,15 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
-    "postinstall": "prisma generate"
+    "test:db": "vitest run --config vitest.db.config.mts",
+    "postinstall": "prisma generate",
+    "collect": "tsx --conditions=react-server src/cli/collect.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "fast-xml-parser": "5.11.2",
     "lucide-react": "1.48.0",
     "next": "16.3.7",
     "next-auth": "5.0.0-beta.32",
@@ -37,6 +40,7 @@
     "jsdom": "29.1.1",
     "prisma": "7.10.0",
     "tailwindcss": "^4",
+    "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "4.1.11"
   }

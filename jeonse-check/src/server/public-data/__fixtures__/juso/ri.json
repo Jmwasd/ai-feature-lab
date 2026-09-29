@@ -1,0 +1,42 @@
+{
+  "results": {
+    "common": {
+      "errorMessage": "정상",
+      "countPerPage": "10",
+      "totalCount": "1",
+      "errorCode": "0",
+      "currentPage": "1"
+    },
+    "juso": [
+      {
+        "roadAddr": "경기도 김포시 고촌읍 수기로 21 (고촌센트레빌)",
+        "roadAddrPart1": "경기도 김포시 고촌읍 수기로 21",
+        "roadAddrPart2": " (고촌센트레빌)",
+        "jibunAddr": "경기도 김포시 고촌읍 신곡리 1040-2 고촌센트레빌",
+        "engAddr": "21, Sugi-ro, Gochon-eup, Gimpo-si, Gyeonggi-do",
+        "zipNo": "10125",
+        "admCd": "4157025021",
+        "rnMgtSn": "415703259031",
+        "bdMgtSn": "4157025021110400002000001",
+        "detBdNmList": "",
+        "bdNm": "고촌센트레빌",
+        "bdKdcd": "1",
+        "siNm": "경기도",
+        "sggNm": "김포시",
+        "emdNm": "고촌읍",
+        "liNm": "신곡리",
+        "rn": "수기로",
+        "udrtYn": "0",
+        "buldMnnm": "21",
+        "buldSlno": "0",
+        "mtYn": "0",
+        "lnbrMnnm": "1040",
+        "lnbrSlno": "2",
+        "emdNo": "01",
+        "hstryYn": "0",
+        "relJibun": "",
+        "hemdNm": "고촌읍"
+      }
+    ]
+  }
+}

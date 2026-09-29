@@ -5,6 +5,7 @@ import { expectNoForbiddenPhrases } from "@/test/forbidden-phrases";
 import { formatPercent, formatWon } from "@/utils/format";
 import {
   CONFIDENCE_LABEL,
+  DATA_LIMITED_NOTE,
   DISCLAIMER,
   ESTIMATE_METHOD_LABEL,
   HUG_STATUS,
@@ -208,5 +209,22 @@ describe("ReportFooter", () => {
       expect((el as HTMLElement).style.opacity).toBe("");
       expect(el.className).not.toMatch(/transition|opacity-0|animate/);
     }
+  });
+});
+
+describe("SignalSummary — 데이터 부족 요약 줄", () => {
+  it.each([
+    ["시세 none", priceNoneView],
+    ["HUG unknown", hugUnknownView],
+  ])("%s이면 헤드라인 아래에 판단이 제한된다는 줄을 보여 준다", (_name, view) => {
+    render(<ResultView view={view} />);
+
+    expect(screen.getByTestId("data-limited")).toHaveTextContent(DATA_LIMITED_NOTE);
+  });
+
+  it("시세와 HUG 판단에 필요한 데이터가 모두 있으면 보여 주지 않는다", () => {
+    render(<ResultView view={noSignalsView} />);
+
+    expect(screen.queryByTestId("data-limited")).not.toBeInTheDocument();
   });
 });

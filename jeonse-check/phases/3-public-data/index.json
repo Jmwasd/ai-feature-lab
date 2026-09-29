@@ -5,32 +5,52 @@
     {
       "step": 0,
       "name": "api-client",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:50:04+0900",
+      "summary": "src/server/env.ts(requireEnv·MissingEnvError), public-data/http.ts(getText·getJson 타임아웃·5xx/네트워크 재시도·429 quota·PublicDataError·redactUrl), xml.ts(fast-xml-parser 문자열 유지 parseXml·toArray), __fixtures__/load.ts(loadFixture·createFakeFetch) + 테스트",
+      "completed_at": "2026-09-30T00:53:09+0900"
     },
     {
       "step": 1,
       "name": "address-normalize",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:53:09+0900",
+      "summary": "src/server/public-data/juso.ts(searchAddress: 검색어 정리·미달 시 미호출, errorCode→PublicDataError(api)/검색어 오류코드는 빈 배열, NormalizedAddress 매핑·lawdCd·umdName '읍면 리' 규칙, 순수 함수 buildPnu·formatJibun) + __fixtures__/juso/ 6종(일반·산·부번없음·리·결과없음·오류) + juso.test.ts",
+      "completed_at": "2026-09-30T00:56:42+0900"
     },
     {
       "step": 2,
       "name": "region-tiers",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:56:42+0900",
+      "summary": "src/consts/policy.ts에 SIDO_CODES·CAPITAL_AREA_SIDO_CODES·PRIORITY_REPAYMENT_REGION_CODES(구간별 2/5/8자리 법정동코드, 광역시 군 OTHER, 인천 검단 8개 동 METROPOLITAN, 남양주 과밀 동 8자리, AMBIGUOUS: 영종구·송도·청라·남동산단 동·시흥·다산동·전남광주통합특별시) 추가, 코드 값은 code.go.kr 법정동코드 전체자료(2026-09-30)로 대조 + src/features/judgment/region.ts(priorityRegionTier·isCapitalArea, 10→8→5→2 최장 일치, 모호·미등록·형식 오류는 null) + region.test.ts",
+      "completed_at": "2026-09-30T01:03:42+0900"
     },
     {
       "step": 3,
       "name": "trade-adapter",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T01:03:42+0900",
+      "summary": "src/server/public-data/molit-trade.ts(fetchTrades: 아파트·연립다세대×매매·전월세 4개 오퍼레이션, numOfRows 1000 totalCount 기준 전 페이지 합침, 금액 콤마→만원 정수, 연월일→UTC 자정, cdealType 'O'·cdealDay 'YY.MM.DD'로 해제 표시만(버리지 않음), OpenAPI_ServiceResponse 22→quota·그 외→api, resultCode 00/000 외→api) + trade-keys.ts(normalizeJibun·buildingKeyOf(isMountain 선택 입력으로 juso 산 지번 대응)·dedupKeyOf(해제 필드 제외, 면적 toFixed(4))) + __fixtures__/molit/ 11종(전월세 2종·인증 오류는 실제 응답, 리 단위 umdNm '고촌읍 신곡리' 실응답으로 확인) + 테스트",
+      "completed_at": "2026-09-30T01:08:53+0900"
     },
     {
       "step": 4,
       "name": "official-price-adapter",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T01:08:53+0900",
+      "summary": "src/server/public-data/official-price.ts(fetchOfficialPrice: vworld getApartHousingPriceAttr, key+domain(VWORLD_API_DOMAIN 신설·.env.example 갱신), 기준연도 KST asOf 연도→없으면 전년도, 숫자 호만 hoNm 필터·지하 호는 전체 페이지 조회 후 비교, 동은 로컬 비교, 같은 세대 중복 행은 lastUpdtDt 최신·금액 충돌 시 null, 동 null+여러 동 같은 호→null(전년도 폴백 없음), 응답에 동 없는 건물은 호로만 매칭, 결과 없음은 루트 'response'·오류 resultCode OVER_REQUEST_LIMIT→quota·그 외→api, 배율 미적용) + 순수 함수 normalizeDong·normalizeHo(동·호 접미사·제·앞자리 0·지하/지층/B→B) + __fixtures__/vworld/ 9종(은마·망원동 다세대 실응답 축약, 빈 결과·INVALID_KEY 실응답, 한도 초과·페이지 분할은 구성) + official-price.test.ts",
+      "completed_at": "2026-09-30T01:14:55+0900"
     },
     {
       "step": 5,
       "name": "building-adapter",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T01:14:55+0900",
+      "summary": "src/server/public-data/building.ts(fetchBuildingRecords: 건축HUB getBrTitleInfo, admCd→sigunguCd 5+bjdongCd 5·platGbCd 0/1(산)·bun/ji 4자리 0채움, numOfRows 100 상한이라 totalCount 기준 전 페이지 합침, 부속건축물(mainAtchGbCd 1) 제외, 공백 값 trim→null, useAprDay→UTC 자정·빈 값/없는 날짜 null, 게이트웨이 22→quota·그 외→api, resultCode 00/000 외→api; 위반건축물 여부 미제공→isViolation 항상 null(2026-09-30 오퍼레이션 10개 실호출로 응답 필드 전수 확인, 위반 필드 없음) + summarizeBuilding(normalizeDong으로 동 일치 우선, 없으면 비주거 용도·위반 true 우선(모르는 값 있으면 null)·최근 사용승인일로 합침, 빈 목록 전부 null) + 주거용 용도 목록을 policy.ts RESIDENTIAL_MAIN_PURPOSES로 옮겨 risk-report.ts와 공유 + __fixtures__/building/ 6종(단일 동 망원동 460-8·여러 동 대치동 670 동부센트레빌(공동주택·제2종근린생활시설·경비실 부속)·결과 없음·인증 오류는 실응답, 사용승인일 없음·한도 초과는 구성) + building.test.ts",
+      "completed_at": "2026-09-30T01:20:13+0900"
     }
-  ]
+  ],
+  "created_at": "2026-09-30T00:50:04+0900",
+  "completed_at": "2026-09-30T01:20:13+0900"
 }

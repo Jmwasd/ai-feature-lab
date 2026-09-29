@@ -14,6 +14,8 @@ type LookupFormProps = {
   searchAddress: (keyword: string) => Promise<AddressCandidate[]>;
   onSubmit: (input: LookupInput) => void;
   defaultValue?: Partial<LookupInput>;
+  // 주소 후보 없이 검색어만 채울 때 쓴다(저장한 결과로 다시 조회). 사용자가 검색해서 다시 골라야 제출된다.
+  defaultKeyword?: string;
 };
 
 type SearchState =
@@ -27,8 +29,8 @@ type FieldErrors = Partial<Record<keyof LookupInput, string>>;
 const UNIT_NOTICE = "동·호를 입력하면 공시가격으로 HUG 기준을 계산해요";
 
 // 조회 조건 입력 폼. 모바일은 세로 입력 스택 + 하단 고정 CTA, desktop은 SearchBarPill + 오브(UI_GUIDE §3·§4).
-export function LookupForm({ searchAddress, onSubmit, defaultValue }: LookupFormProps) {
-  const [keyword, setKeyword] = useState(defaultValue?.address?.roadAddress ?? "");
+export function LookupForm({ searchAddress, onSubmit, defaultValue, defaultKeyword }: LookupFormProps) {
+  const [keyword, setKeyword] = useState(defaultValue?.address?.roadAddress ?? defaultKeyword ?? "");
   const [selected, setSelected] = useState<AddressCandidate | null>(defaultValue?.address ?? null);
   const [search, setSearch] = useState<SearchState>({ status: "idle" });
   const [houseType, setHouseType] = useState<HouseType | null>(defaultValue?.houseType ?? null);

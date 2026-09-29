@@ -1,4 +1,4 @@
-import { ESTIMATE_METHOD_LABEL, RECHECK_REGISTRY_NOTE } from "../copy";
+import { DATA_LIMITED_NOTE, ESTIMATE_METHOD_LABEL, RECHECK_REGISTRY_NOTE } from "../copy";
 import type { RiskReport } from "../risk-report";
 import { formatWon } from "@/utils/format";
 import type { JudgmentView } from "./types";
@@ -18,6 +18,11 @@ export function SignalSummary({ report, view }: { report: RiskReport; view: Judg
         {report.signalCount}
       </p>
       <h2 className="text-display-sm text-ink">{report.headline}</h2>
+      {isDataLimited(view) ? (
+        <p data-testid="data-limited" className="max-w-detail text-body-md text-ink">
+          {DATA_LIMITED_NOTE}
+        </p>
+      ) : null}
       <p className="max-w-detail text-body-sm text-muted">{RECHECK_REGISTRY_NOTE}</p>
       <dl className="mt-lg flex flex-wrap justify-center gap-x-xl gap-y-base">
         <SummaryFigure label="보증금" value={formatWon(view.deposit)} />
@@ -29,6 +34,12 @@ export function SignalSummary({ report, view }: { report: RiskReport; view: Judg
       </dl>
     </section>
   );
+}
+
+// 시세를 추정하지 못했거나 HUG 판단에 필요한 값이 없으면 판단이 제한된 결과다.
+// 공공데이터 부분 실패(warnings)는 직렬화 뷰에 실리지 않으므로 notes로만 보인다.
+function isDataLimited(view: JudgmentView): boolean {
+  return view.priceEstimate.method === "none" || view.hug.eligible === "unknown";
 }
 
 function SummaryFigure({ label, value }: { label: string; value: string }) {
