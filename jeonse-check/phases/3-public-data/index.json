@@ -32,7 +32,7 @@
       "status": "completed",
       "started_at": "2026-09-30T01:03:42+0900",
       "summary": "src/server/public-data/molit-trade.ts(fetchTrades: 아파트·연립다세대×매매·전월세 4개 오퍼레이션, numOfRows 1000 totalCount 기준 전 페이지 합침, 금액 콤마→만원 정수, 연월일→UTC 자정, cdealType 'O'·cdealDay 'YY.MM.DD'로 해제 표시만(버리지 않음), OpenAPI_ServiceResponse 22→quota·그 외→api, resultCode 00/000 외→api) + trade-keys.ts(normalizeJibun·buildingKeyOf(isMountain 선택 입력으로 juso 산 지번 대응)·dedupKeyOf(해제 필드 제외, 면적 toFixed(4))) + __fixtures__/molit/ 11종(전월세 2종·인증 오류는 실제 응답, 리 단위 umdNm '고촌읍 신곡리' 실응답으로 확인) + 테스트",
-      "completed_at": "2026-09-30T01:08:24+0900"
+      "completed_at": "2026-09-30T01:08:53+0900"
     },
     {
       "step": 4,
