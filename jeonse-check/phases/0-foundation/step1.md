@@ -24,6 +24,12 @@ Prisma를 설치하고 MVP에 필요한 DB 스키마와 Prisma 클라이언트 �
 
 어느 쪽이든 결과는 같아야 한다. 앱 런타임은 `DATABASE_URL`(풀러)을 쓰고, 마이그레이션은 `DIRECT_URL`(직접 연결)을 쓴다. 이유: ADR-006.
 
+**환경변수가 없어도 generate·validate·build가 통과해야 한다** (Prisma 7 이상일 때):
+
+- `prisma.config.ts` 첫 줄에 `import "dotenv/config";`를 둔다(`dotenv`는 devDependency). 이유: Prisma 7 CLI는 `.env`를 자동으로 읽지 않는다.
+- datasource url은 `prisma/config`의 `env("DIRECT_URL")`를 쓰지 말고 `process.env.DIRECT_URL`을 읽는다. 이유: `env()`는 값이 없으면 예외를 던져, `.env`가 없는 하네스 세션·Stop 훅·CI에서 `postinstall`과 `npm run build`의 `prisma generate`가 실패한다.
+- 검증: `.env`가 없고 `DATABASE_URL`·`DIRECT_URL`도 설정되지 않은 셸에서 `npx prisma generate`와 `npm run build`가 성공해야 한다.
+
 생성된 클라이언트 코드를 `src/` 아래에 출력한다면 `src/server/generated/`에 두고 `.gitignore`와 ESLint 무시 대상에 추가한다. 생성 코드는 `import "server-only"` 규칙에서 예외다.
 
 ### 2. 스키마 (`prisma/schema.prisma`)
@@ -67,6 +73,7 @@ Prisma 클라이언트는 이 파일 한 곳에서만 생성한다. 이유: ARCH
 
 ```bash
 npx prisma validate   # 스키마 유효 (DATABASE_URL/DIRECT_URL이 필요하면 .env.example 값을 환경변수로 넘겨 실행)
+env -u DATABASE_URL -u DIRECT_URL npx prisma generate   # 환경변수 없이도 generate 성공
 npm run lint
 npm run build
 npm run test
