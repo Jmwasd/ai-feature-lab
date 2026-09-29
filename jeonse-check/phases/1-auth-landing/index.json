@@ -56,7 +56,7 @@
       "status": "completed",
       "started_at": "2026-09-30T00:23:57+0900",
       "summary": "src/features/auth에 callback-url.ts(safeCallbackUrl: '/'로 시작하고 '//'·'/\\'가 아닌 상대 경로만 허용, 아니면 /check)·actions.ts('use server' signInWithGoogle(formData callbackUrl 재검사 후 signIn google redirectTo)·signOutAction(redirectTo '/'))·AuthNavAction(Server Component, 비로그인 '지금 확인하기' secondary / 로그인 '내 조회' secondary+로그아웃 tertiary-text submit 폼), 랜딩 page.tsx를 async로 바꿔 TopNav action에 AuthNavAction 조합·callbackUrl 쿼리 있으면 히어로 앞에 _components/LoginNotice(비로그인만 '로그인이 필요해요'+primary 'Google로 로그인', hidden callbackUrl), src/app/check/page.tsx(첫 줄 auth() 없으면 redirect('/?callbackUrl=/check'), TopNav+사용자 이름·헤드라인·준비 중 안내 자리), 각 테스트(auth·next/navigation 모킹)",
-      "completed_at": "2026-09-30T00:26:25+0900"
+      "completed_at": "2026-09-30T00:26:49+0900"
     }
   ],
   "created_at": "2026-09-30T00:01:16+0900"
