@@ -7,7 +7,8 @@
     },
     {
       "dir": "1-auth-landing",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T00:26:49+0900"
     },
     {
       "dir": "2-judgment-ui",
