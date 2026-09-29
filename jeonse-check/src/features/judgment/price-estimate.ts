@@ -91,7 +91,7 @@ function median(values: number[]): number {
 }
 
 // 월말에서 빼면 대상 월의 말일로 맞춘다(예: 2월 29일 - 12개월 → 2월 28일).
-function subtractMonthsUtc(date: Date, months: number): Date {
+export function subtractMonthsUtc(date: Date, months: number): Date {
   const result = new Date(date.getTime());
   const day = result.getUTCDate();
   result.setUTCDate(1);

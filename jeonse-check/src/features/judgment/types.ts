@@ -13,3 +13,17 @@ export interface ComparableTrade {
   price: number; // 매매가, 원 단위 정수
   cancelled: boolean;
 }
+
+export interface BuildingInfo {
+  mainPurpose: string | null; // 건축물대장 주용도명
+  isViolation: boolean | null; // 위반건축물 여부
+  useApprovalDate: Date | null; // 사용승인일
+}
+
+// 사용자가 등기부를 보고 입력한다
+export interface RightsInput {
+  maxClaimAmount: number; // 근저당 채권최고액 합계, 원
+  seniorDeposits: number; // 선순위 임차보증금 합계, 원
+  isTrust: boolean; // 신탁 등기 여부
+  lastOwnershipChangeDate: Date | null;
+}
