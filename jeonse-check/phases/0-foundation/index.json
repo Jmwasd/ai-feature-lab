@@ -2,11 +2,38 @@
   "project": "jeonse-check",
   "phase": "0-foundation",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "db-schema", "status": "pending" },
-    { "step": 2, "name": "policy-consts", "status": "pending" },
-    { "step": 3, "name": "price-estimate", "status": "pending" },
-    { "step": 4, "name": "judgment-ratios", "status": "pending" },
-    { "step": 5, "name": "risk-report", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-09-29T20:13:04+0900",
+      "summary": "Next.js 16 App Router + TS strict + ESLint(eslint .) + Tailwind v4(@tailwindcss/postcss) + Vitest(@ alias, server-only stub) 뼈대와 최소 랜딩 placeholder를 세웠다"
+    },
+    {
+      "step": 1,
+      "name": "db-schema",
+      "status": "pending"
+    },
+    {
+      "step": 2,
+      "name": "policy-consts",
+      "status": "pending"
+    },
+    {
+      "step": 3,
+      "name": "price-estimate",
+      "status": "pending"
+    },
+    {
+      "step": 4,
+      "name": "judgment-ratios",
+      "status": "pending"
+    },
+    {
+      "step": 5,
+      "name": "risk-report",
+      "status": "pending"
+    }
+  ],
+  "created_at": "2026-09-29T20:13:04+0900"
 }
