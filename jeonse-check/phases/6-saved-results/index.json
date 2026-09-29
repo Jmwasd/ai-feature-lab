@@ -7,7 +7,8 @@
       "name": "saved-repository",
       "status": "completed",
       "started_at": "2026-09-30T05:40:54+0900",
-      "summary": "src/server/saved/ — SavedResultRepository 인터페이스(userId 조건 필수, 최신순 커서, 사용자당 100개 상한) + Prisma/in-memory 구현 + 계약 테스트(in-memory *.test.ts, Prisma *.db.test.ts), 목록용 addressDisplay·signalCount 컬럼 마이그레이션"
+      "summary": "src/server/saved/ — SavedResultRepository 인터페이스(userId 조건 필수, 최신순 커서, 사용자당 100개 상한) + Prisma/in-memory 구현 + 계약 테스트(in-memory *.test.ts, Prisma *.db.test.ts), 목록용 addressDisplay·signalCount 컬럼 마이그레이션",
+      "completed_at": "2026-09-30T05:44:02+0900"
     },
     {
       "step": 1,
