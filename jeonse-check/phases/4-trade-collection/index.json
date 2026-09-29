@@ -7,7 +7,8 @@
       "name": "trade-repository",
       "status": "completed",
       "started_at": "2026-09-30T01:22:10+0900",
-      "summary": "src/server/trades/에 TradeRepository 인터페이스, Prisma 구현(INSERT…ON CONFLICT dedupKey raw SQL·500건 배치 트랜잭션·xmax=0으로 inserted/updated 집계), in-memory 구현, 재사용 가능한 계약 테스트 describeTradeRepositoryContract(repository.contract.ts)를 추가하고 in-memory에 적용"
+      "summary": "src/server/trades/에 TradeRepository 인터페이스, Prisma 구현(INSERT…ON CONFLICT dedupKey raw SQL·500건 배치 트랜잭션·xmax=0으로 inserted/updated 집계), in-memory 구현, 재사용 가능한 계약 테스트 describeTradeRepositoryContract(repository.contract.ts)를 추가하고 in-memory에 적용",
+      "completed_at": "2026-09-30T01:24:59+0900"
     },
     {
       "step": 1,
