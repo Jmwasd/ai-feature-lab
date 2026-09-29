@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatIsoDate, formatPercent, formatWon } from "./format";
+import { formatIsoDate, formatPercent, formatSeoulDate, formatWon } from "./format";
 
 describe("formatWon", () => {
   it.each([
@@ -48,5 +48,13 @@ describe("formatIsoDate", () => {
   it("UTC 기준 YYYY-MM-DD로 쓴다", () => {
     expect(formatIsoDate(new Date("2026-09-01T00:00:00Z"))).toBe("2026-09-01");
     expect(formatIsoDate(new Date("2026-02-28T23:59:59Z"))).toBe("2026-02-28");
+  });
+});
+
+describe("formatSeoulDate", () => {
+  it("한국 시간 기준 YYYY-MM-DD로 쓴다", () => {
+    // UTC로는 전날이지만 한국 시간으로는 다음 날 아침이다.
+    expect(formatSeoulDate(new Date("2026-09-29T23:30:00Z"))).toBe("2026-09-30");
+    expect(formatSeoulDate(new Date("2026-09-30T14:59:59Z"))).toBe("2026-09-30");
   });
 });
