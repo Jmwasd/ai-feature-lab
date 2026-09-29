@@ -48,6 +48,6 @@ npm run test    # 테스트 파일이 없어도 통과
 - Pretendard 폰트 파일을 추가하지 마라. 이유: UI phase에서 `next/font/local`로 붙인다. 그 전까지는 `globals.css`의 대체 폰트로 렌더링된다.
 - `globals.css`의 `@theme` 값을 바꾸거나 `--*: initial` 줄을 지우지 마라. 이유: 토큰 단일 원본이고, 기본 팔레트를 비워 둔 것은 의도다.
 - `npm run collect`, `npm run test:db` 스크립트를 만들지 마라. 이유: 실제 코드가 생기는 phase 1에서 추가한다.
-- 랜딩 페이지를 디자인하지 마라. 이유: UI_GUIDE.md가 아직 placeholder이고, UI는 phase 2에서 가이드를 받은 뒤 만든다.
+- 랜딩 페이지를 디자인하지 마라. 이유: 이 phase는 셋업과 판정 로직 범위이고, 랜딩을 비롯한 UI는 phase 2에서 `docs/UI_GUIDE.md`에 따라 만든다.
 - `CLAUDE.md`, `docs/`, `scripts/`, `phases/`, `.claude/`, `.env.example`, `src/app/globals.css`를 수정하거나 덮어쓰지 마라.
 - `src/` 아래에 쓰지 않는 레이어 폴더(`features/`, `server/`, `components/` 등)를 미리 만들지 마라. 이유: ARCHITECTURE.md가 빈 폴더를 금지한다.

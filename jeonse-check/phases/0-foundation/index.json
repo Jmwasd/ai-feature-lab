@@ -2,11 +2,55 @@
   "project": "jeonse-check",
   "phase": "0-foundation",
   "steps": [
-    { "step": 0, "name": "project-setup", "status": "pending" },
-    { "step": 1, "name": "db-schema", "status": "pending" },
-    { "step": 2, "name": "policy-consts", "status": "pending" },
-    { "step": 3, "name": "price-estimate", "status": "pending" },
-    { "step": 4, "name": "judgment-ratios", "status": "pending" },
-    { "step": 5, "name": "risk-report", "status": "pending" }
-  ]
+    {
+      "step": 0,
+      "name": "project-setup",
+      "status": "completed",
+      "started_at": "2026-09-29T20:13:04+0900",
+      "summary": "Next.js 16 App Router + TS strict + ESLint(eslint .) + Tailwind v4(@tailwindcss/postcss) + Vitest(@ alias, server-only stub) 뼈대와 최소 랜딩 placeholder를 세웠다",
+      "completed_at": "2026-09-29T20:15:10+0900"
+    },
+    {
+      "step": 1,
+      "name": "db-schema",
+      "status": "completed",
+      "started_at": "2026-09-29T20:15:10+0900",
+      "summary": "Prisma 7(prisma.config.ts: DIRECT_URL, env 없이도 generate/build 통과) + Auth.js 모델·Trade(dedupKey unique, 만원 Int)·CollectionLog·SavedResult 스키마, 초기 마이그레이션 SQL, src/server/db.ts(adapter-pg + DATABASE_URL, globalThis 싱글턴), postinstall/build에 prisma generate 연동",
+      "completed_at": "2026-09-29T20:17:27+0900"
+    },
+    {
+      "step": 2,
+      "name": "policy-consts",
+      "status": "completed",
+      "started_at": "2026-09-29T20:17:28+0900",
+      "summary": "src/consts/policy.ts에 HUG(1.4×0.9=1.26, 보증금 상한 7억/5억)·최우선변제 4구간(시행령 제10·11조, 1/2 상한)·전세가율/부채비율 임계치·시세 추정·위험 신호 기준을 시행일·출처 주석과 함께 as const로 정의하고 불변식 테스트를 추가했다(법령 수치는 2026-09-29 현행 확인)",
+      "completed_at": "2026-09-29T20:19:32+0900"
+    },
+    {
+      "step": 3,
+      "name": "price-estimate",
+      "status": "completed",
+      "started_at": "2026-09-29T20:19:32+0900",
+      "summary": "src/features/judgment에 ComparableTrade·HouseType 타입과 순수 함수 estimateSalePrice(same-building→dong-unit-price→official-price→none 폴백, 해제·기간·면적 오차·최소 거래 수·배율은 PRICE_ESTIMATE 사용, 중앙값 원 단위 반올림, 추정 불가 시 null)를 경계값 테스트와 함께 추가했다",
+      "completed_at": "2026-09-29T20:20:58+0900"
+    },
+    {
+      "step": 4,
+      "name": "judgment-ratios",
+      "status": "completed",
+      "started_at": "2026-09-29T20:20:58+0900",
+      "summary": "src/features/judgment/ratios.ts에 jeonseRatio·debtRatio(임계치 이상 caution/danger, 시세 null·0 이하면 null)·checkHugEligibility(공시가격×합산비율·지역 한도, 입력 누락 시 unknown+누락/초과 HugReason 코드)·checkPriorityRepayment(구간 상한 이하 대상, min(변제액, 보증금), 구간 null이면 null) 순수 함수를 policy.ts 상수만으로 구현하고 경계값 테스트를 추가했다",
+      "completed_at": "2026-09-29T20:22:42+0900"
+    },
+    {
+      "step": 5,
+      "name": "risk-report",
+      "status": "completed",
+      "started_at": "2026-09-29T20:22:42+0900",
+      "summary": "src/features/judgment에 BuildingInfo·RightsInput 타입, buildRiskReport(비율 caution/danger·HUG false 신호·unknown은 notes·비주거 용도·위반·신축/소유자 변동(policy 기간, asOf 기준 경계 포함)·신탁·시세 low/none 신호, 신고 지연 note 상시, 출처 4종·면책·기준일)와 copy.ts(headline·disclaimer·출처·신호별 title/detail 템플릿, 수치는 policy에서 채움)를 추가하고, UI_GUIDE §6 금지 표현 검사 포함 테스트를 작성했다",
+      "completed_at": "2026-09-29T20:25:52+0900"
+    }
+  ],
+  "created_at": "2026-09-29T20:13:04+0900",
+  "completed_at": "2026-09-29T20:25:52+0900"
 }
