@@ -40,7 +40,7 @@
       "status": "completed",
       "started_at": "2026-09-29T20:20:58+0900",
       "summary": "src/features/judgment/ratios.ts에 jeonseRatio·debtRatio(임계치 이상 caution/danger, 시세 null·0 이하면 null)·checkHugEligibility(공시가격×합산비율·지역 한도, 입력 누락 시 unknown+누락/초과 HugReason 코드)·checkPriorityRepayment(구간 상한 이하 대상, min(변제액, 보증금), 구간 null이면 null) 순수 함수를 policy.ts 상수만으로 구현하고 경계값 테스트를 추가했다",
-      "completed_at": "2026-09-29T20:22:26+0900"
+      "completed_at": "2026-09-29T20:22:42+0900"
     },
     {
       "step": 5,
