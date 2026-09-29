@@ -13,7 +13,10 @@
     {
       "step": 1,
       "name": "judgment-run",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T05:27:12+0900",
+      "summary": "src/features/judgment/run.ts — runJudgment가 estimateSalePrice→비율→지역→HUG·최우선변제→buildRiskReport를 조립해 JudgmentView+warnings 반환. 공공데이터 경고는 copy.lookupWarningNote로 report.notes 뒤에 추가, JudgmentWarning 타입은 types.ts",
+      "completed_at": "2026-09-30T05:29:30+0900"
     },
     {
       "step": 2,

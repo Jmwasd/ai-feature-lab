@@ -7,7 +7,7 @@ import { formatIsoDate, formatPercent, formatWon } from "@/utils/format";
 import type { Confidence, EstimateMethod } from "./price-estimate";
 import type { HugReason, RatioResult } from "./ratios";
 import type { RiskSignal, RiskSignalCode } from "./risk-report";
-import type { RightsInput } from "./types";
+import type { JudgmentWarning, RightsInput } from "./types";
 
 export function headline(signalCount: number): string {
   return `위험 신호 ${signalCount}개`;
@@ -44,6 +44,29 @@ export function hugUnknownNote(reasons: HugReason[]): string {
   if (exceeded.length > 0) text += ` 확인된 초과 항목: ${exceeded.join(" ")}`;
   return text;
 }
+
+// 공공데이터 부분 실패를 결과 notes에 적는다. 빠진 데이터 때문에 확인하지 못한 항목을 함께 쓴다.
+export function lookupWarningNote(warning: JudgmentWarning): string {
+  switch (warning.kind) {
+    case "trades-partial":
+      return `${warning.failedMonths.map(formatYearMonth).join(", ")} 실거래를 가져오지 못해 시세 추정에서 빠졌습니다.`;
+    case "trades-quota":
+      return "공공데이터 호출 한도에 걸려 일부 실거래를 가져오지 못했습니다. 잠시 뒤 다시 조회하면 결과가 달라질 수 있습니다.";
+    case "official-price-unavailable":
+      return OFFICIAL_PRICE_WARNING[warning.reason];
+    case "building-unavailable":
+      return "건축물대장을 가져오지 못해 건축물 용도·위반건축물·사용승인일은 확인하지 못했습니다.";
+  }
+}
+
+const OFFICIAL_PRICE_WARNING = {
+  "no-ho": "호수를 입력하지 않아 공시가격을 조회하지 않았습니다.",
+  "not-found": "해당 세대의 공시가격을 찾지 못했습니다.",
+  error: "공시가격을 가져오지 못했습니다.",
+} as const satisfies Record<
+  Extract<JudgmentWarning, { kind: "official-price-unavailable" }>["reason"],
+  string
+>;
 
 export const SIGNAL_COPY = {
   "jeonse-ratio-caution": {
@@ -207,6 +230,11 @@ function debtBasis({ ratio, maxClaimAmount, seniorDeposits, deposit }: DebtDetai
 // 만 원 단위로 반올림하는 @/utils/format의 formatWon과 다르다.
 function formatWonExact(amount: number): string {
   return `${amount.toLocaleString("ko-KR")}원`;
+}
+
+// "202604" → "2026-04"
+function formatYearMonth(yyyymm: string): string {
+  return `${yyyymm.slice(0, 4)}-${yyyymm.slice(4, 6)}`;
 }
 
 // UTC 기준 YYYY-MM-DD
