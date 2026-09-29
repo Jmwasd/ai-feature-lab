@@ -1,10 +1,11 @@
-import { Button } from "@/components/Button";
 import { FooterLight } from "@/components/FooterLight";
 import { TopNav } from "@/components/TopNav";
+import { AuthNavAction } from "@/features/auth/AuthNavAction";
 import { CasesSection } from "./_components/CasesSection";
 import { FinalCta } from "./_components/FinalCta";
 import { FlowSection } from "./_components/FlowSection";
 import { Hero } from "./_components/Hero";
+import { LoginNotice } from "./_components/LoginNotice";
 import { SourcesSection } from "./_components/SourcesSection";
 import { TrySection } from "./_components/TrySection";
 
@@ -35,18 +36,15 @@ const FOOTER_COLUMNS = [
 ];
 
 // UI_GUIDE §8 랜딩 구성 순서대로 조합만 한다.
-export default function Home() {
+// callbackUrl 쿼리는 proxy가 보호 경로에서 보냈다는 뜻이라 히어로 앞에 로그인 안내를 둔다.
+export default async function Home({ searchParams }: PageProps<"/">) {
+  const { callbackUrl } = await searchParams;
+
   return (
     <>
-      <TopNav
-        links={NAV_LINKS}
-        action={
-          <Button href="/check" variant="secondary">
-            지금 확인하기
-          </Button>
-        }
-      />
+      <TopNav links={NAV_LINKS} action={<AuthNavAction />} />
       <main>
+        {callbackUrl !== undefined && <LoginNotice callbackUrl={typeof callbackUrl === "string" ? callbackUrl : ""} />}
         <Hero />
         <TrySection />
         <CasesSection />
