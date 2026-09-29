@@ -12,7 +12,8 @@
     },
     {
       "dir": "2-judgment-ui",
-      "status": "pending"
+      "status": "completed",
+      "completed_at": "2026-09-30T00:48:51+0900"
     },
     {
       "dir": "3-public-data",
