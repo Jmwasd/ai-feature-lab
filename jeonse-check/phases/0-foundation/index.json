@@ -7,7 +7,8 @@
       "name": "project-setup",
       "status": "completed",
       "started_at": "2026-09-29T20:13:04+0900",
-      "summary": "Next.js 16 App Router + TS strict + ESLint(eslint .) + Tailwind v4(@tailwindcss/postcss) + Vitest(@ alias, server-only stub) 뼈대와 최소 랜딩 placeholder를 세웠다"
+      "summary": "Next.js 16 App Router + TS strict + ESLint(eslint .) + Tailwind v4(@tailwindcss/postcss) + Vitest(@ alias, server-only stub) 뼈대와 최소 랜딩 placeholder를 세웠다",
+      "completed_at": "2026-09-29T20:15:10+0900"
     },
     {
       "step": 1,
