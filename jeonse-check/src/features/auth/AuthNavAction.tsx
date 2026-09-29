@@ -19,6 +19,9 @@ export async function AuthNavAction() {
       <Button href="/check" variant="secondary">
         내 조회
       </Button>
+      <Button href="/saved" variant="tertiary-text">
+        저장 목록
+      </Button>
       <form action={signOutAction}>
         <Button type="submit" variant="tertiary-text">
           로그아웃

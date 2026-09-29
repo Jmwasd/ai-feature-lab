@@ -269,6 +269,25 @@ describe("LookupForm", () => {
     );
   });
 
+  it("defaultKeyword는 검색어만 채우고 주소를 고른 것으로 치지 않는다", async () => {
+    const onSubmit = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <LookupForm
+        searchAddress={vi.fn(async () => candidates)}
+        onSubmit={onSubmit}
+        defaultKeyword={candidates[0].roadAddress}
+        defaultValue={{ houseType: "row-house", deposit: 150_000_000, exclusiveArea: 59 }}
+      />,
+    );
+
+    expect(screen.getByLabelText("주소")).toHaveValue(candidates[0].roadAddress);
+    await user.click(submitButton());
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(screen.getByText("주소를 검색해서 목록에서 골라 주세요")).toBeInTheDocument();
+  });
+
   it("레드 CTA는 모바일 하단 바와 desktop 오브 하나씩이다", () => {
     setup();
     const buttons = screen.getAllByRole("button", { name: "조회하기" });
