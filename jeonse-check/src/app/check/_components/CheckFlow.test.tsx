@@ -402,4 +402,37 @@ describe("CheckFlow", () => {
       expect(screen.getByRole("button", { name: "결과 저장" }).className).not.toContain("bg-primary");
     });
   });
+
+  it("prefill이 있으면 조회 조건과 권리관계를 미리 채우고, 주소는 검색어로만 채운다", async () => {
+    const runCheck = vi.fn(async (): Promise<RunCheckResult> => okResult);
+    const searchAddress = vi.fn(async (): Promise<SearchAddressResult> => ({ ok: true, candidates: [candidate] }));
+    const user = userEvent.setup();
+    render(
+      <CheckFlow
+        searchAddress={searchAddress}
+        runCheck={runCheck}
+        saveResult={vi.fn()}
+        prefill={{
+          addressKeyword: candidate.roadAddress,
+          lookup: { houseType: "row-house", deposit: 150_000_000, exclusiveArea: 59, dong: "1동" },
+          rights: { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: null },
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("주소")).toHaveValue(candidate.roadAddress);
+    expect(screen.getByLabelText("보증금")).toHaveValue(wonToInputText(150_000_000));
+    expect(screen.getByRole("radio", { name: "연립다세대" })).toBeChecked();
+
+    await user.click(screen.getByRole("button", { name: "주소 검색" }));
+    await user.click(await screen.findByRole("button", { name: /월드컵로 100/ }));
+    await user.click(screen.getAllByRole("button", { name: "조회하기" })[0]);
+    await user.click(screen.getByRole("button", { name: "위험 신호 확인하기" }));
+
+    await screen.findByTestId("signal-count");
+    expect(runCheck).toHaveBeenCalledWith({
+      lookup: expect.objectContaining({ address: candidate, deposit: 150_000_000, exclusiveArea: 59, dong: "1동" }),
+      rights: { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: null },
+    });
+  });
 });

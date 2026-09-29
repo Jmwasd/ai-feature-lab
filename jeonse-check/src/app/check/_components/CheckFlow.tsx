@@ -11,6 +11,7 @@ import { RightsForm, type RightsFormValue } from "@/features/rights-input/Rights
 import type { CheckError as CheckErrorCode, RunCheckResult } from "../_actions/run-check";
 import type { SaveResultResult } from "../_actions/save-result";
 import type { SearchAddressResult } from "../_actions/search-address";
+import type { CheckPrefill } from "../_lib/saved-prefill";
 import { CheckError } from "./CheckError";
 import { SaveResultButton } from "./SaveResultButton";
 
@@ -23,6 +24,8 @@ type CheckFlowProps = {
   searchAddress: (keyword: string) => Promise<SearchAddressResult>;
   runCheck: (payload: CheckPayload) => Promise<RunCheckResult>;
   saveResult: (payload: { token: string }) => Promise<SaveResultResult>;
+  // 저장한 결과의 입력(같은 조건으로 다시 조회). 첫 입력에만 쓰고, 사용자가 입력하면 그 값이 우선한다.
+  prefill?: CheckPrefill | null;
 };
 
 type Step = "lookup" | "rights" | "result";
@@ -39,7 +42,7 @@ const STEPS: { key: Step; title: string; description: string; heading: string }[
   { key: "result", title: "결과", description: "위험 신호와 근거", heading: "조회 결과" },
 ];
 
-export function CheckFlow({ searchAddress, runCheck, saveResult }: CheckFlowProps) {
+export function CheckFlow({ searchAddress, runCheck, saveResult, prefill }: CheckFlowProps) {
   const [step, setStep] = useState<Step>("lookup");
   // 앞 단계로 돌아가도 입력이 남도록 값을 여기에 둔다. URL·localStorage에는 남기지 않는다(개인 정보).
   const [lookup, setLookup] = useState<LookupInput | null>(null);
@@ -128,13 +131,18 @@ export function CheckFlow({ searchAddress, runCheck, saveResult }: CheckFlowProp
 
       {step === "lookup" ? (
         <div className="mx-auto w-full max-w-editorial px-gutter py-xl">
-          <LookupForm searchAddress={(keyword) => searchCandidates(searchAddress, keyword)} onSubmit={submitLookup} defaultValue={lookup ?? undefined} />
+          <LookupForm
+            searchAddress={(keyword) => searchCandidates(searchAddress, keyword)}
+            onSubmit={submitLookup}
+            defaultValue={lookup ?? prefill?.lookup}
+            defaultKeyword={prefill?.addressKeyword}
+          />
         </div>
       ) : null}
 
       {step === "rights" ? (
         <div className="mx-auto w-full max-w-editorial px-gutter py-xl">
-          <RightsForm asOf={asOf} onSubmit={submitRights} onBack={() => setStep("lookup")} defaultValue={rights ?? undefined} />
+          <RightsForm asOf={asOf} onSubmit={submitRights} onBack={() => setStep("lookup")} defaultValue={rights ?? prefill?.rights} />
         </div>
       ) : null}
 

@@ -20,9 +20,10 @@ describe("AuthNavAction", () => {
     expect(cta).toHaveClass("border-ink");
     expect(cta).not.toHaveClass("bg-primary");
     expect(screen.queryByRole("button", { name: "로그아웃" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "저장 목록" })).not.toBeInTheDocument();
   });
 
-  it("로그인 상태면 '내 조회' 링크와 tertiary-text 로그아웃 버튼이 보인다", async () => {
+  it("로그인 상태면 '내 조회'·'저장 목록' 링크와 tertiary-text 로그아웃 버튼이 보인다", async () => {
     auth.mockResolvedValue({ user: { id: "u1", name: "홍길동" }, expires: "2099-01-01T00:00:00.000Z" });
     render(await AuthNavAction());
     const mine = screen.getByRole("link", { name: "내 조회" });
@@ -30,6 +31,7 @@ describe("AuthNavAction", () => {
 
     expect(mine).toHaveAttribute("href", "/check");
     expect(mine).not.toHaveClass("bg-primary");
+    expect(screen.getByRole("link", { name: "저장 목록" })).toHaveAttribute("href", "/saved");
     expect(logout).toHaveAttribute("type", "submit");
     expect(logout).toHaveClass("underline");
     expect(logout.closest("form")).not.toBeNull();
