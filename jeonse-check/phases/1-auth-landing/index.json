@@ -29,7 +29,10 @@
     {
       "step": 3,
       "name": "landing-try",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:11:12+0900",
+      "summary": "src/components/RatioBar(client, 트랙 최대 120%·초과 시 끝까지 채움+실제 값, 임계치 이상 error-text/미만 ink 채움, 1px muted 기준선, role=meter·aria-valuetext, null이면 '계산할 수 없어요', width 1.2s ease-fill)와 src/hooks/use-tweened-number(숫자 트윈, reduced-motion이면 즉시), _components/TrySection(client, 보증금·채권최고액 슬라이더+프리셋 칩 3개, ratios.ts의 jeonseRatio·debtRatio·checkHugEligibility 그대로 호출, 기준 문구·기준선은 policy 상수+formatPercent, HUG 줄 '가입 기준 충족(공시가격 기준 추정)' 잉크 circle-check/'가입 어려움'+copy.ts 근거, 예시 안내)와 try-examples.ts(프리셋·슬라이더 범위), 각 *.test.tsx",
+      "completed_at": "2026-09-30T00:14:35+0900"
     },
     {
       "step": 4,
