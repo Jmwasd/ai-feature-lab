@@ -37,7 +37,10 @@
     {
       "step": 4,
       "name": "official-price-adapter",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T01:08:53+0900",
+      "summary": "src/server/public-data/official-price.ts(fetchOfficialPrice: vworld getApartHousingPriceAttr, key+domain(VWORLD_API_DOMAIN 신설·.env.example 갱신), 기준연도 KST asOf 연도→없으면 전년도, 숫자 호만 hoNm 필터·지하 호는 전체 페이지 조회 후 비교, 동은 로컬 비교, 같은 세대 중복 행은 lastUpdtDt 최신·금액 충돌 시 null, 동 null+여러 동 같은 호→null(전년도 폴백 없음), 응답에 동 없는 건물은 호로만 매칭, 결과 없음은 루트 'response'·오류 resultCode OVER_REQUEST_LIMIT→quota·그 외→api, 배율 미적용) + 순수 함수 normalizeDong·normalizeHo(동·호 접미사·제·앞자리 0·지하/지층/B→B) + __fixtures__/vworld/ 9종(은마·망원동 다세대 실응답 축약, 빈 결과·INVALID_KEY 실응답, 한도 초과·페이지 분할은 구성) + official-price.test.ts",
+      "completed_at": "2026-09-30T01:15:00+0900"
     },
     {
       "step": 5,

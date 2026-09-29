@@ -1,0 +1,53 @@
+{
+  "apartHousingPrices": {
+    "field": [
+      {
+        "stdrYear": "2026",
+        "aphusSeCode": "5",
+        "prvuseAr": "31.44",
+        "ldCode": "1144012300",
+        "ldCodeNm": "서울특별시 마포구 망원동",
+        "spclLandNm": "",
+        "pblntfPc": "188000000",
+        "mnnmSlno": "454-13",
+        "aphusCode": "17251970",
+        "pnu": "1144012300104540013",
+        "hoNm": "301",
+        "dongNm": "",
+        "lastUpdtDt": "2026-05-14",
+        "regstrSeCodeNm": "일반",
+        "stdrMt": "01",
+        "regstrSeCode": "1",
+        "floorNm": "2",
+        "aphusNm": "진흥빌라",
+        "aphusSeCodeNm": "다세대"
+      },
+      {
+        "stdrYear": "2026",
+        "aphusSeCode": "5",
+        "prvuseAr": "31.44",
+        "ldCode": "1144012300",
+        "ldCodeNm": "서울특별시 마포구 망원동",
+        "spclLandNm": "",
+        "pblntfPc": "188000000",
+        "mnnmSlno": "454-13",
+        "aphusCode": "17251970",
+        "pnu": "1144012300104540013",
+        "hoNm": "301",
+        "dongNm": "",
+        "lastUpdtDt": "2026-05-14",
+        "regstrSeCodeNm": "일반",
+        "stdrMt": "01",
+        "regstrSeCode": "1",
+        "floorNm": "2",
+        "aphusNm": "진흥빌라",
+        "aphusSeCodeNm": "다세대"
+      }
+    ],
+    "pageNo": "1",
+    "resultCode": "",
+    "totalCount": "2",
+    "numOfRows": "1000",
+    "resultMsg": ""
+  }
+}

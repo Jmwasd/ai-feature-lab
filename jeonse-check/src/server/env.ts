@@ -1,7 +1,11 @@
 import "server-only";
 
 // 서버가 읽는 외부 API 키. 목록과 발급처는 .env.example에 있다.
-export type ServerEnvName = "DATA_GO_KR_SERVICE_KEY" | "VWORLD_API_KEY" | "JUSO_API_KEY";
+export type ServerEnvName =
+  | "DATA_GO_KR_SERVICE_KEY"
+  | "VWORLD_API_KEY"
+  | "VWORLD_API_DOMAIN"
+  | "JUSO_API_KEY";
 
 // 오류에는 변수 이름만 담는다. 값은 어떤 경우에도 넣지 않는다.
 export class MissingEnvError extends Error {
