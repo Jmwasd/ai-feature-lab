@@ -27,4 +27,4 @@ npm run dev      # 개발 서버
 npm run build    # 프로덕션 빌드
 npm run lint     # ESLint
 npm run test     # 테스트 (Vitest)
-npm run collect  # 실거래가 배치 수집 CLI (지역코드·계약월 단위)
+npm run collect -- --lawd 11680 --from 202401 --to 202412 [--type apartment,row-house] [--kind sale,lease] [--force] [--dry-run]  # 실거래가 배치 수집 CLI
