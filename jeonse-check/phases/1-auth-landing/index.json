@@ -15,7 +15,8 @@
       "name": "base-components",
       "status": "completed",
       "started_at": "2026-09-30T00:02:54+0900",
-      "summary": "src/utils/format.ts(formatWon 만 원 단위 반올림 '2억 8,000만'·formatPercent, 음수·NaN은 RangeError)와 copy.ts의 formatPercent 중복 제거(원 단위 전체 금액은 formatWonExact로 유지, 출력 동일), src/components에 Button(4변형, href면 next/link)·TopNav(client, 8px 초과 스크롤 shadow-float, tablet 미만 햄버거 aria-expanded/controls·Escape 닫기, brand 기본 워드마크)·FooterLight·IconButtonCircle·StatusPill과 각 *.test.tsx"
+      "summary": "src/utils/format.ts(formatWon 만 원 단위 반올림 '2억 8,000만'·formatPercent, 음수·NaN은 RangeError)와 copy.ts의 formatPercent 중복 제거(원 단위 전체 금액은 formatWonExact로 유지, 출력 동일), src/components에 Button(4변형, href면 next/link)·TopNav(client, 8px 초과 스크롤 shadow-float, tablet 미만 햄버거 aria-expanded/controls·Escape 닫기, brand 기본 워드마크)·FooterLight·IconButtonCircle·StatusPill과 각 *.test.tsx",
+      "completed_at": "2026-09-30T00:06:32+0900"
     },
     {
       "step": 2,
