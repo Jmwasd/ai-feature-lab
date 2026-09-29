@@ -396,6 +396,7 @@ describe("금지 표현 검사", () => {
       ...Object.values(copy.CONFIDENCE_LABEL),
       ...Object.values(copy.HUG_STATUS),
       copy.EMPTY_SIGNALS_NOTE,
+      copy.DATA_LIMITED_NOTE,
       copy.ratioStatusText({ ratio: 0.5, level: "normal" }, { caution: 0.7 }),
       copy.ratioStatusText({ ratio: 0.75, level: "caution" }, { caution: 0.7 }),
       copy.ratioStatusText({ ratio: 0.9, level: "danger" }, { caution: 0.7 }),
@@ -421,6 +422,7 @@ describe("금지 표현 검사", () => {
     expect(Object.keys(copy).sort()).toEqual(
       [
         "CONFIDENCE_LABEL",
+        "DATA_LIMITED_NOTE",
         "DISCLAIMER",
         "EMPTY_SIGNALS_NOTE",
         "ESTIMATE_METHOD_LABEL",

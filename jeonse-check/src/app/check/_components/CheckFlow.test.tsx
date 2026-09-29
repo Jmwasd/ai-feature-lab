@@ -7,9 +7,10 @@ import { noSignalsView } from "@/features/judgment/ui/__fixtures__/views";
 import type { AddressCandidate } from "@/features/lookup-input/schema";
 import { expectNoForbiddenPhrases } from "@/test/forbidden-phrases";
 import { wonToInputText } from "@/utils/parse-won-input";
-import type { RunCheckResult } from "../_actions/run-check";
+import type { CheckError as CheckErrorCode, RunCheckResult } from "../_actions/run-check";
 import type { SearchAddressResult } from "../_actions/search-address";
 import { CheckFlow } from "./CheckFlow";
+import { CHECK_ERROR_COPY } from "./error-copy";
 
 const candidate: AddressCandidate = {
   id: "a1",
@@ -171,6 +172,100 @@ describe("CheckFlow", () => {
     await fillRights(user);
 
     expect(await screen.findByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+  });
+
+  it("판정 호출이 예외를 던지면 공공데이터 실패 안내와 '다시 시도'를 보여 준다", async () => {
+    const { user } = setup(vi.fn(async (): Promise<RunCheckResult> => {
+      throw new Error("fetch failed: https://apis.data.go.kr/x?serviceKey=SECRET123");
+    }));
+    await fillLookup(user);
+    await fillRights(user);
+
+    expect(await screen.findByRole("heading", { name: CHECK_ERROR_COPY["lookup-failed"].title })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "다시 시도" })).toBeInTheDocument();
+    expect(document.body.textContent).not.toContain("SECRET123");
+  });
+
+  it.each(Object.keys(CHECK_ERROR_COPY) as CheckErrorCode[])(
+    "%s — 코드별 안내를 보여 주고 '위험 신호' 헤드라인·개수를 보여 주지 않는다",
+    async (code) => {
+      const { user } = setup(vi.fn(async (): Promise<RunCheckResult> => ({ ok: false, error: code })));
+      await fillLookup(user);
+      await fillRights(user);
+
+      expect(await screen.findByRole("heading", { name: CHECK_ERROR_COPY[code].title })).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: /위험 신호/ })).not.toBeInTheDocument();
+      expect(screen.queryByTestId("signal-count")).not.toBeInTheDocument();
+      expectNoForbiddenPhrases(document.body.textContent ?? "");
+    },
+  );
+
+  it("invalid-input — 권리관계 단계로 돌아가고 입력이 남아 있다", async () => {
+    const { user, runCheck } = setup(vi.fn(async (): Promise<RunCheckResult> => ({ ok: false, error: "invalid-input" })));
+    await fillLookup(user);
+    await fillRights(user);
+
+    await user.click(await screen.findByRole("button", { name: "입력 다시 확인하기" }));
+
+    expect(currentStep()).toContain("권리관계");
+    expect(screen.getByLabelText("선순위 임차보증금 합계")).toHaveValue(wonToInputText(0));
+    expect(screen.getByRole("radio", { name: "아니오" })).toBeChecked();
+    expect(runCheck).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "이전" }));
+    expect(screen.getByLabelText("보증금")).toHaveValue(wonToInputText(150_000_000));
+  });
+
+  it("address-not-found — 조회 조건 단계로 돌아가 주소를 다시 검색하게 하고 다른 입력은 남긴다", async () => {
+    const { user, runCheck } = setup(vi.fn(async (): Promise<RunCheckResult> => ({ ok: false, error: "address-not-found" })));
+    await fillLookup(user);
+    await fillRights(user);
+
+    await user.click(await screen.findByRole("button", { name: "주소 다시 검색하기" }));
+
+    expect(currentStep()).toContain("조회 조건");
+    expect(screen.getByLabelText("보증금")).toHaveValue(wonToInputText(150_000_000));
+    expect(runCheck).toHaveBeenCalledTimes(1);
+  });
+
+  it("unsupported-house — 입력을 비우고 처음으로 돌아간다", async () => {
+    const { user } = setup(vi.fn(async (): Promise<RunCheckResult> => ({ ok: false, error: "unsupported-house" })));
+    await fillLookup(user);
+    await fillRights(user);
+
+    await user.click(await screen.findByRole("button", { name: "처음으로" }));
+
+    expect(currentStep()).toContain("조회 조건");
+    expect(screen.getByLabelText("보증금")).toHaveValue("");
+    expect(screen.getByLabelText("주소")).toHaveValue("");
+  });
+
+  it("quota — 자동으로 다시 부르지 않고, '다시 시도'를 눌렀을 때만 같은 입력으로 다시 판정한다", async () => {
+    const runCheck = vi
+      .fn<() => Promise<RunCheckResult>>()
+      .mockResolvedValueOnce({ ok: false, error: "quota" })
+      .mockResolvedValueOnce(okResult);
+    const { user } = setup(runCheck);
+    await fillLookup(user);
+    await fillRights(user);
+
+    const retry = await screen.findByRole("button", { name: "다시 시도" });
+    expect(screen.getByText(CHECK_ERROR_COPY.quota.description)).toBeInTheDocument();
+    expect(runCheck).toHaveBeenCalledTimes(1);
+
+    await user.click(retry);
+
+    expect(await screen.findByTestId("signal-count")).toBeInTheDocument();
+    expect(runCheck).toHaveBeenCalledTimes(2);
+    expect(runCheck.mock.calls[1]).toEqual(runCheck.mock.calls[0]);
+  });
+
+  it("unauthorized — 로그인 링크를 보여 준다", async () => {
+    const { user } = setup(vi.fn(async (): Promise<RunCheckResult> => ({ ok: false, error: "unauthorized" })));
+    await fillLookup(user);
+    await fillRights(user);
+
+    expect(await screen.findByRole("link", { name: "다시 로그인하기" })).toHaveAttribute("href", "/?callbackUrl=/check");
   });
 
   it("주소 검색이 실패 코드를 돌려주면 검색 오류 안내를 보여 준다", async () => {

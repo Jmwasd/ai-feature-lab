@@ -166,7 +166,10 @@ export const CONFIDENCE_LABEL: Record<Confidence, string> = {
 export const EMPTY_SIGNALS_NOTE =
   "확인한 항목에서 위험 신호가 나오지 않았어요. 입력하지 않은 권리관계나 공공데이터에 없는 위험은 반영되지 않아요.";
 
-const CANNOT_JUDGE = "입력이 부족해 판단할 수 없어요";
+// 시세나 HUG 판단에 필요한 데이터가 빠졌을 때 헤드라인 아래에 둔다. 신호 개수가 적은 것이 위험이 적다는 뜻으로 읽히지 않게 한다.
+export const DATA_LIMITED_NOTE = "일부 데이터가 없어 판단이 제한돼요. 아래 안내에서 확인하지 못한 항목을 살펴봐 주세요";
+
+const CANNOT_JUDGE ="입력이 부족해 판단할 수 없어요";
 
 export const HUG_STATUS = {
   eligible: "가입 기준 충족(공시가격 기준 추정)",

@@ -6,10 +6,11 @@ import { deserializeJudgmentView } from "@/features/judgment/serialize";
 import { ResultView } from "@/features/judgment/ui/ResultView";
 import type { JudgmentView } from "@/features/judgment/ui/types";
 import { LookupForm } from "@/features/lookup-input/LookupForm";
-import type { AddressCandidate, LookupInput } from "@/features/lookup-input/schema";
+import { type AddressCandidate, type LookupInput, lookupInputSchema } from "@/features/lookup-input/schema";
 import { RightsForm, type RightsFormValue } from "@/features/rights-input/RightsForm";
-import type { RunCheckResult } from "../_actions/run-check";
+import type { CheckError as CheckErrorCode, RunCheckResult } from "../_actions/run-check";
 import type { SearchAddressResult } from "../_actions/search-address";
+import { CheckError } from "./CheckError";
 
 // lookup-input·rights-input·judgment feature는 서로 참조하지 않으므로 이 라우트에서 조합한다.
 // 서버 호출은 page.tsx가 넘긴 Server Action으로만 한다. 이 파일은 server 레이어를 import하지 않는다.
@@ -23,7 +24,7 @@ type CheckFlowProps = {
 
 type Step = "lookup" | "rights" | "result";
 
-type RunState = { status: "pending" } | { status: "error" } | { status: "done"; view: JudgmentView };
+type RunState = { status: "pending" } | { status: "error"; code: CheckErrorCode } | { status: "done"; view: JudgmentView };
 
 const STEPS: { key: Step; title: string; description: string; heading: string }[] = [
   { key: "lookup", title: "조회 조건", description: "주소·보증금·전용면적", heading: "주소와 보증금을 입력해 주세요" },
@@ -80,6 +81,33 @@ export function CheckFlow({ searchAddress, runCheck }: CheckFlowProps) {
     setStep("lookup");
   }
 
+  // 오류 화면의 행동 버튼. 재시도는 사용자가 누를 때만 한다(한도 초과 때 자동 재시도는 호출을 더 쓴다).
+  function handleErrorAction(code: CheckErrorCode) {
+    switch (code) {
+      case "invalid-input":
+        // 서버가 어느 쪽 입력을 거절했는지 알려 주지 않으므로, 조회 조건이 스키마를 통과하면 권리관계로 보낸다.
+        latestRun.current++;
+        setStep(lookup && lookupInputSchema.safeParse(lookup).success ? "rights" : "lookup");
+        return;
+      case "address-not-found":
+        restart();
+        return;
+      case "unsupported-house":
+        // MVP 밖 유형이므로 입력을 비우고 처음부터 시작한다.
+        setLookup(null);
+        setRights(null);
+        restart();
+        return;
+      case "quota":
+      case "lookup-failed":
+        retry();
+        return;
+      case "unauthorized":
+        // CheckError가 로그인 링크를 보여 준다.
+        return;
+    }
+  }
+
   const current = STEPS.find((item) => item.key === step)!;
 
   return (
@@ -106,12 +134,7 @@ export function CheckFlow({ searchAddress, runCheck }: CheckFlowProps) {
       {step === "result" && run.status === "pending" ? <Waiting /> : null}
 
       {step === "result" && run.status === "error" ? (
-        <div className="mx-auto flex w-full max-w-editorial flex-col items-start gap-base px-gutter py-xl">
-          <p role="alert" className="text-body-md text-error-text">
-            결과를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요
-          </p>
-          <Button onClick={retry}>다시 시도</Button>
-        </div>
+        <CheckError code={run.code} onAction={() => handleErrorAction(run.code)} />
       ) : null}
 
       {step === "result" && run.status === "done" ? (
@@ -174,13 +197,13 @@ async function searchCandidates(
   return result.candidates;
 }
 
-// 실패 응답의 세부 처리는 step 4에서 한다. 지금은 오류 코드·예외·읽을 수 없는 결과를 모두 '다시 시도'로 둔다.
+// 오류 코드는 그대로 넘긴다. 호출 예외(네트워크 등)와 읽을 수 없는 결과는 원인을 보이지 않고 lookup-failed('다시 시도')로 둔다.
 async function runCheckSafely(runCheck: CheckFlowProps["runCheck"], payload: CheckPayload): Promise<RunState> {
   try {
     const result = await runCheck(payload);
-    if (!result.ok) return { status: "error" };
+    if (!result.ok) return { status: "error", code: result.error };
     return { status: "done", view: deserializeJudgmentView(result.view) };
   } catch {
-    return { status: "error" };
+    return { status: "error", code: "lookup-failed" };
   }
 }
