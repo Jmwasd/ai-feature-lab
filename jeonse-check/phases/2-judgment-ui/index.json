@@ -7,7 +7,8 @@
       "name": "result-components",
       "status": "completed",
       "started_at": "2026-09-30T00:32:20+0900",
-      "summary": "src/features/judgment/ui에 JudgmentView 타입과 ResultView·SignalSummary·SignalList·RatioPanel·PriceEvidence·ReportFooter, src/components/Badge, copy.ts 결과 화면 라벨·줄 문구(HUG_STATUS·priorityRepaymentText·rightsLines 등), formatIsoDate, ComparableTrade.buildingName(선택), fixture 4종과 필수 요소 5개·금지 표현·수준 라벨 렌더링 테스트 추가"
+      "summary": "src/features/judgment/ui에 JudgmentView 타입과 ResultView·SignalSummary·SignalList·RatioPanel·PriceEvidence·ReportFooter, src/components/Badge, copy.ts 결과 화면 라벨·줄 문구(HUG_STATUS·priorityRepaymentText·rightsLines 등), formatIsoDate, ComparableTrade.buildingName(선택), fixture 4종과 필수 요소 5개·금지 표현·수준 라벨 렌더링 테스트 추가",
+      "completed_at": "2026-09-30T00:37:33+0900"
     },
     {
       "step": 1,
