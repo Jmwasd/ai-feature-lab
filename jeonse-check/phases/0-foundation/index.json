@@ -16,7 +16,7 @@
       "status": "completed",
       "started_at": "2026-09-29T20:15:10+0900",
       "summary": "Prisma 7(prisma.config.ts: DIRECT_URL, env 없이도 generate/build 통과) + Auth.js 모델·Trade(dedupKey unique, 만원 Int)·CollectionLog·SavedResult 스키마, 초기 마이그레이션 SQL, src/server/db.ts(adapter-pg + DATABASE_URL, globalThis 싱글턴), postinstall/build에 prisma generate 연동",
-      "completed_at": "2026-09-29T20:17:08+0900"
+      "completed_at": "2026-09-29T20:17:27+0900"
     },
     {
       "step": 2,
