@@ -21,7 +21,10 @@
     {
       "step": 2,
       "name": "check-actions",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T05:29:30+0900",
+      "summary": "src/app/check/_actions — searchAddressAction(auth→길이 제한→juso→AddressCandidate)·runCheckAction(auth→스키마 재검증→건물관리번호로 juso 재조회→collectPublicInputs→runJudgment→SerializedJudgmentView). 오류는 CheckError 코드만, LookupFailedError+trades-quota·PublicDataError quota→quota. 직렬화는 features/judgment/serialize.ts(version 1)",
+      "completed_at": "2026-09-30T05:33:00+0900"
     },
     {
       "step": 3,
