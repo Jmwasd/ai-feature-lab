@@ -12,6 +12,7 @@ export interface ComparableTrade {
   contractDate: Date;
   price: number; // 매매가, 원 단위 정수
   cancelled: boolean;
+  buildingName?: string | null; // 단지·건물명. 결과 화면 근거 표시용
 }
 
 export interface BuildingInfo {

@@ -39,3 +39,8 @@ function assertNonNegative(value: number, name: string): void {
     throw new RangeError(`${name}는 0 이상의 유한한 수여야 합니다: ${value}`);
   }
 }
+
+/** UTC 기준 YYYY-MM-DD. 예: 2026-09-01T00:00:00Z → "2026-09-01". */
+export function formatIsoDate(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}

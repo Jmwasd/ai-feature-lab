@@ -3,9 +3,11 @@
 // 기준 수치는 @/consts/policy에서 가져와 채운다.
 
 import { DEBT_RATIO_THRESHOLD, HUG_GUARANTEE, JEONSE_RATIO_THRESHOLD } from "@/consts/policy";
-import { formatPercent } from "@/utils/format";
-import type { HugReason } from "./ratios";
-import type { RiskSignalCode } from "./risk-report";
+import { formatIsoDate, formatPercent, formatWon } from "@/utils/format";
+import type { Confidence, EstimateMethod } from "./price-estimate";
+import type { HugReason, RatioResult } from "./ratios";
+import type { RiskSignal, RiskSignalCode } from "./risk-report";
+import type { RightsInput } from "./types";
 
 export function headline(signalCount: number): string {
   return `위험 신호 ${signalCount}개`;
@@ -112,6 +114,67 @@ export const SIGNAL_COPY = {
   RiskSignalCode,
   { title: string; detail: (...args: never[]) => string }
 >;
+
+// ---------------------------------------------------------------------------
+// 결과 화면 라벨과 줄 문구
+// ---------------------------------------------------------------------------
+
+// 신호 수준 라벨. 배지는 이 두 가지뿐이다(UI_GUIDE §6).
+export const LEVEL_LABEL = { caution: "주의", danger: "위험" } as const satisfies Record<
+  RiskSignal["level"],
+  string
+>;
+
+export const ESTIMATE_METHOD_LABEL: Record<EstimateMethod, string> = {
+  "same-building": "같은 건물 실거래",
+  "dong-unit-price": "같은 동 ㎡당 단가",
+  "official-price": "공시가격 기준",
+  none: "추정 불가",
+};
+
+export const CONFIDENCE_LABEL: Record<Confidence, string> = {
+  high: "높음",
+  medium: "보통",
+  low: "낮음",
+  none: "없음",
+};
+
+// 신호가 0개일 때 목록 자리에 둔다. 확인하지 못한 위험이 있을 수 있다는 사실을 함께 쓴다.
+export const EMPTY_SIGNALS_NOTE =
+  "확인한 항목에서 위험 신호가 나오지 않았어요. 입력하지 않은 권리관계나 공공데이터에 없는 위험은 반영되지 않아요.";
+
+const CANNOT_JUDGE = "입력이 부족해 판단할 수 없어요";
+
+export const HUG_STATUS = {
+  eligible: "가입 기준 충족(공시가격 기준 추정)",
+  ineligible: "가입 어려움(공시가격 기준 추정)",
+  unknown: CANNOT_JUDGE,
+} as const;
+
+// normal이면 수준 대신 주의 기준 대비 사실을 쓴다(UI_GUIDE §6 "70% 미만").
+export function ratioStatusText(result: RatioResult, threshold: { caution: number }): string {
+  return result.level === "normal" ? `${formatPercent(threshold.caution)} 미만` : LEVEL_LABEL[result.level];
+}
+
+export function priorityRepaymentText(result: { qualifies: boolean; amount: number } | null): string {
+  if (result === null) return CANNOT_JUDGE;
+  if (result.qualifies)
+    return `보증금이 소액임차인 기준 안이라 최우선변제 대상으로 추정돼요. 최우선변제액 최대 ${formatWon(result.amount)}`;
+  return "보증금이 소액임차인 기준을 넘어 최우선변제 대상이 아니에요.";
+}
+
+// 권리 입력 값에는 근거를 붙인다(UI_GUIDE §6 "입력한 등기부 기준 근저당 0원").
+export function rightsLines(rights: RightsInput): string[] {
+  const basis = "입력한 등기부 기준";
+  return [
+    `${basis} 근저당 채권최고액 ${formatWon(rights.maxClaimAmount)}`,
+    `${basis} 선순위 보증금 ${formatWon(rights.seniorDeposits)}`,
+    `${basis} 신탁 등기 ${rights.isTrust ? "있음" : "없음"}`,
+    rights.lastOwnershipChangeDate
+      ? `${basis} 최근 소유자 변동일 ${formatIsoDate(rights.lastOwnershipChangeDate)}`
+      : `${basis} 소유자 변동일 입력 없음`,
+  ];
+}
 
 interface DebtDetailInput {
   ratio: number;

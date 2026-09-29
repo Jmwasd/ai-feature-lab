@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPercent, formatWon } from "./format";
+import { formatIsoDate, formatPercent, formatWon } from "./format";
 
 describe("formatWon", () => {
   it.each([
@@ -41,5 +41,12 @@ describe("formatPercent", () => {
 
   it.each([-0.1, Number.NaN, Number.POSITIVE_INFINITY])("%d는 예외를 던진다", (ratio) => {
     expect(() => formatPercent(ratio)).toThrow(RangeError);
+  });
+});
+
+describe("formatIsoDate", () => {
+  it("UTC 기준 YYYY-MM-DD로 쓴다", () => {
+    expect(formatIsoDate(new Date("2026-09-01T00:00:00Z"))).toBe("2026-09-01");
+    expect(formatIsoDate(new Date("2026-02-28T23:59:59Z"))).toBe("2026-02-28");
   });
 });

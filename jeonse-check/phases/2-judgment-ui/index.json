@@ -5,7 +5,9 @@
     {
       "step": 0,
       "name": "result-components",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:32:20+0900",
+      "summary": "src/features/judgment/ui에 JudgmentView 타입과 ResultView·SignalSummary·SignalList·RatioPanel·PriceEvidence·ReportFooter, src/components/Badge, copy.ts 결과 화면 라벨·줄 문구(HUG_STATUS·priorityRepaymentText·rightsLines 등), formatIsoDate, ComparableTrade.buildingName(선택), fixture 4종과 필수 요소 5개·금지 표현·수준 라벨 렌더링 테스트 추가"
     },
     {
       "step": 1,
@@ -17,5 +19,6 @@
       "name": "rights-form",
       "status": "pending"
     }
-  ]
+  ],
+  "created_at": "2026-09-30T00:32:20+0900"
 }
