@@ -29,7 +29,9 @@
     {
       "step": 3,
       "name": "db-integration-test",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T01:30:12+0900",
+      "summary": "npm run test:db(vitest.db.config.mts, src/**/*.db.test.ts, 기본 test에서 제외)를 추가: 전역 setup이 TEST_DATABASE_URL을 검사(없으면 실패, localhost/127.0.0.1 외·supabase 포함 시 거부)하고 DIRECT_URL을 바꿔 prisma migrate deploy, prisma-repository.db.test.ts가 계약 테스트+1,500건 재upsert 행 수 불변·해제 갱신·inserted/updated 집계를 TRUNCATE 후 검증, .env.example에 jeonse-pg-test(5433) 예시 추가. Docker jeonse-pg-test로 test:db 실행 결과 17/17 통과 후 컨테이너 정지"
     }
   ],
   "created_at": "2026-09-30T01:22:10+0900"

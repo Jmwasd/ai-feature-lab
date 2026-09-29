@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run --passWithNoTests",
+    "test:db": "vitest run --config vitest.db.config.mts",
     "postinstall": "prisma generate",
     "collect": "tsx --conditions=react-server src/cli/collect.ts"
   },
