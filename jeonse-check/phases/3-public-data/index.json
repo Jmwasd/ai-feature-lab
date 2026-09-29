@@ -5,7 +5,9 @@
     {
       "step": 0,
       "name": "api-client",
-      "status": "pending"
+      "status": "completed",
+      "started_at": "2026-09-30T00:50:04+0900",
+      "summary": "src/server/env.ts(requireEnv·MissingEnvError), public-data/http.ts(getText·getJson 타임아웃·5xx/네트워크 재시도·429 quota·PublicDataError·redactUrl), xml.ts(fast-xml-parser 문자열 유지 parseXml·toArray), __fixtures__/load.ts(loadFixture·createFakeFetch) + 테스트"
     },
     {
       "step": 1,
@@ -32,5 +34,6 @@
       "name": "building-adapter",
       "status": "pending"
     }
-  ]
+  ],
+  "created_at": "2026-09-30T00:50:04+0900"
 }
