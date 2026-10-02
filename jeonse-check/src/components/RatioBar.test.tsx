@@ -78,4 +78,20 @@ describe("RatioBar", () => {
 
     expect(screen.queryByText("상태")).not.toBeInTheDocument();
   });
+
+  it("icon을 라벨 앞에 둔다", () => {
+    renderBar(0.5, { icon: <svg data-testid="bar-icon" /> });
+
+    expect(screen.getByText("전세가율")).toContainElement(screen.getByTestId("bar-icon"));
+  });
+
+  it("shownRatio를 넘기면 숫자·막대·채움 색을 그 값으로 그리고 접근성 값은 실제 비율을 쓴다", () => {
+    renderBar(0.9, { shownRatio: 0.6 });
+    const fill = screen.getByTestId("ratio-fill");
+
+    expect(screen.getByText("60%")).toBeInTheDocument();
+    expect(fill.style.width).toBe(`${(0.6 / TRACK_MAX) * 100}%`);
+    expect(fill).toHaveClass("bg-ink");
+    expect(screen.getByRole("meter")).toHaveAttribute("aria-valuetext", "90%");
+  });
 });

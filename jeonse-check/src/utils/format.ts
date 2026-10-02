@@ -34,6 +34,16 @@ export function formatPercent(ratio: number): string {
   return `${Math.round(ratio * 1000) / 10}%`;
 }
 
+/**
+ * 비율을 정수 퍼센트로 반올림해 쓴다. 랜딩 예시 화면용. 예: 0.9667 → "97%", 0.875 → "88%".
+ *
+ * @throws {RangeError} 음수, NaN, 무한대
+ */
+export function formatWholePercent(ratio: number): string {
+  assertNonNegative(ratio, "ratio");
+  return `${Math.round(ratio * 100)}%`;
+}
+
 function assertNonNegative(value: number, name: string): void {
   if (!Number.isFinite(value) || value < 0) {
     throw new RangeError(`${name}는 0 이상의 유한한 수여야 합니다: ${value}`);

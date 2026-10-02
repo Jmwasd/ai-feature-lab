@@ -12,23 +12,31 @@ function trackPercent(ratio: number): string {
 }
 
 // 비율 막대(UI_GUIDE §4). 도메인 기준값은 props로 받는다.
+// shownRatio를 넘기면 숫자와 막대를 그 값으로 그린다(호출부가 트윈을 맡는다). 없으면 자체 트윈 + 막대 채움 전환을 쓴다.
 export function RatioBar({
   label,
+  icon,
   ratio,
+  shownRatio,
   dangerThreshold,
   statusText,
   formula,
   thresholdLabel,
 }: {
   label: string;
+  icon?: ReactNode;
   ratio: number | null;
+  shownRatio?: number;
   dangerThreshold: number;
   statusText?: string;
   formula?: ReactNode;
   thresholdLabel: string;
 }) {
-  const shown = useTweenedNumber(ratio ?? 0);
+  const tweened = useTweenedNumber(ratio ?? 0);
+  const shown = shownRatio ?? tweened;
   const danger = ratio !== null && ratio >= dangerThreshold;
+  // 트윈을 호출부가 맡으면 채움 색도 지금 보이는 값을 따른다.
+  const fillDanger = shownRatio === undefined ? danger : shown >= dangerThreshold;
   const meterProps =
     ratio === null
       ? {}
@@ -44,28 +52,35 @@ export function RatioBar({
   return (
     <div className="flex flex-col gap-sm">
       <div className="flex items-baseline justify-between gap-md">
-        <span className="text-title-md text-ink">{label}</span>
-        {statusText ? (
-          <span className={`text-caption ${danger ? "text-error-text" : "text-ink"}`}>{statusText}</span>
-        ) : null}
+        <span className="flex items-center gap-sm text-title-md text-ink">
+          {icon}
+          {label}
+        </span>
+        <span className="flex items-baseline gap-sm">
+          {statusText ? (
+            <span className={`text-caption font-bold ${danger ? "text-error-text" : "text-ink"}`}>{statusText}</span>
+          ) : null}
+          {ratio === null ? (
+            <span className="text-body-md text-muted">계산할 수 없어요</span>
+          ) : (
+            <span className="text-ratio-display tabular-nums text-ink">{formatPercent(shown)}</span>
+          )}
+        </span>
       </div>
-      {ratio === null ? (
-        <p className="text-body-md text-muted">계산할 수 없어요</p>
-      ) : (
-        <p className="text-ratio-display tabular-nums text-ink">{formatPercent(shown)}</p>
-      )}
       <div {...meterProps} className="relative h-2.5 rounded-full bg-surface-strong">
         {ratio === null ? null : (
           <div
             data-testid="ratio-fill"
-            className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-1200 ease-fill ${danger ? "bg-error-text" : "bg-ink"}`}
-            style={{ width: trackPercent(ratio) }}
+            className={`absolute inset-y-0 left-0 rounded-full ${shownRatio === undefined ? "transition-[width] duration-1200 ease-fill" : "transition-colors ease-linear"} ${
+              fillDanger ? "bg-error-text" : "bg-ink"
+            }`}
+            style={{ width: trackPercent(shownRatio === undefined ? ratio : shown) }}
           />
         )}
         <div
           data-testid="ratio-threshold"
           aria-hidden="true"
-          className="absolute -inset-y-1 w-px bg-muted"
+          className="absolute -inset-y-[5px] w-px bg-muted"
           style={{ left: trackPercent(dangerThreshold) }}
         />
       </div>

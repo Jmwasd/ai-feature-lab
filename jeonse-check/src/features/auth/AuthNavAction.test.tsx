@@ -11,14 +11,15 @@ beforeEach(() => {
 });
 
 describe("AuthNavAction", () => {
-  it("비로그인이면 /check로 가는 secondary '지금 확인하기'만 보인다", async () => {
+  it("비로그인이면 Google 로그인 폼을 보내는 secondary '로그인' 버튼만 보인다", async () => {
     auth.mockResolvedValue(null);
     render(await AuthNavAction());
-    const cta = screen.getByRole("link", { name: "지금 확인하기" });
+    const login = screen.getByRole("button", { name: "로그인" });
 
-    expect(cta).toHaveAttribute("href", "/check");
-    expect(cta).toHaveClass("border-ink");
-    expect(cta).not.toHaveClass("bg-primary");
+    expect(login).toHaveAttribute("type", "submit");
+    expect(login.closest("form")).not.toBeNull();
+    expect(login).toHaveClass("border-ink");
+    expect(login).not.toHaveClass("bg-primary");
     expect(screen.queryByRole("button", { name: "로그아웃" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "저장 목록" })).not.toBeInTheDocument();
   });
@@ -35,6 +36,6 @@ describe("AuthNavAction", () => {
     expect(logout).toHaveAttribute("type", "submit");
     expect(logout).toHaveClass("underline");
     expect(logout.closest("form")).not.toBeNull();
-    expect(screen.queryByRole("link", { name: "지금 확인하기" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "로그인" })).not.toBeInTheDocument();
   });
 });

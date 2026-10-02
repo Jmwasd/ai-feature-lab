@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-// 뷰포트에 이 비율만큼 들어오면 등장시킨다(UI_GUIDE §5 등장).
+// 뷰포트에 이 비율만큼 들어오면 등장시킨다(UI_GUIDE §5 등장). 뷰포트 아래 8%는 진입으로 치지 않는다.
 const REVEAL_THRESHOLD = 0.15;
+const REVEAL_ROOT_MARGIN = "0px 0px -8% 0px";
 
 export function prefersReducedMotion(): boolean {
   return typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -32,7 +33,7 @@ export function useReveal<T extends Element>(options?: { delayMs?: number }): { 
         if (delayMs > 0) timer = setTimeout(show, delayMs);
         else show();
       },
-      { threshold: REVEAL_THRESHOLD },
+      { threshold: REVEAL_THRESHOLD, rootMargin: REVEAL_ROOT_MARGIN },
     );
     observer.observe(target);
 

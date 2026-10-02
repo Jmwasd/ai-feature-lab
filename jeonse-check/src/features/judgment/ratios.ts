@@ -114,6 +114,6 @@ function isPositive(value: number | null): value is number {
 
 // 공시가격 × 합산 비율을 원 단위로 내린다. 부동소수 오차(예: 377999999.99999994)로
 // 정확히 상한인 금액이 거절되지 않도록 소수 둘째 자리에서 먼저 반올림한다.
-function hugPriceCap(officialPrice: number): number {
+export function hugPriceCap(officialPrice: number): number {
   return Math.floor(Number((officialPrice * HUG_GUARANTEE.combinedRatio).toFixed(2)));
 }

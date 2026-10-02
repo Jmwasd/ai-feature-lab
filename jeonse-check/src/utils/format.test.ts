@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatIsoDate, formatPercent, formatSeoulDate, formatWon } from "./format";
+import { formatIsoDate, formatPercent, formatSeoulDate, formatWholePercent, formatWon } from "./format";
 
 describe("formatWon", () => {
   it.each([
@@ -24,6 +24,17 @@ describe("formatWon", () => {
 
   it.each([-1, Number.NaN, Number.POSITIVE_INFINITY])("%d는 예외를 던진다", (amount) => {
     expect(() => formatWon(amount)).toThrow(RangeError);
+  });
+});
+
+describe("formatWholePercent", () => {
+  it.each([
+    [0.9667, "97%"],
+    [0.875, "88%"],
+    [1.0625, "106%"],
+    [0, "0%"],
+  ])("%s → %s", (ratio, expected) => {
+    expect(formatWholePercent(ratio)).toBe(expected);
   });
 });
 
