@@ -20,7 +20,7 @@ const { auth, redirect, notFound, repoRef } = vi.hoisted(() => ({
 }));
 vi.mock("@/server/auth", () => ({ auth, signIn: vi.fn(), signOut: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect, notFound }));
-vi.mock("@/features/auth/AuthNavAction", () => ({ AuthNavAction: () => <span>auth-nav-action</span> }));
+vi.mock("@/features/auth/AuthTopNav", () => ({ AuthTopNav: () => <span>auth-top-nav</span> }));
 vi.mock("@/server/saved/prisma-repository", () => ({ createPrismaSavedResultRepository: () => repoRef.current }));
 vi.mock("../_actions/delete-result", () => ({ deleteResultAction: vi.fn() }));
 

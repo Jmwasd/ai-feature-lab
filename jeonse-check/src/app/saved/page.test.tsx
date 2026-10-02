@@ -15,8 +15,8 @@ const { auth, redirect, repoRef } = vi.hoisted(() => ({
 }));
 vi.mock("@/server/auth", () => ({ auth, signIn: vi.fn(), signOut: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect }));
-// 비동기 Server Component는 jsdom에서 렌더링할 수 없어 자리 표시로 바꾼다. 자체 동작은 AuthNavAction.test.tsx가 검증한다.
-vi.mock("@/features/auth/AuthNavAction", () => ({ AuthNavAction: () => <span>auth-nav-action</span> }));
+// 비동기 Server Component는 jsdom에서 렌더링할 수 없어 자리 표시로 바꾼다. 자체 동작은 AuthTopNav.test.tsx가 검증한다.
+vi.mock("@/features/auth/AuthTopNav", () => ({ AuthTopNav: () => <span>auth-top-nav</span> }));
 vi.mock("@/server/saved/prisma-repository", () => ({ createPrismaSavedResultRepository: () => repoRef.current }));
 vi.mock("./_actions/list-saved", () => ({ loadMoreSavedAction: vi.fn() }));
 

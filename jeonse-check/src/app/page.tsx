@@ -1,7 +1,6 @@
 import { Calculator, Clock, Database, House } from "lucide-react";
 import { FooterLight } from "@/components/FooterLight";
-import { TopNav } from "@/components/TopNav";
-import { AuthNavAction } from "@/features/auth/AuthNavAction";
+import { AuthTopNav } from "@/features/auth/AuthTopNav";
 import { CasesSection } from "./_components/CasesSection";
 import { FinalCta } from "./_components/FinalCta";
 import { FlowSection } from "./_components/FlowSection";
@@ -38,7 +37,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   return (
     <>
-      <TopNav links={NAV_LINKS} action={<AuthNavAction />} />
+      <AuthTopNav links={NAV_LINKS} />
       <main>
         {callbackUrl !== undefined && <LoginNotice callbackUrl={typeof callbackUrl === "string" ? callbackUrl : ""} />}
         <Hero />

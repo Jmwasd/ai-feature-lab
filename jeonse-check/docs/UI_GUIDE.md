@@ -18,7 +18,7 @@
 - 스타일은 `globals.css` `@theme`이 만드는 **Tailwind 유틸리티**로 쓴다. 예: `text-ink`, `bg-surface-soft`, `text-display-md`, `p-lg`, `rounded-card`, `shadow-float`, `max-w-editorial`, `desktop:`.
 - 기본 팔레트·스케일은 비워 두었다. `bg-green-500`, `shadow-lg`, `text-sm` 같은 기본 클래스는 생성되지 않는다. 팔레트를 다시 열지 마라.
 - **새 토큰을 만들지 않는다.** 필요한 값이 없으면 가장 가까운 기존 토큰을 쓴다(예: 15px 글자 → `text-body-sm`, 20px 간격 → `gap-gutter`). `globals.css`의 `@theme`은 사용자 지시가 있을 때만 바꾼다.
-- 임의값(`text-[15px]`, `bg-[#…]`)을 쓰지 마라. 예외는 이 문서에 적힌 레이아웃 치수(`w-[280px]`, `grid-cols-[72px_1fr_56px]`, 막대 두께, 랜딩 시안의 히어로 카드 여백·스크롤 안내 마우스·미리보기 판 패딩 등)뿐이다.
+- 임의값(`text-[15px]`, `bg-[#…]`)을 쓰지 마라. 예외는 이 문서에 적힌 레이아웃 치수(`w-[280px]`, `grid-cols-[72px_1fr_56px]`, 막대 두께, 랜딩 시안의 히어로 카드 여백·스크롤 안내 마우스·미리보기 판 패딩, 모달 패널 `max-w-[400px]` 등)뿐이다.
 - 인라인 style이나 CSS 모듈에서는 같은 이름의 CSS 변수(`var(--color-ink)`, `var(--text-body-sm)`)를 쓴다.
 - 금액·비율에는 `tabular-nums`를 준다.
 - 클릭할 수 있는 요소(버튼·탭·링크·슬라이더)는 `cursor: pointer`다. `globals.css` base가 전역으로 주므로 컴포넌트에 따로 쓰지 않는다.
@@ -37,7 +37,7 @@
 | `ink` / `body` / `muted` / `muted-soft` | 헤드라인·수치 / 긴 본문 / 보조 라벨·캡션 / 비활성 |
 | `error-text` | 폼 오류, **위험** 수준 신호 |
 | `legal-link` | 면책·법률 문구 안의 링크 전용 |
-| `scrim` | 모달 배경 전용 |
+| `scrim` | 어두운 모달 배경용. 로그인 모달은 시안에 따라 흰 막(`bg-canvas/70`)을 쓴다 |
 
 ### 타이포 용도 (`text-*`)
 
@@ -74,11 +74,12 @@
 | `Button` | CTA, 저장, 더 보기 | `min-h-control`, `px-lg`, `rounded-button`, `text-button-md`. 변형: `primary`(레드), `secondary`(흰 바탕 + 1px 잉크 테두리), `tertiary-text`(밑줄, 패딩 0), `pill-primary`(`rounded-full`, `text-button-sm`). 누름 `primary-active`, 비활성 `primary-disabled`. 전환은 배경·글자색만 |
 | `TextInput` | 주소, 보증금, 면적, 채권최고액 | 라벨이 필드 안 위에 쌓인다. `h-input`, `rounded-input`, 1px `hairline`. 라벨 `text-caption text-muted`, 값 `text-body-md`. **포커스는 2px 잉크 테두리만**(glow·ring 없음, 크기 유지). 오류는 테두리와 아래 문구를 `error-text`로. 비활성 `bg-surface-soft` |
 | `SearchBarPill` | 조회 입력(주소 · 보증금 · 전용면적) | `h-search`, `rounded-full`, 1px `hairline` + `shadow-float`. 세그먼트 사이 1px `hairline`, 활성 세그먼트는 `surface-soft` 알약. 오른쪽 끝에 레드 원형 오브 |
-| `TopNav` | 전역 상단 바 | `h-nav`, sticky, 하단 1px `hairline`, 폭 제한 없이 `px-gutter`. **스크롤 8px 초과 시 `shadow-float`**. 왼쪽 `house` 아이콘 + 워드마크(`text-display-lg text-primary`). 가운데 내비 링크 `text-button-md text-body` + 16px 아이콘, 알약 호버 `bg-surface-soft`. 오른쪽 `secondary` 버튼(비로그인 "로그인") |
+| `TopNav` | 전역 상단 바 | `h-nav`, sticky, 하단 1px `hairline`, 폭 제한 없이 `px-gutter`. **스크롤 8px 초과 시 `shadow-float`**. 왼쪽 `house` 아이콘 + 워드마크(`text-display-lg text-primary`). 가운데 내비 링크 `text-button-md text-body` + 16px 아이콘, 알약 호버 `bg-surface-soft`. 오른쪽 `secondary` 버튼(비로그인 "로그인" → 로그인 모달). 로그인 상태는 오른쪽에 "내 조회"·"저장 목록"을 가운데 내비와 같은 알약 링크(16px 아이콘)로 두고 끝에 `secondary` "로그아웃"을 둔다. `tablet` 미만에서는 이 계정 항목을 햄버거 메뉴 아래쪽(위 1px `hairline-soft`)으로 옮기고, 메뉴에 넣을 것이 없으면 햄버거를 두지 않는다 |
 | `SignalSummary` | 결과 최상단 요약 | 가운데 정렬 세로 스택. `text-rating-display` = **위험 신호 개수**, 아래 `text-display-sm` "위험 신호 N개", `text-body-sm text-muted` 캡션, 요약 수치 줄(`text-title-md` 값 + `text-caption-sm` 라벨) |
 | `CheckList` | 확인한 항목 | 제목 `text-display-md`, 위아래 1px `hairline`로 닫힌 목록, 행마다 24px 아이콘 + `text-body-md`. 확인 못 한 항목은 `muted-soft` + 취소선 |
 | 상태 배지 | 신호 수준 | 흰 알약, `text-badge`, `shadow-float` |
-| `IconButtonCircle` | 뒤로 가기, 닫기 | 32px 원, `bg-surface-strong` + 1px `hairline` |
+| `Modal` | 로그인 | 화면 전체를 흰 막 `bg-canvas/70`으로 덮고 가운데 흰 패널 `w-full max-w-[400px] rounded-card p-lg shadow-float`. 오른쪽 위 닫기는 배경 없는 18px `x`(32px 원, 호버 시 `bg-surface-soft`). Esc·바깥 막·닫기로 닫고, 열면 패널 안으로 포커스를 옮겨 가두고 닫으면 연 버튼으로 돌려준다. 열고 닫을 때 막은 opacity(`ease-fade`), 패널은 opacity·translateY 16px·blur 4px(`ease-rise`)를 300ms로 전환한다. 로그인 모달 내용: 워드마크 → `text-display-sm` "로그인" → `text-body-sm text-body` 설명 → 전체 폭 "Google로 계속하기"(`min-h-control rounded-button` + 1px `hairline`, Google 로고) → `text-caption-sm text-muted` 약관 안내 |
+| `IconButtonCircle` | 뒤로 가기 | 32px 원, `bg-surface-strong` + 1px `hairline` |
 | `FooterLight` | 전역 푸터 | 흰 바탕, 상단 1px `hairline`, `px-section py-xxl`. 열 수만큼 같은 폭 그리드. 열 제목 `text-title-sm`, 링크 `text-body-sm text-ink`. 하단 법률 밴드(상단 1px `hairline`) `text-caption-sm text-muted`. 없는 페이지 링크는 두지 않는다 |
 
 랜딩 시안 패턴:

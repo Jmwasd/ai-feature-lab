@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { Button } from "@/components/Button";
-import { TopNav } from "@/components/TopNav";
-import { AuthNavAction } from "@/features/auth/AuthNavAction";
+import { AuthTopNav } from "@/features/auth/AuthTopNav";
 import { deserializeJudgmentView, SERIALIZED_VIEW_VERSION, type SerializedJudgmentView } from "@/features/judgment/serialize";
 import { ResultView } from "@/features/judgment/ui/ResultView";
 import type { JudgmentView } from "@/features/judgment/ui/types";
@@ -30,7 +29,7 @@ export default async function SavedDetailPage({ params }: SavedDetailPageProps) 
 
   return (
     <>
-      <TopNav links={[]} action={<AuthNavAction />} />
+      <AuthTopNav links={[]} />
       <main>
         <div className="mx-auto flex w-full max-w-editorial flex-col items-start gap-base px-gutter pt-section">
           <Button href="/saved" variant="tertiary-text">

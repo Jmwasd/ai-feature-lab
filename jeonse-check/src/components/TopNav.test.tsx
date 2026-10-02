@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { TopNav } from "./TopNav";
@@ -110,5 +110,47 @@ describe("TopNav", () => {
     await user.keyboard("{Escape}");
     expect(button).toHaveAttribute("aria-expanded", "false");
     expect(button).toHaveFocus();
+  });
+
+  it("계정 링크와 계정 버튼은 tablet 이상에서 오른쪽 바에 알약 링크·버튼으로 둔다", () => {
+    render(
+      <TopNav
+        links={links}
+        accountLinks={[{ href: "/saved", label: "저장 목록" }]}
+        accountAction={<button type="button">로그아웃</button>}
+      />,
+    );
+
+    const account = screen.getByRole("navigation", { name: "계정 메뉴" });
+    expect(account).toHaveClass("hidden", "tablet:flex");
+    const saved = within(account).getByRole("link", { name: "저장 목록" });
+    expect(saved).toHaveAttribute("href", "/saved");
+    expect(saved).toHaveClass("text-button-md", "text-body", "rounded-full", "hover:bg-surface-soft");
+    expect(saved).not.toHaveClass("underline");
+    expect(within(account).getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+  });
+
+  it("tablet 미만에서는 계정 링크와 계정 버튼을 햄버거 메뉴 아래쪽에 둔다", async () => {
+    const user = userEvent.setup();
+    render(
+      <TopNav
+        links={links}
+        accountLinks={[{ href: "/saved", label: "저장 목록" }]}
+        accountAction={<button type="button">로그아웃</button>}
+      />,
+    );
+    await user.click(menuButton());
+
+    const panel = screen.getByRole("navigation", { name: "모바일 메뉴" });
+    const labels = within(panel).getAllByRole("link").map((link) => link.textContent);
+    expect(labels).toEqual(["계산해 보기", "사례", "저장 목록"]);
+    expect(within(panel).getByRole("button", { name: "로그아웃" })).toBeInTheDocument();
+  });
+
+  it("햄버거 메뉴에 넣을 것이 없으면 햄버거 버튼을 두지 않는다", () => {
+    render(<TopNav links={[]} action={<button type="button">로그인</button>} />);
+
+    expect(screen.queryByRole("button", { name: /메뉴/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "로그인" })).toBeInTheDocument();
   });
 });
