@@ -80,7 +80,9 @@ describe("/check 페이지", () => {
     render(await CheckPage(props({ from: "other" })));
 
     expect(getForUser).toHaveBeenCalledWith("u1", "other");
-    expect(screen.getByLabelText("주소")).toHaveValue("");
+    // 빈 폼은 주택 유형만 보이고 주소 칸은 아직 없다.
+    expect(screen.getByRole("radiogroup", { name: "주택 유형" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("주소")).not.toBeInTheDocument();
   });
 
   it("?from이 없으면 저장소를 조회하지 않는다", async () => {

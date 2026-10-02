@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { createRef } from "react";
 import { describe, expect, it } from "vitest";
 import { TextInput } from "./TextInput";
 
@@ -55,5 +56,12 @@ describe("TextInput", () => {
     const box = screen.getByTestId("text-input-box");
 
     expect(box).toHaveClass("desktop:rounded-full", "desktop:border-0", "desktop:focus-within:bg-surface-soft");
+  });
+
+  it("ref는 안쪽 input에 붙는다", () => {
+    const ref = createRef<HTMLInputElement>();
+    render(<TextInput label="보증금" ref={ref} />);
+
+    expect(ref.current).toBe(screen.getByLabelText("보증금"));
   });
 });
