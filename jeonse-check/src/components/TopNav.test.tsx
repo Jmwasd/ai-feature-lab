@@ -71,7 +71,7 @@ describe("TopNav", () => {
     expect(desktop).toHaveClass("hidden", "tablet:flex");
     const link = screen.getAllByRole("link", { name: "사례" })[0];
     expect(link).toHaveAttribute("href", "#cases");
-    expect(link).toHaveClass("text-caption", "text-body", "rounded-full", "hover:bg-surface-soft");
+    expect(link).toHaveClass("text-button-md", "text-body", "rounded-full", "hover:bg-surface-soft");
   });
 
   it("햄버거 버튼으로 모바일 메뉴를 열고 닫는다", async () => {

@@ -80,9 +80,9 @@
   --text-rating-display--font-weight: 700;
 
   /* 비율 막대의 큰 퍼센트 */
-  --text-ratio-display: 48px;
+  --text-ratio-display: 36px;
   --text-ratio-display--line-height: 1.1;
-  --text-ratio-display--letter-spacing: -1px;
+  --text-ratio-display--letter-spacing: -0.8px;
   --text-ratio-display--font-weight: 700;
 
   --text-display-xl: 28px;
@@ -200,6 +200,14 @@
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-8px); }
   }
+
+  /* 히어로 "아래로 스크롤" 마우스 휠 */
+  --animate-wheel: wheel 1.6s ease-in infinite;
+
+  @keyframes wheel {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(10px); opacity: 0; }
+  }
 }
 
 @layer base {
@@ -222,6 +230,10 @@
   }
   a:hover {
     text-decoration: underline;
+  }
+  /* 클릭할 수 있는 요소는 손가락 커서를 쓴다. Tailwind v4 preflight가 버튼 커서를 default로 되돌리기 때문이다. */
+  :where(button, [role="button"], [role="tab"], select, summary):not(:disabled) {
+    cursor: pointer;
   }
   input[type="range"] {
     accent-color: var(--color-ink);

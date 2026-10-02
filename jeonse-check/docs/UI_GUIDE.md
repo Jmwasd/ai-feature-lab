@@ -18,9 +18,10 @@
 - 스타일은 `globals.css` `@theme`이 만드는 **Tailwind 유틸리티**로 쓴다. 예: `text-ink`, `bg-surface-soft`, `text-display-md`, `p-lg`, `rounded-card`, `shadow-float`, `max-w-editorial`, `desktop:`.
 - 기본 팔레트·스케일은 비워 두었다. `bg-green-500`, `shadow-lg`, `text-sm` 같은 기본 클래스는 생성되지 않는다. 팔레트를 다시 열지 마라.
 - **새 토큰을 만들지 않는다.** 필요한 값이 없으면 가장 가까운 기존 토큰을 쓴다(예: 15px 글자 → `text-body-sm`, 20px 간격 → `gap-gutter`). `globals.css`의 `@theme`은 사용자 지시가 있을 때만 바꾼다.
-- 임의값(`text-[15px]`, `bg-[#…]`)을 쓰지 마라. 예외는 이 문서에 적힌 레이아웃 치수(`w-[280px]`, `grid-cols-[72px_1fr_56px]`, 막대 두께 등)뿐이다.
+- 임의값(`text-[15px]`, `bg-[#…]`)을 쓰지 마라. 예외는 이 문서에 적힌 레이아웃 치수(`w-[280px]`, `grid-cols-[72px_1fr_56px]`, 막대 두께, 랜딩 시안의 히어로 카드 여백·스크롤 안내 마우스·미리보기 판 패딩 등)뿐이다.
 - 인라인 style이나 CSS 모듈에서는 같은 이름의 CSS 변수(`var(--color-ink)`, `var(--text-body-sm)`)를 쓴다.
 - 금액·비율에는 `tabular-nums`를 준다.
+- 클릭할 수 있는 요소(버튼·탭·링크·슬라이더)는 `cursor: pointer`다. `globals.css` base가 전역으로 주므로 컴포넌트에 따로 쓰지 않는다.
 
 ### 컬러 용도
 
@@ -73,27 +74,27 @@
 | `Button` | CTA, 저장, 더 보기 | `min-h-control`, `px-lg`, `rounded-button`, `text-button-md`. 변형: `primary`(레드), `secondary`(흰 바탕 + 1px 잉크 테두리), `tertiary-text`(밑줄, 패딩 0), `pill-primary`(`rounded-full`, `text-button-sm`). 누름 `primary-active`, 비활성 `primary-disabled`. 전환은 배경·글자색만 |
 | `TextInput` | 주소, 보증금, 면적, 채권최고액 | 라벨이 필드 안 위에 쌓인다. `h-input`, `rounded-input`, 1px `hairline`. 라벨 `text-caption text-muted`, 값 `text-body-md`. **포커스는 2px 잉크 테두리만**(glow·ring 없음, 크기 유지). 오류는 테두리와 아래 문구를 `error-text`로. 비활성 `bg-surface-soft` |
 | `SearchBarPill` | 조회 입력(주소 · 보증금 · 전용면적) | `h-search`, `rounded-full`, 1px `hairline` + `shadow-float`. 세그먼트 사이 1px `hairline`, 활성 세그먼트는 `surface-soft` 알약. 오른쪽 끝에 레드 원형 오브 |
-| `TopNav` | 전역 상단 바 | `h-nav`, sticky, 하단 1px `hairline`. **스크롤 8px 초과 시 `shadow-float`**. 왼쪽 `house` 아이콘 + 워드마크(`text-display-lg text-primary`). 내비 링크 `text-caption text-body`, 알약 호버 `bg-surface-soft`. 오른쪽 `secondary` 버튼 |
+| `TopNav` | 전역 상단 바 | `h-nav`, sticky, 하단 1px `hairline`, 폭 제한 없이 `px-gutter`. **스크롤 8px 초과 시 `shadow-float`**. 왼쪽 `house` 아이콘 + 워드마크(`text-display-lg text-primary`). 가운데 내비 링크 `text-button-md text-body` + 16px 아이콘, 알약 호버 `bg-surface-soft`. 오른쪽 `secondary` 버튼(비로그인 "로그인") |
 | `SignalSummary` | 결과 최상단 요약 | 가운데 정렬 세로 스택. `text-rating-display` = **위험 신호 개수**, 아래 `text-display-sm` "위험 신호 N개", `text-body-sm text-muted` 캡션, 요약 수치 줄(`text-title-md` 값 + `text-caption-sm` 라벨) |
 | `CheckList` | 확인한 항목 | 제목 `text-display-md`, 위아래 1px `hairline`로 닫힌 목록, 행마다 24px 아이콘 + `text-body-md`. 확인 못 한 항목은 `muted-soft` + 취소선 |
 | 상태 배지 | 신호 수준 | 흰 알약, `text-badge`, `shadow-float` |
 | `IconButtonCircle` | 뒤로 가기, 닫기 | 32px 원, `bg-surface-strong` + 1px `hairline` |
-| `FooterLight` | 전역 푸터 | 흰 바탕, 상단 1px `hairline`. 열 제목 `text-title-sm`, 링크 `text-body-sm`. 하단 법률 밴드 `text-caption-sm text-muted` |
+| `FooterLight` | 전역 푸터 | 흰 바탕, 상단 1px `hairline`, `px-section py-xxl`. 열 수만큼 같은 폭 그리드. 열 제목 `text-title-sm`, 링크 `text-body-sm text-ink`. 하단 법률 밴드(상단 1px `hairline`) `text-caption-sm text-muted`. 없는 페이지 링크는 두지 않는다 |
 
 랜딩 시안 패턴:
 
 | 패턴 | 사양 |
 |---|---|
-| 상태 알약 | `rounded-full bg-surface-soft` + 1px `hairline-soft`, `text-caption`, 앞에 6px 레드 점 |
-| 떠 있는 신호 카드 | `w-[280px] rounded-card shadow-float`, `animate-float`. 36px 레드 원 + 흰 `triangle-alert`, 라벨 "전세 위험도" + 값 "높음"(`text-error-text`), 6px 게이지, 예시 신호 줄(`circle-alert` + `text-body-sm`). **랜딩 히어로의 예시 일러스트 전용이다.** 이 라벨·게이지·아이콘 조합을 결과 화면이나 실제 판정에 쓰지 않는다(§6) |
-| 비율 막대 | 라벨 `text-title-md`, 상태 `text-caption`, 값 `text-ratio-display`. 트랙 10px `rounded-full bg-surface-strong`. 값이 위험 임계치 이상이면 `error-text`로 채우고, 미만이면 `ink`로 채운다. **위험 임계치 위치에 1px `muted` 기준선**. 아래 계산식과 "80% 기준"(`text-caption-sm text-muted`). 트랙 최대 120% |
+| 상태 알약 | `rounded-full bg-surface-soft` + 1px `hairline-soft`, `text-caption`. 앞에 14px 레드 아이콘을 둘 수 있다 |
+| 떠 있는 신호 카드 | `w-[280px] rounded-card shadow-float`, `animate-float`. 36px 레드 원 + 흰 `triangle-alert`, 라벨 "전세 위험도" + 값 "높음"(`text-error-text`), 6px 레드 게이지(마운트 뒤 0→86%), 예시 신호 줄(레드 `circle-alert` + `text-body-sm`). **랜딩 히어로의 예시 일러스트 전용이다.** 이 라벨·게이지·아이콘 조합을 결과 화면이나 실제 판정에 쓰지 않는다(§6) |
+| 비율 막대 | 왼쪽 아이콘 + 라벨 `text-title-md`, 오른쪽에 상태 `text-caption` 굵게 + 값 `text-ratio-display`. 트랙 10px `rounded-full bg-surface-strong`. 값이 위험 임계치 이상이면 `error-text`로 채우고, 미만이면 `ink`로 채운다. **위험 임계치 위치에 1px `muted` 기준선**. 아래 계산식과 "80% 기준"(`text-caption-sm text-muted`). 트랙 최대 120% |
 | 비교 막대 | `grid-cols-[72px_1fr_56px]`, 트랙 28px `rounded-sm bg-surface-soft`, 기준선 `border-strong` |
 | 슬라이더 | 라벨 `text-caption`과 현재 값 `text-title-md`를 양끝에, 아래 `input[type=range]` |
 | 프리셋 칩 | 높이 40px, `rounded-full`, 1px `hairline`, `text-caption`. 호버 시 `surface-soft` + 잉크 테두리 |
 | 선택 탭 | 높이 44px, `rounded-full`, `text-button-sm`. 선택된 탭은 잉크 배경 + 흰 글자, 나머지는 흰 배경 + 1px `hairline`. 가로 스크롤 허용 |
 | 세그먼트 토글 | 바깥 1px `hairline` `rounded-full` p-0.5, 선택된 항목만 잉크 배경 + 흰 글자 |
-| 단계 진행 탭 | 3px 진행 막대(트랙 `surface-strong`, 채움 `ink`) + `text-title-md` 제목 + `text-body-sm text-muted` 설명. 현재 단계만 잉크 |
-| 미리보기 판 | `bg-surface-soft rounded-card` 안에 흰 카드(최대 520px, `shadow-float`) |
+| 단계 진행 탭 | 가로 3열. 3px 진행 막대(트랙 `surface-strong`, 채움 `primary-disabled`→`primary` 그라디언트, 100ms 간격 linear 전환으로 부드럽게) + 아이콘·`text-title-md` 제목 + `text-body-sm text-muted` 설명. 현재 단계만 잉크 |
+| 미리보기 판 | `bg-surface-soft rounded-card` 안에 흰 카드(최대 520px, `shadow-float`). 입력 화면을 흉내 낸 예시이며 금액·비율은 "계산해 보기" 예시 집 값으로 맞춘다 |
 | 신호 행 | 상단 1px `hairline-soft`, 20px 아이콘 + `text-title-md` 제목 + `text-body-sm text-body` 설명 |
 | 예/아니오 선택 | 버튼 모양, `rounded-sm`, `text-button-sm`. 선택된 쪽만 2px 잉크 테두리 |
 
@@ -106,11 +107,12 @@
 | 이름 | 사양 |
 |---|---|
 | 등장 | opacity 0→1, translateY 16px→0, blur 6px→0. 약 1.1–1.3s, 요소별 0–400ms 계단 지연, 뷰포트 15% 진입 시 한 번 |
-| 헤드라인 롤링 | 랜딩 h1 문장을 3s마다 교체. `aria-live="polite"`, 숨은 줄은 `aria-hidden` |
-| 내용 교체 | 340ms 페이드아웃(+10px, blur) 뒤 교체. 목록 행은 90–110ms씩 지연 |
-| 숫자 트윈 / 막대 채움 | 목표값까지 부드럽게 접근 / width 1.2s `ease-fill` |
+| 헤드라인 롤링 | 랜딩 h1의 두 줄짜리 문장 4개를 3s마다 교체. 들어오는 문장은 아래(14px)에서, 나가는 문장은 위(-10px)로 blur 8px과 함께 움직이고, 두 줄이 350·650ms(나갈 때 0·120ms) 차이로 따라온다. `aria-live="polite"`, 숨은 문장은 `aria-hidden` |
+| 내용 교체 | 340ms 페이드아웃(+8–10px, blur) 뒤 교체. 다시 나타날 때 패널 380–480ms 페이드 + 560–720ms 이동, 목록 행은 90–110ms씩 지연 |
+| 숫자 트윈 / 막대 채움 | 목표값까지 부드럽게 접근(랜딩은 섹션 진입 시 0부터, 프레임마다 남은 거리의 7%) / width 1.2s `ease-fill` |
 | 떠 있기 | `animate-float` (히어로 카드) |
-| 히어로 배경 | 로드 시 scale 1.06→1, 스크롤 패럴랙스 |
+| 히어로 배경 | 로드 시 scale 1.06→1(1.4s), 이후 스크롤 패럴랙스(600px까지 translateY 8%) |
+| 스크롤 안내 | 히어로 하단 마우스 모양 안의 휠이 `animate-wheel`로 내려간다 |
 
 - `prefers-reduced-motion`이면 모두 끈다(`globals.css` base에 전역 처리가 있다. JS 모션도 같은 조건을 확인한다).
 - 면책 문구, 데이터 기준일, 출처에는 등장 모션을 주지 않는다. 이유: 관찰자가 실패해 숨겨지면 CLAUDE.md 필수 표시를 어긴다.
@@ -145,7 +147,7 @@
 ## 7. 금지 패턴
 
 - 임의값·인라인 hex로 토큰을 우회하지 마라.
-- 두 번째 그림자 단계, 그라디언트, 글래스모피즘, 어두운 배경 섹션을 만들지 마라.
+- 두 번째 그림자 단계, 그라디언트, 글래스모피즘, 어두운 배경 섹션을 만들지 마라. 예외: 랜딩 "단계 진행 탭" 진행 막대의 레드 그라디언트(랜딩 시안).
 - 입력 포커스에 glow·ring을 쓰지 마라. 2px 잉크 테두리만 쓴다.
 - 초록 체크·방패 체크로 "통과"를 표현하지 마라. 기준 충족 표시는 잉크색 `circle-check`만 쓴다. 이유: 안전 보장으로 읽힌다.
 - 신호등 3색(초록·노랑·빨강)을 쓰지 마라.
@@ -154,11 +156,11 @@
 
 `src/app/page.tsx`의 섹션 순서:
 
-1. **TopNav** — 앵커 링크: 계산해 보기 · 사례 · 이용 방법 · 데이터 출처. CTA "지금 확인하기"(secondary)
-2. **히어로** — 최소 높이 `max(640px, 100vh - 80px)`, 배경 `docs/assets/landing-hero.png`(구현 시 `public/images/`로 옮기고 WebP 변환). 순서: 상태 알약 → 롤링 헤드라인 → 리드 → CTA 두 개(primary + 외곽선 "이용 방법 보기"). 오른쪽에 떠 있는 신호 카드
+1. **TopNav** — 앵커 링크: 계산해 보기 · 사례 · 이용 방법 · 데이터 출처. 비로그인이면 "로그인"(secondary, Google 로그인)
+2. **히어로** — 최소 높이 `max(640px, 100vh - 80px)`, 배경 `docs/assets/landing-hero.png`(구현 시 `public/images/`로 옮기고 WebP 변환). 순서: 상태 알약 → 롤링 헤드라인 → 리드 → CTA 두 개(primary "지금 위험도 확인하기" + 외곽선 "이용 방법 보기"). 오른쪽에 떠 있는 신호 카드, 하단에 "아래로 스크롤" 안내
 3. **계산해 보기** `#try` — 보증금·근저당 슬라이더와 프리셋 칩, 오른쪽 카드에 비율 막대 2개 + HUG 줄. 계산은 `src/features/judgment/` 함수를 그대로 쓴다
-4. **사례** `#cases` — 선택 탭 5개(깡통전세, 근저당 과다, 신탁 등기, 근린생활시설, 비율이 낮은 빌라). 왼쪽은 조건 요약 + 비교 막대, 오른쪽은 "위험 신호 N개" + 신호 행. "예시 데이터" 표기
+4. **사례** `#cases` — 선택 탭 5개(비율이 낮은 빌라, 깡통전세, 근저당 과다, 신탁 등기, 근린생활시설), 처음엔 깡통전세. 왼쪽은 주소·조건 요약 + 비교 막대 + HUG 줄, 오른쪽은 "위험 신호 N개" + 신호 행. "예시 데이터" 표기. 신호 문구는 랜딩 예시 문구(`cases-data.ts`)이고 결과 화면 문구(`copy.ts`)와 따로 둔다
 5. **이용 방법** `#flow` — 단계 진행 탭 3개(4.5s 자동 진행) + 미리보기 판
-6. **데이터 출처** `#sources` — 세그먼트 토글(자동 조회 / 직접 입력 / 지원 안 함). "지원 안 함"은 PRD의 MVP 제외 사항
+6. **데이터 출처** `#sources` — 기관 카드 5개(로고는 `public/images/sources/`, 없으면 아이콘) + 세그먼트 토글(자동 조회 / 직접 입력 / 지원 안 함). "지원 안 함"은 PRD의 MVP 제외 사항
 7. **마지막 CTA** — "계약 전에 확인하세요" + primary 버튼 + 면책 문구
-8. **FooterLight** — 고객지원 / 서비스 / jeonse-check 열, "© 2026 jeonse-check"
+8. **FooterLight** — 서비스(위험 진단 · 저장한 결과) / jeonse-check(데이터 출처) 열, "© 2026 jeonse-check"
