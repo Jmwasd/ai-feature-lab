@@ -1,6 +1,6 @@
 ---
 name: branch
-description: ai-feature-lab에서 새 git 브랜치를 만든다. 새 작업·`/branch` 요청·main에서의 작업을 발견했을 때 쓴다. `<type>/<project>/<slug>` 규칙으로 origin/main에서 분기·push하고 PR 제목·본문 초안을 낸다.
+description: ai-feature-lab에서 새 git 브랜치를 만든다. 새 작업·`/branch` 요청·main에서의 작업을 발견했을 때 쓴다. `<type>/<project>/<slug>` 규칙으로 origin/main에서 분기·push하고 PR 제목·본문 초안을 낸다. PR은 사용자가 요청할 때만 연다.
 argument-hint: "[작업 설명]"
 ---
 
@@ -108,16 +108,21 @@ git push -u origin <type>/<project>/<slug>
 - 커밋 목록을 옮겨 적지 마라. GitHub PR 페이지에 이미 있다. diff도 붙여 넣지 마라 — 파일은 경로로만 가리킨다 (`spend-report/parser.py:42`).
 - harness phase PR은 step 커밋이 수십 개다. **step을 나열하지 말고 그 phase가 무엇을 완성했는지로 쓴다.**
 
-초안이 준비되면 **PR까지 연다** (아래 절).
+초안은 작업 결과와 함께 사용자에게 보여 주기만 한다. **PR은 사용자가 올리라고 할 때만 연다** (루트 `CLAUDE.md`).
 
 ## 작업을 끝낸 뒤
 
-커밋하고 push했으면 **PR을 열고 main으로 돌아간다.**
+커밋하고 push했으면 **main으로 돌아간다.** PR은 열지 않는다.
 
 ```bash
 git push
-gh pr create --base main --title "<제목 초안>" --body-file <본문 초안 파일>
 git checkout main
+```
+
+사용자가 PR을 올리라고 하면 그때 연다. main에 서 있어도 `--head`로 브랜치를 지정하면 된다.
+
+```bash
+gh pr create --base main --head <브랜치> --title "<제목 초안>" --body-file <본문 초안 파일>
 ```
 
 - 본문은 파일로 넘긴다. 한글 여러 줄을 `--body`에 직접 넣으면 셸 인용이 깨진다.
