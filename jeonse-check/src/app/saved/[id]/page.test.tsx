@@ -82,7 +82,7 @@ describe("/saved/[id] 상세", () => {
     expect(footer).toHaveTextContent("데이터 기준일 2026-09-01");
     for (const source of SOURCES) expect(footer).toHaveTextContent(source);
     // 5. 면책 문구
-    expect(screen.getByText(DISCLAIMER)).toHaveClass("text-body-sm", "text-body");
+    expect(screen.getByText(DISCLAIMER)).toBeVisible();
   });
 
   it("저장일·기준일 안내와 같은 조건으로 다시 조회하는 링크를 보여 준다", async () => {

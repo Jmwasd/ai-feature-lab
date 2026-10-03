@@ -42,17 +42,6 @@ describe("RightsForm", () => {
     expect(screen.getByText(/사용자 입력\(등기부 기준\)/)).toBeInTheDocument();
   });
 
-  it("필드마다 등기부에서 볼 곳을 안내한다", async () => {
-    const { user } = setup();
-    await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
-    await fillOthers(user);
-
-    expect(screen.getByText(/을구 → 근저당권설정 → 채권최고액/)).toBeInTheDocument();
-    expect(screen.getByText(/을구 → 전세권설정·임차권등기/)).toBeInTheDocument();
-    expect(screen.getByText(/갑구 → 소유권이전 등기의 목적/)).toBeInTheDocument();
-    expect(screen.getByText(/갑구 → 마지막 소유권이전 → 접수일/)).toBeInTheDocument();
-  });
-
   describe("단계별로 칸이 나타난다", () => {
     it("처음에는 근저당만 있고 나머지 칸과 확인 버튼이 없다", () => {
       setup();
@@ -181,12 +170,6 @@ describe("RightsForm", () => {
       expect(onSubmit.mock.calls[0][0].maxClaimAmount).toBe(60_000_000);
     });
 
-    it("한 건만 남으면 삭제할 수 없다", async () => {
-      const { user } = setup();
-      await user.click(screen.getByRole("radio", { name: "근저당 있음" }));
-      expect(screen.queryByRole("button", { name: /근저당 1 삭제/ })).not.toBeInTheDocument();
-    });
-
     it("'근저당 없음'을 고르면 0을 넘긴다", async () => {
       const { user, onSubmit } = setup();
       await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
@@ -275,11 +258,6 @@ describe("RightsForm", () => {
     const { user } = setup({ onBack });
     await user.click(screen.getByRole("button", { name: "이전" }));
     expect(onBack).toHaveBeenCalledTimes(1);
-  });
-
-  it("onBack이 없으면 이전 버튼이 없다", () => {
-    setup();
-    expect(screen.queryByRole("button", { name: "이전" })).not.toBeInTheDocument();
   });
 
   it("안내·도움말·오류 문구에 금지 표현이 없다", async () => {

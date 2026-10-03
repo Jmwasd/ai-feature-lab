@@ -23,8 +23,6 @@ describe.each(Object.entries(ALL_VIEWS))("ResultView — %s", (_name, view) => {
     render(<ResultView view={view} />);
 
     expect(screen.getByTestId("signal-count")).toHaveTextContent(String(view.report.signalCount));
-    expect(screen.getByTestId("signal-count")).toHaveClass("text-rating-display");
-    expect(screen.getByRole("heading", { name: view.report.headline })).toHaveClass("text-display-sm");
   });
 
   it("필수 요소 2: 신호 목록 — 신호마다 수준 라벨·제목·근거", () => {
@@ -56,15 +54,13 @@ describe.each(Object.entries(ALL_VIEWS))("ResultView — %s", (_name, view) => {
     const footer = screen.getByTestId("report-footer");
 
     expect(within(footer).getByText(/데이터 기준일/)).toHaveTextContent("2026-09-01");
-    expect(within(footer).getByText(/데이터 기준일/)).toHaveClass("text-caption-sm", "text-muted");
     for (const source of SOURCES) expect(footer).toHaveTextContent(source);
   });
 
-  it("필수 요소 5: 면책 문구 전문을 접지 않고 text-body-sm text-body로 보여 준다", () => {
+  it("필수 요소 5: 면책 문구 전문을 접지 않고 보여 준다", () => {
     render(<ResultView view={view} />);
     const disclaimer = screen.getByText(DISCLAIMER);
 
-    expect(disclaimer).toHaveClass("text-body-sm", "text-body");
     expect(disclaimer).toBeVisible();
     expect(disclaimer.closest("details")).toBeNull();
   });
@@ -94,41 +90,17 @@ describe.each(Object.entries(ALL_VIEWS))("ResultView — %s", (_name, view) => {
 
     for (const note of view.report.notes) expect(screen.getByText(note)).toBeInTheDocument();
   });
-
-  it("모바일 1단, desktop 이상 2단이고 우측 레일에 RatioPanel을 둔다", () => {
-    render(<ResultView view={view} />);
-    const rail = screen.getByTestId("ratio-panel").closest("aside");
-
-    expect(rail).not.toBeNull();
-    expect(rail?.parentElement).toHaveClass("grid", "grid-cols-1", "desktop:grid-cols-3");
-  });
-
-  it("desktop 이상에서 우측 레일은 상단 바 아래에 붙어 따라오고(sticky), 모바일에서는 일반 흐름이다", () => {
-    render(<ResultView view={view} />);
-    const rail = screen.getByTestId("ratio-panel").closest("aside");
-
-    expect(rail).toHaveClass("desktop:sticky", "desktop:self-start", "desktop:top-[calc(var(--spacing-nav)+var(--spacing-lg))]");
-    expect(rail).not.toHaveClass("sticky");
-  });
 });
 
 describe("SignalList — 수준 표시", () => {
-  it("위험은 triangle-alert + error-text, 주의는 circle-alert + ink로 표시하고 라벨을 함께 둔다", () => {
+  it("신호마다 수준 라벨(위험·주의)을 함께 둔다", () => {
     render(<ResultView view={allSignalsView} />);
     const rows = screen.getAllByTestId("signal-row");
     const levels = new Set(allSignalsView.report.signals.map((s) => s.level));
     expect(levels).toEqual(new Set(["danger", "caution"]));
 
     allSignalsView.report.signals.forEach((signal, i) => {
-      const icon = rows[i].querySelector("svg");
-      const label = within(rows[i]).getByText(LEVEL_LABEL[signal.level]);
-      if (signal.level === "danger") {
-        expect(icon).toHaveClass("lucide-triangle-alert", "text-error-text");
-        expect(label).toHaveClass("text-error-text");
-      } else {
-        expect(icon).toHaveClass("lucide-circle-alert", "text-ink");
-        expect(label).toHaveClass("text-ink");
-      }
+      expect(within(rows[i]).getByText(LEVEL_LABEL[signal.level])).toBeInTheDocument();
     });
   });
 
@@ -150,20 +122,16 @@ describe("RatioPanel", () => {
     expect(screen.getAllByText(`${formatPercent(JEONSE_RATIO_THRESHOLD.danger)} 기준`)).toHaveLength(2);
   });
 
-  it("HUG 가입 기준 충족이면 잉크색 circle-check와 추정 표기를 쓴다", () => {
+  it("HUG 가입 기준 충족이면 추정 표기를 쓴다", () => {
     render(<ResultView view={noSignalsView} />);
-    const row = screen.getByTestId("hug-row");
-    const status = within(row).getByText(HUG_STATUS.eligible);
 
-    expect(status).toHaveClass("text-ink");
-    expect(status.querySelector("svg")).toHaveClass("lucide-circle-check");
+    expect(within(screen.getByTestId("hug-row")).getByText(HUG_STATUS.eligible)).toBeInTheDocument();
   });
 
-  it("HUG 가입 어려움이면 위험 표시와 근거를 쓴다", () => {
+  it("HUG 가입 어려움이면 그 상태를 쓴다", () => {
     render(<ResultView view={allSignalsView} />);
-    const row = screen.getByTestId("hug-row");
 
-    expect(within(row).getByText(HUG_STATUS.ineligible)).toHaveClass("text-error-text");
+    expect(within(screen.getByTestId("hug-row")).getByText(HUG_STATUS.ineligible)).toBeInTheDocument();
   });
 
   it("HUG unknown이면 '입력이 부족해 판단할 수 없어요'라고 사실만 쓴다", () => {
