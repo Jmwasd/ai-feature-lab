@@ -31,7 +31,7 @@ async function Home({ callbackUrl }: { callbackUrl?: string } = {}) {
 }
 
 describe("랜딩 페이지", () => {
-  it("UI_GUIDE §8 순서대로 섹션을 둔다", async () => {
+  it("랜딩 시안 순서대로 섹션을 둔다", async () => {
     const { container } = render(await Home());
     const ids = Array.from(container.querySelectorAll("main > section[id]")).map((s) => s.id);
 
