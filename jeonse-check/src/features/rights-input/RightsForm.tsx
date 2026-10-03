@@ -1,10 +1,11 @@
 "use client";
 
 import { Plus, X } from "lucide-react";
-import { useId, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from "react";
 import type { z } from "zod";
 import { Button } from "@/components/Button";
 import { IconButtonCircle } from "@/components/IconButtonCircle";
+import { Reveal } from "@/components/Reveal";
 import { TextInput } from "@/components/TextInput";
 import { formatIsoDate, formatWon } from "@/utils/format";
 import { parseWonInput, wonToInputText } from "@/utils/parse-won-input";
@@ -39,6 +40,11 @@ const MORTGAGE_UNSET_ERROR = "근저당이 있는지 골라 주세요";
 const AMOUNT_PARSE_ERROR = "금액을 이해하지 못했어요. 예: 1억 2000만, 5000만";
 const MORTGAGE_ZERO_ERROR = "0원인 건은 지우거나 '근저당 없음'을 골라 주세요";
 
+// 칸이 나타나는 순서. 앞 칸이 유효해야 다음 칸이 열리고, 모두 유효하면 확인 버튼이 나타난다.
+const STAGES = ["mortgage", "seniorDeposits", "trust", "ownership", "submit"] as const;
+type Stage = (typeof STAGES)[number];
+const ALL_STAGES = STAGES.length - 1;
+
 // 예/아니오 선택(UI_GUIDE §4). 선택된 쪽만 2px 잉크 테두리. 칸 폭은 grid가 정해 테두리 두께가 바뀌어도 크기가 같다.
 const CHOICE =
   "inline-flex h-11 cursor-pointer items-center justify-center rounded-sm border bg-canvas px-md text-button-sm text-ink transition-colors hover:bg-surface-soft has-checked:border-2 has-checked:border-ink has-disabled:cursor-not-allowed has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink";
@@ -58,6 +64,36 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
   const [dateText, setDateText] = useState(defaultValue?.lastOwnershipChangeDate ? formatIsoDate(defaultValue.lastOwnershipChangeDate) : "");
   const [noOwnershipChange, setNoOwnershipChange] = useState(defaultValue?.lastOwnershipChangeDate === null);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const firstEntryRef = useRef<HTMLInputElement>(null);
+  const seniorRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  // 고르는 동작으로 새 칸이 열리면 그 칸의 입력으로 포커스를 옮긴다. 타이핑 중에는 옮기지 않는다.
+  const pendingFocus = useRef<"firstEntry" | "seniorDeposits" | "ownership" | null>(null);
+
+  // 미리 채운 값이 있으면(다시 조회) 처음부터 모든 칸을 보인다.
+  const [initialStage] = useState(() => (Object.values(defaultValue ?? {}).some((value) => value !== undefined) ? ALL_STAGES : 0));
+  const seniorAmount = parseWonInput(seniorText);
+  const reachable = countValid([
+    mortgageMode === "none" || (mortgageMode === "some" && entries.every((entry) => (parseWonInput(entry.text) ?? 0) > 0)),
+    seniorText.trim() !== "" && seniorAmount !== null,
+    isTrust !== null,
+    ownershipError(noOwnershipChange, dateText, asOf) === null,
+  ]);
+  // 한 번 열린 칸은 앞 칸을 고쳐도 닫지 않는다. 확인 버튼은 지금 값이 모두 유효할 때만 보인다.
+  const [openedStage, setOpenedStage] = useState(initialStage);
+  if (reachable > openedStage) setOpenedStage(reachable);
+  const visibleStage = Math.max(openedStage, reachable);
+  const complete = reachable === ALL_STAGES;
+  const isOpen = (stage: Stage) => STAGES.indexOf(stage) <= visibleStage;
+  const appears = (stage: Stage) => STAGES.indexOf(stage) > initialStage;
+
+  useEffect(() => {
+    const targets = { firstEntry: firstEntryRef, seniorDeposits: seniorRef, ownership: dateRef };
+    const target = pendingFocus.current ? targets[pendingFocus.current].current : null;
+    if (!target) return;
+    pendingFocus.current = null;
+    target.focus();
+  });
 
   const clearError = (field: keyof RightsFormValue) => setErrors((prev) => (prev[field] ? { ...prev, [field]: undefined } : prev));
 
@@ -76,6 +112,8 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
   }
 
   function chooseMortgage(mode: Exclude<MortgageMode, null>) {
+    if (mode === "some" && mortgageMode !== "some") pendingFocus.current = "firstEntry";
+    else if (mode === "none" && !isOpen("seniorDeposits")) pendingFocus.current = "seniorDeposits";
     setMortgageMode(mode);
     setEntryErrors({});
     clearError("maxClaimAmount");
@@ -124,7 +162,13 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
     onSubmit(result.data);
   }
 
-  const seniorAmount = parseWonInput(seniorText);
+  // 칸을 벗어날 때 읽을 수 없는 금액을 바로 알린다. 비어 있으면 아직 입력 중으로 본다.
+  function checkEntryOnBlur(id: number, text: string) {
+    if (text.trim() === "") return;
+    const amount = parseWonInput(text);
+    const message = amount === null ? AMOUNT_PARSE_ERROR : amount === 0 ? MORTGAGE_ZERO_ERROR : null;
+    if (message) setEntryErrors((prev) => ({ ...prev, [id]: message }));
+  }
 
   return (
     <form noValidate aria-label="권리관계 입력" onSubmit={handleSubmit} className="flex flex-col gap-xl pb-section tablet:pb-0">
@@ -156,12 +200,14 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
                   return (
                     <TextInput
                       key={entry.id}
+                      ref={index === 0 ? firstEntryRef : undefined}
                       label={`근저당 ${index + 1} 채권최고액`}
                       placeholder="1억 2000만"
                       value={entry.text}
                       error={entryErrors[entry.id] || undefined}
                       hint={amount !== null && amount > 0 ? wonText(amount) : undefined}
                       onChange={(event) => updateEntry(entry.id, event.target.value)}
+                      onBlur={(event) => checkEntryOnBlur(entry.id, event.target.value)}
                       className="tabular-nums"
                       trailing={
                         entries.length > 1 ? (
@@ -190,74 +236,93 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
         )}
       </Field>
 
-      <Field title="선순위 임차보증금" help={HELP.seniorDeposits}>
-        {() => (
-          <TextInput
-            label="선순위 임차보증금 합계"
-            placeholder="0"
-            value={seniorText}
-            error={errors.seniorDeposits}
-            hint={seniorAmount !== null ? wonText(seniorAmount) : undefined}
-            onChange={(event) => {
-              setSeniorText(event.target.value);
-              clearError("seniorDeposits");
-            }}
-            className="tabular-nums"
-          />
-        )}
-      </Field>
-
-      <Field title="신탁 등기" help={HELP.trust}>
-        {(titleId, helpId) => (
-          <ChoiceGroup
-            name="isTrust"
-            labelledBy={titleId}
-            helpId={helpId}
-            error={errors.isTrust}
-            value={isTrust === null ? null : isTrust ? "yes" : "no"}
-            options={[
-              { value: "yes", label: "예" },
-              { value: "no", label: "아니오" },
-            ]}
-            onChange={(value) => {
-              setIsTrust(value === "yes");
-              clearError("isTrust");
-            }}
-          />
-        )}
-      </Field>
-
-      <Field title="최근 소유권 이전" help={HELP.ownership}>
-        {() => (
-          <div className="flex flex-col gap-sm">
+      {isOpen("seniorDeposits") ? (
+        <Field title="선순위 임차보증금" help={HELP.seniorDeposits} appear={appears("seniorDeposits")}>
+          {() => (
             <TextInput
-              type="date"
-              label="최근 소유권 이전 등기일"
-              max={localIsoDate(asOf)}
-              value={noOwnershipChange ? "" : dateText}
-              disabled={noOwnershipChange}
-              error={errors.lastOwnershipChangeDate}
+              ref={seniorRef}
+              label="선순위 임차보증금 합계"
+              placeholder="0"
+              value={seniorText}
+              error={errors.seniorDeposits}
+              hint={seniorAmount !== null ? wonText(seniorAmount) : undefined}
               onChange={(event) => {
-                setDateText(event.target.value);
-                clearError("lastOwnershipChangeDate");
+                setSeniorText(event.target.value);
+                clearError("seniorDeposits");
+              }}
+              onBlur={(event) => {
+                if (event.target.value.trim() !== "" && parseWonInput(event.target.value) === null) {
+                  setErrors((prev) => ({ ...prev, seniorDeposits: AMOUNT_PARSE_ERROR }));
+                }
               }}
               className="tabular-nums"
             />
-            <label className={`${CHOICE} self-start border-hairline`}>
-              <input
-                type="checkbox"
-                checked={noOwnershipChange}
+          )}
+        </Field>
+      ) : null}
+
+      {isOpen("trust") ? (
+        <Field title="신탁 등기" help={HELP.trust} appear={appears("trust")}>
+          {(titleId, helpId) => (
+            <ChoiceGroup
+              name="isTrust"
+              labelledBy={titleId}
+              helpId={helpId}
+              error={errors.isTrust}
+              value={isTrust === null ? null : isTrust ? "yes" : "no"}
+              options={[
+                { value: "yes", label: "예" },
+                { value: "no", label: "아니오" },
+              ]}
+              onChange={(value) => {
+                if (!isOpen("ownership")) pendingFocus.current = "ownership";
+                setIsTrust(value === "yes");
+                clearError("isTrust");
+              }}
+            />
+          )}
+        </Field>
+      ) : null}
+
+      {isOpen("ownership") ? (
+        <Field title="최근 소유권 이전" help={HELP.ownership} appear={appears("ownership")}>
+          {() => (
+            <div className="flex flex-col gap-sm">
+              <TextInput
+                ref={dateRef}
+                type="date"
+                label="최근 소유권 이전 등기일"
+                max={localIsoDate(asOf)}
+                value={noOwnershipChange ? "" : dateText}
+                disabled={noOwnershipChange}
+                error={errors.lastOwnershipChangeDate}
                 onChange={(event) => {
-                  setNoOwnershipChange(event.target.checked);
+                  setDateText(event.target.value);
                   clearError("lastOwnershipChangeDate");
                 }}
-                className="sr-only"
+                onBlur={(event) => {
+                  if (event.target.value === "") return;
+                  const message = ownershipError(false, event.target.value, asOf);
+                  if (message) setErrors((prev) => ({ ...prev, lastOwnershipChangeDate: message }));
+                }}
+                className="tabular-nums"
               />
-              소유권 이전 없음(보존등기만 있음)
-            </label>
-          </div>
-        )}
-      </Field>
+              <label className={`${CHOICE} self-start border-hairline`}>
+                <input
+                  type="checkbox"
+                  checked={noOwnershipChange}
+                  onChange={(event) => {
+                    setNoOwnershipChange(event.target.checked);
+                    clearError("lastOwnershipChangeDate");
+                  }}
+                  className="sr-only"
+                />
+                소유권 이전 없음(보존등기만 있음)
+              </label>
+            </div>
+          )}
+        </Field>
+      ) : null}
 
       <div className="fixed inset-x-0 bottom-0 z-10 flex gap-sm border-t border-hairline bg-canvas px-gutter py-sm tablet:static tablet:justify-end tablet:border-0 tablet:bg-transparent tablet:p-0">
         {onBack ? (
@@ -265,20 +330,32 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
             이전
           </Button>
         ) : null}
-        <Button type="submit" className="flex-1 tablet:flex-none">
-          위험 신호 확인하기
-        </Button>
+        {complete ? (
+          <Reveal appear className="flex flex-1 tablet:flex-none">
+            <Button type="submit" className="flex-1 tablet:flex-none">
+              위험 신호 확인하기
+            </Button>
+          </Reveal>
+        ) : null}
       </div>
     </form>
   );
 }
 
 // 항목 제목 + 등기부 위치 도움말 + 입력. 섹션 사이는 hairline-soft로 나눈다.
-function Field({ title, help, children }: { title: string; help: string; children: (titleId: string, helpId: string) => ReactNode }) {
+type FieldProps = {
+  title: string;
+  help: string;
+  // 앞 칸을 채워 새로 나타날 때 true. 처음부터 있던 칸은 등장 전환을 주지 않는다.
+  appear?: boolean;
+  children: (titleId: string, helpId: string) => ReactNode;
+};
+
+function Field({ title, help, appear = false, children }: FieldProps) {
   const titleId = useId();
   const helpId = useId();
   return (
-    <section className="flex flex-col gap-md border-t border-hairline-soft pt-lg">
+    <Reveal appear={appear} className="flex flex-col gap-md border-t border-hairline-soft pt-lg">
       <div className="flex flex-col gap-xs">
         <h3 id={titleId} className="text-title-md text-ink">
           {title}
@@ -288,7 +365,7 @@ function Field({ title, help, children }: { title: string; help: string; childre
         </p>
       </div>
       {children(titleId, helpId)}
-    </section>
+    </Reveal>
   );
 }
 
@@ -334,6 +411,21 @@ function ChoiceGroup<T extends string>({ name, labelledBy, helpId, error, value,
       ) : null}
     </div>
   );
+}
+
+function countValid(steps: boolean[]): number {
+  const firstInvalid = steps.indexOf(false);
+  return firstInvalid === -1 ? steps.length : firstInvalid;
+}
+
+// 소유권 이전 칸의 오류 문구. 유효하면 null이다. 날짜 판단은 제출 검증(validateRightsInput)과 같은 기준을 쓴다.
+function ownershipError(noOwnershipChange: boolean, dateText: string, asOf: Date): string | null {
+  if (noOwnershipChange) return null;
+  const result = validateRightsInput(
+    { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: dateText === "" ? undefined : parseDateInput(dateText) },
+    asOf,
+  );
+  return result.success ? null : (result.error.issues[0]?.message ?? null);
 }
 
 function initialMortgageMode(maxClaimAmount: number | undefined): MortgageMode {

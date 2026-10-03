@@ -50,7 +50,7 @@ async function fillLookup(user: User) {
   await user.click(await screen.findByRole("button", { name: /월드컵로 100/ }));
   await user.type(screen.getByLabelText("보증금"), "1억 5000만");
   await user.type(screen.getByLabelText("전용면적(㎡)"), "59");
-  await user.click(screen.getAllByRole("button", { name: "조회하기" })[0]);
+  await user.click(screen.getAllByRole("button", { name: "다음" })[0]);
 }
 
 async function fillRights(user: User) {
@@ -247,8 +247,10 @@ describe("CheckFlow", () => {
     await user.click(await screen.findByRole("button", { name: "처음으로" }));
 
     expect(currentStep()).toContain("조회 조건");
-    expect(screen.getByLabelText("보증금")).toHaveValue("");
-    expect(screen.getByLabelText("주소")).toHaveValue("");
+    // 빈 폼은 주택 유형부터 다시 고르게 한다.
+    for (const radio of screen.getAllByRole("radio")) expect(radio).not.toBeChecked();
+    expect(screen.queryByLabelText("주소")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("보증금")).not.toBeInTheDocument();
   });
 
   it("quota — 자동으로 다시 부르지 않고, '다시 시도'를 눌렀을 때만 같은 입력으로 다시 판정한다", async () => {
@@ -284,6 +286,7 @@ describe("CheckFlow", () => {
     const searchAddress = vi.fn(async (): Promise<SearchAddressResult> => ({ ok: false, error: "unavailable" }));
     render(<CheckFlow searchAddress={searchAddress} runCheck={vi.fn()} saveResult={vi.fn()} />);
 
+    await user.click(screen.getByRole("radio", { name: "연립다세대" }));
     await user.type(screen.getByLabelText("주소"), "월드컵로");
     await user.click(screen.getByRole("button", { name: "주소 검색" }));
 
@@ -384,7 +387,7 @@ describe("CheckFlow", () => {
       await screen.findByText(/저장했어요/);
 
       await user.click(screen.getByRole("button", { name: "조건 바꿔 다시 보기" }));
-      await user.click(screen.getAllByRole("button", { name: "조회하기" })[0]);
+      await user.click(screen.getAllByRole("button", { name: "다음" })[0]);
       await user.click(screen.getByRole("button", { name: "위험 신호 확인하기" }));
       await screen.findByTestId("signal-count");
 
@@ -426,7 +429,7 @@ describe("CheckFlow", () => {
 
     await user.click(screen.getByRole("button", { name: "주소 검색" }));
     await user.click(await screen.findByRole("button", { name: /월드컵로 100/ }));
-    await user.click(screen.getAllByRole("button", { name: "조회하기" })[0]);
+    await user.click(screen.getAllByRole("button", { name: "다음" })[0]);
     await user.click(screen.getByRole("button", { name: "위험 신호 확인하기" }));
 
     await screen.findByTestId("signal-count");

@@ -1,4 +1,4 @@
-import { useId, type InputHTMLAttributes, type ReactNode } from "react";
+import { useId, type ComponentProps, type ReactNode } from "react";
 
 type TextInputProps = {
   label: string;
@@ -7,7 +7,8 @@ type TextInputProps = {
   trailing?: ReactNode;
   // SearchBarPill 안의 세그먼트. 모바일에서는 일반 입력 상자, desktop에서는 테두리 없는 알약이 된다.
   segment?: boolean;
-} & Omit<InputHTMLAttributes<HTMLInputElement>, "children">;
+  // ref는 안쪽 <input>에 붙는다(React 19는 ref를 일반 prop으로 넘긴다).
+} & Omit<ComponentProps<"input">, "children">;
 
 // 텍스트 입력(UI_GUIDE §4 TextInput). 라벨이 필드 안 위에 쌓인다.
 // 포커스는 2px 잉크 테두리만 쓴다(오류 중에는 오류색 유지). 테두리가 1px→2px로 두꺼워지는 만큼 안쪽 1px 여백을 빼서 크기를 유지한다.

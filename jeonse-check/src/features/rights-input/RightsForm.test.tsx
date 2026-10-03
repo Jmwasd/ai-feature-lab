@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import type { RightsInput } from "@/features/judgment/types";
@@ -24,7 +24,11 @@ function submit(user: User) {
   return user.click(screen.getByRole("button", { name: "위험 신호 확인하기" }));
 }
 
-// 근저당 외 필드를 채운다.
+function submitButton() {
+  return screen.queryByRole("button", { name: "위험 신호 확인하기" });
+}
+
+// 근저당 외 필드를 채운다. 근저당을 먼저 채워야 나타난다.
 async function fillOthers(user: User) {
   await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
   await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
@@ -38,12 +42,103 @@ describe("RightsForm", () => {
     expect(screen.getByText(/사용자 입력\(등기부 기준\)/)).toBeInTheDocument();
   });
 
-  it("필드마다 등기부에서 볼 곳을 안내한다", () => {
-    setup();
+  it("필드마다 등기부에서 볼 곳을 안내한다", async () => {
+    const { user } = setup();
+    await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+    await fillOthers(user);
+
     expect(screen.getByText(/을구 → 근저당권설정 → 채권최고액/)).toBeInTheDocument();
     expect(screen.getByText(/을구 → 전세권설정·임차권등기/)).toBeInTheDocument();
     expect(screen.getByText(/갑구 → 소유권이전 등기의 목적/)).toBeInTheDocument();
     expect(screen.getByText(/갑구 → 마지막 소유권이전 → 접수일/)).toBeInTheDocument();
+  });
+
+  describe("단계별로 칸이 나타난다", () => {
+    it("처음에는 근저당만 있고 나머지 칸과 확인 버튼이 없다", () => {
+      setup();
+
+      expect(screen.getByRole("radiogroup", { name: "근저당" })).toBeInTheDocument();
+      expect(screen.queryByLabelText("선순위 임차보증금 합계")).not.toBeInTheDocument();
+      expect(screen.queryByRole("radiogroup", { name: "신탁 등기" })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("최근 소유권 이전 등기일")).not.toBeInTheDocument();
+      expect(submitButton()).not.toBeInTheDocument();
+    });
+
+    it("'근저당 없음'을 고르면 선순위 임차보증금 칸을 열고 포커스를 옮긴다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+
+      await waitFor(() => expect(screen.getByLabelText("선순위 임차보증금 합계")).toHaveFocus());
+      expect(screen.queryByRole("radiogroup", { name: "신탁 등기" })).not.toBeInTheDocument();
+    });
+
+    it("'근저당 있음'은 모든 건의 금액이 0원보다 커야 다음 칸을 연다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 있음" }));
+      await waitFor(() => expect(screen.getByLabelText("근저당 1 채권최고액")).toHaveFocus());
+      expect(screen.queryByLabelText("선순위 임차보증금 합계")).not.toBeInTheDocument();
+
+      await user.type(screen.getByLabelText("근저당 1 채권최고액"), "0");
+      expect(screen.queryByLabelText("선순위 임차보증금 합계")).not.toBeInTheDocument();
+
+      await user.clear(screen.getByLabelText("근저당 1 채권최고액"));
+      await user.type(screen.getByLabelText("근저당 1 채권최고액"), "1억");
+      expect(screen.getByLabelText("선순위 임차보증금 합계")).toBeInTheDocument();
+    });
+
+    it("선순위 임차보증금(0 포함) → 신탁 등기 → 소유권 이전 순서로 열고, 모두 채우면 확인 버튼을 보인다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
+      expect(screen.queryByLabelText("최근 소유권 이전 등기일")).not.toBeInTheDocument();
+
+      await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
+      await waitFor(() => expect(screen.getByLabelText("최근 소유권 이전 등기일")).toHaveFocus());
+      expect(submitButton()).not.toBeInTheDocument();
+
+      await user.type(screen.getByLabelText("최근 소유권 이전 등기일"), "2024-03-15");
+      expect(submitButton()).toBeInTheDocument();
+    });
+
+    it("앞 칸을 고쳐 다시 비면 이미 나타난 칸은 남기고 확인 버튼만 숨긴다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+      await fillOthers(user);
+      await user.clear(screen.getByLabelText("선순위 임차보증금 합계"));
+
+      expect(screen.getByLabelText("최근 소유권 이전 등기일")).toHaveValue("2024-03-15");
+      expect(submitButton()).not.toBeInTheDocument();
+    });
+
+    it("미래 날짜는 확인 버튼을 열지 않고, 칸을 벗어나면 오류로 보인다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
+      await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
+      await user.type(screen.getByLabelText("최근 소유권 이전 등기일"), "2026-10-01");
+      await user.tab();
+
+      expect(submitButton()).not.toBeInTheDocument();
+      expect(screen.getByLabelText("최근 소유권 이전 등기일")).toHaveAccessibleDescription("오늘 이후 날짜는 입력할 수 없어요");
+    });
+
+    it("읽을 수 없는 금액은 칸을 벗어나면 오류로 보인다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 있음" }));
+      await user.type(screen.getByLabelText("근저당 1 채권최고액"), "일억");
+      await user.tab();
+
+      expect(screen.getByLabelText("근저당 1 채권최고액")).toHaveAttribute("aria-invalid", "true");
+    });
+
+    it("0원인 근저당 건은 칸을 벗어나면 오류로 보인다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 있음" }));
+      await user.type(screen.getByLabelText("근저당 1 채권최고액"), "0");
+      await user.tab();
+
+      expect(screen.getByLabelText("근저당 1 채권최고액")).toHaveAccessibleDescription("0원인 건은 지우거나 '근저당 없음'을 골라 주세요");
+    });
   });
 
   describe("근저당", () => {
@@ -102,49 +197,18 @@ describe("RightsForm", () => {
 
       expect(onSubmit.mock.calls[0][0].maxClaimAmount).toBe(0);
     });
-
-    it("있음·없음을 고르지 않으면 0으로 채우지 않고 제출을 막는다", async () => {
-      const { user, onSubmit } = setup();
-      await fillOthers(user);
-      await submit(user);
-
-      expect(onSubmit).not.toHaveBeenCalled();
-      expect(screen.getByText("근저당이 있는지 골라 주세요")).toBeInTheDocument();
-    });
-
-    it("'근저당 있음'인데 금액이 비었거나 0원이면 제출을 막는다", async () => {
-      const { user, onSubmit } = setup();
-      await user.click(screen.getByRole("radio", { name: "근저당 있음" }));
-      await user.click(screen.getByRole("button", { name: "근저당 추가" }));
-      await user.type(screen.getByLabelText("근저당 2 채권최고액"), "0");
-      await fillOthers(user);
-      await submit(user);
-
-      expect(onSubmit).not.toHaveBeenCalled();
-      expect(screen.getByLabelText("근저당 1 채권최고액")).toHaveAttribute("aria-invalid", "true");
-      expect(screen.getByLabelText("근저당 2 채권최고액")).toHaveAttribute("aria-invalid", "true");
-    });
   });
 
   describe("신탁 등기", () => {
-    it("기본값 없이 예·아니오를 고르게 한다", () => {
-      setup();
+    it("기본값 없이 예·아니오를 고르게 한다", async () => {
+      const { user } = setup();
+      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
       const group = screen.getByRole("radiogroup", { name: "신탁 등기" });
       const radios = within(group).getAllByRole("radio");
 
       expect(radios.map((radio) => radio.closest("label")?.textContent)).toEqual(["예", "아니오"]);
       for (const radio of radios) expect(radio).not.toBeChecked();
-    });
-
-    it("고르지 않으면 제출할 수 없다", async () => {
-      const { user, onSubmit } = setup();
-      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
-      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
-      await user.type(screen.getByLabelText("최근 소유권 이전 등기일"), "2024-03-15");
-      await submit(user);
-
-      expect(onSubmit).not.toHaveBeenCalled();
-      expect(screen.getByText("신탁 등기 여부를 골라 주세요")).toBeInTheDocument();
     });
 
     it("'예'를 고르면 true를 넘긴다", async () => {
@@ -158,53 +222,17 @@ describe("RightsForm", () => {
     });
   });
 
-  it("선순위 보증금을 비우면 0으로 채우지 않고 오류를 보인다", async () => {
+  it("'소유권 이전 없음'을 고르면 날짜 칸을 막고 null을 넘긴다", async () => {
     const { user, onSubmit } = setup();
     await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
+    await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
     await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
-    await user.type(screen.getByLabelText("최근 소유권 이전 등기일"), "2024-03-15");
+    await user.click(screen.getByRole("checkbox", { name: /소유권 이전 없음/ }));
+
+    expect(screen.getByLabelText("최근 소유권 이전 등기일")).toBeDisabled();
     await submit(user);
 
-    expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.getByLabelText("선순위 임차보증금 합계")).toHaveAttribute("aria-invalid", "true");
-  });
-
-  describe("최근 소유권 이전 등기일", () => {
-    it("비우면 없음으로 채우지 않고 오류를 보인다", async () => {
-      const { user, onSubmit } = setup();
-      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
-      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
-      await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
-      await submit(user);
-
-      expect(onSubmit).not.toHaveBeenCalled();
-      expect(screen.getByLabelText("최근 소유권 이전 등기일")).toHaveAttribute("aria-invalid", "true");
-    });
-
-    it("미래 날짜는 오류다", async () => {
-      const { user, onSubmit } = setup();
-      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
-      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
-      await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
-      await user.type(screen.getByLabelText("최근 소유권 이전 등기일"), "2026-10-01");
-      await submit(user);
-
-      expect(onSubmit).not.toHaveBeenCalled();
-      expect(screen.getByLabelText("최근 소유권 이전 등기일")).toHaveAccessibleDescription("오늘 이후 날짜는 입력할 수 없어요");
-    });
-
-    it("'소유권 이전 없음'을 고르면 null을 넘긴다", async () => {
-      const { user, onSubmit } = setup();
-      await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
-      await user.type(screen.getByLabelText("선순위 임차보증금 합계"), "0");
-      await user.click(within(screen.getByRole("radiogroup", { name: "신탁 등기" })).getByRole("radio", { name: "아니오" }));
-      await user.click(screen.getByRole("checkbox", { name: /소유권 이전 없음/ }));
-
-      expect(screen.getByLabelText("최근 소유권 이전 등기일")).toBeDisabled();
-      await submit(user);
-
-      expect(onSubmit.mock.calls[0][0].lastOwnershipChangeDate).toBeNull();
-    });
+    expect(onSubmit.mock.calls[0][0].lastOwnershipChangeDate).toBeNull();
   });
 
   it("제출 값은 RightsInput과 같은 구조다", async () => {
@@ -259,7 +287,8 @@ describe("RightsForm", () => {
     expectNoForbiddenPhrases(container.textContent ?? "");
 
     await user.click(screen.getByRole("radio", { name: "근저당 있음" }));
-    await submit(user);
+    await user.type(screen.getByLabelText("근저당 1 채권최고액"), "0");
+    await user.tab();
     expectNoForbiddenPhrases(container.textContent ?? "");
 
     await user.click(screen.getByRole("radio", { name: "근저당 없음" }));
