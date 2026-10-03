@@ -8,7 +8,7 @@ export const APPROACH_RATE = 0.07;
 // 남은 거리가 이보다 작으면 목표값에 붙인다. 퍼센트 값(0~120)을 다루는 기준이다.
 const SNAP_DISTANCE = 0.4;
 
-// 숫자 트윈(UI_GUIDE §5) 랜딩판: active가 되면 0에서 목표값으로, 목표가 바뀌면 지금 값에서 새 목표로 감속하며 다가간다.
+// 숫자 트윈(UI_GUIDE §5)의 랜딩판: active가 되면 0에서 목표값으로, 목표가 바뀌면 지금 값에서 새 목표로 감속하며 다가간다.
 // 동작 줄이기면 트윈 없이 목표값을 쓴다.
 export function useApproach(target: number, active: boolean): number {
   const [value, setValue] = useState(0);

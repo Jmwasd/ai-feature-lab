@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-// 내용 교체 전환(UI_GUIDE §5) 인라인 스타일. 숨길 때는 지연 없이 바로, 다시 보일 때만 delayMs만큼 늦춘다.
+// 내용 교체 전환(랜딩 시안) 인라인 스타일. 숨길 때는 지연 없이 바로, 다시 보일 때만 delayMs만큼 늦춘다.
 export function swapStyle(
   hidden: boolean,
   motion: { fadeMs: number; riseMs: number; shiftPx?: number; blurPx?: number },

@@ -30,7 +30,7 @@ const FOOTER_COLUMNS = [
   { title: "jeonse-check", links: [{ href: "/#sources", label: "데이터 출처" }] },
 ];
 
-// UI_GUIDE §8 랜딩 구성 순서대로 조합만 한다.
+// 랜딩 시안의 섹션 순서대로 조합만 한다.
 // callbackUrl 쿼리는 proxy가 보호 경로에서 보냈다는 뜻이라 히어로 앞에 로그인 안내를 둔다.
 export default async function Home({ searchParams }: PageProps<"/">) {
   const { callbackUrl } = await searchParams;

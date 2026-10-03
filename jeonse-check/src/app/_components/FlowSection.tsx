@@ -28,7 +28,7 @@ import { swapStyle } from "./swap-style";
 import { TRY_EXAMPLE, TRY_INITIAL } from "./try-examples";
 import { useRovingTabs } from "./use-roving-tabs";
 
-// 단계 진행 탭 자동 진행 간격(UI_GUIDE §8)과 진행 막대 갱신 간격.
+// 단계 진행 탭 자동 진행 간격(랜딩 시안)과 진행 막대 갱신 간격.
 export const FLOW_AUTO_ADVANCE_MS = 4500;
 const TICK_MS = 100;
 
