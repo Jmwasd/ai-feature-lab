@@ -7,7 +7,7 @@ import { SignalSummary } from "./SignalSummary";
 import type { JudgmentView } from "./types";
 
 // 결과 화면 본문. UI_GUIDE §6 필수 요소 5개(요약, 신호 목록, 시세 근거, 기준일·출처, 면책)를 항상 렌더링한다.
-// 모바일 1단, desktop 이상 2단(본문 / 우측 레일)이다(§3).
+// 모바일 1단, desktop 이상 2단(본문 / 우측 레일)이다(§3). 우측 레일은 본문을 읽는 동안 상단 바 아래에 붙어 따라온다.
 export function ResultView({ view }: { view: JudgmentView }) {
   const { report } = view;
 
@@ -43,7 +43,7 @@ export function ResultView({ view }: { view: JudgmentView }) {
           </section>
           <PriceEvidence estimate={view.priceEstimate} />
         </div>
-        <aside aria-label="비율과 보증 기준">
+        <aside aria-label="비율과 보증 기준" className="desktop:sticky desktop:top-[calc(var(--spacing-nav)+var(--spacing-lg))] desktop:self-start">
           <RatioPanel view={view} />
         </aside>
       </div>

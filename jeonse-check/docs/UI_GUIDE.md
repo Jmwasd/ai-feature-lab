@@ -18,7 +18,7 @@
 - 스타일은 `globals.css` `@theme`이 만드는 **Tailwind 유틸리티**로 쓴다. 예: `text-ink`, `bg-surface-soft`, `text-display-md`, `p-lg`, `rounded-card`, `shadow-float`, `max-w-editorial`, `desktop:`.
 - 기본 팔레트·스케일은 비워 두었다. `bg-green-500`, `shadow-lg`, `text-sm` 같은 기본 클래스는 생성되지 않는다. 팔레트를 다시 열지 마라.
 - **새 토큰을 만들지 않는다.** 필요한 값이 없으면 가장 가까운 기존 토큰을 쓴다(예: 15px 글자 → `text-body-sm`, 20px 간격 → `gap-gutter`). `globals.css`의 `@theme`은 사용자 지시가 있을 때만 바꾼다.
-- 임의값(`text-[15px]`, `bg-[#…]`)을 쓰지 마라. 예외는 이 문서에 적힌 레이아웃 치수(`w-[280px]`, `grid-cols-[72px_1fr_56px]`, 막대 두께, 랜딩 시안의 히어로 카드 여백·스크롤 안내 마우스·미리보기 판 패딩, 모달 패널 `max-w-[400px]` 등)뿐이다.
+- 임의값(`text-[15px]`, `bg-[#…]`)을 쓰지 마라. 예외는 이 문서에 적힌 레이아웃 치수(`w-[280px]`, `grid-cols-[72px_1fr_56px]`, 막대 두께, 랜딩 시안의 히어로 카드 여백·스크롤 안내 마우스·미리보기 판 패딩, 모달 패널 `max-w-[400px]`, 결과 우측 레일의 sticky 위치 등)뿐이다.
 - 인라인 style이나 CSS 모듈에서는 같은 이름의 CSS 변수(`var(--color-ink)`, `var(--text-body-sm)`)를 쓴다.
 - 금액·비율에는 `tabular-nums`를 준다.
 - 클릭할 수 있는 요소(버튼·탭·링크·슬라이더)는 `cursor: pointer`다. `globals.css` base가 전역으로 주므로 컴포넌트에 따로 쓰지 않는다.
@@ -62,7 +62,7 @@
 - 두 칼럼 섹션은 `grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))]` + `gap-xxl`로 두고, 좁은 폭에서 자연히 1열이 되게 한다.
 - 반응형은 모바일이 기본이고 `tablet:`·`desktop:`·`wide:`로 넓혀 간다. 행 순서를 바꾸지 않고 열 수만 늘린다.
   - 기본(`tablet` 미만): 내비는 햄버거 메뉴, 주요 CTA는 하단 고정 바
-  - `desktop:` 이상: 전체 내비. 결과 화면은 2단(본문 / `gap-xl` / 우측 레일)
+  - `desktop:` 이상: 전체 내비. 결과 화면은 2단(본문 / `gap-xl` / 우측 레일). 우측 레일은 `sticky`로 상단 바 아래(`top-[calc(var(--spacing-nav)+var(--spacing-lg))]`, `self-start`)에 붙어 따라온다
   - `wide:` 이상: 콘텐츠는 최대 폭에 멈추고 여백이 나머지를 흡수
 
 ## 4. 컴포넌트

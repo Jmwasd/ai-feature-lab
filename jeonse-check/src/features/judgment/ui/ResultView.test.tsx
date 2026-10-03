@@ -102,6 +102,14 @@ describe.each(Object.entries(ALL_VIEWS))("ResultView — %s", (_name, view) => {
     expect(rail).not.toBeNull();
     expect(rail?.parentElement).toHaveClass("grid", "grid-cols-1", "desktop:grid-cols-3");
   });
+
+  it("desktop 이상에서 우측 레일은 상단 바 아래에 붙어 따라오고(sticky), 모바일에서는 일반 흐름이다", () => {
+    render(<ResultView view={view} />);
+    const rail = screen.getByTestId("ratio-panel").closest("aside");
+
+    expect(rail).toHaveClass("desktop:sticky", "desktop:self-start", "desktop:top-[calc(var(--spacing-nav)+var(--spacing-lg))]");
+    expect(rail).not.toHaveClass("sticky");
+  });
 });
 
 describe("SignalList — 수준 표시", () => {
