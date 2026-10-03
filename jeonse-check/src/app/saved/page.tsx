@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { Button } from "@/components/Button";
-import { TopNav } from "@/components/TopNav";
-import { AuthNavAction } from "@/features/auth/AuthNavAction";
+import { AuthTopNav } from "@/features/auth/AuthTopNav";
 import { DISCLAIMER, SOURCES } from "@/features/judgment/copy";
 import { auth } from "@/server/auth";
 import { createPrismaSavedResultRepository } from "@/server/saved/prisma-repository";
@@ -21,7 +20,7 @@ export default async function SavedPage() {
 
   return (
     <>
-      <TopNav links={[]} action={<AuthNavAction />} />
+      <AuthTopNav links={[]} />
       <main className="mx-auto flex w-full max-w-editorial flex-col gap-xl px-gutter py-section">
         <h1 className="text-display-xl text-ink">저장 목록</h1>
         {page.items.length === 0 ? (

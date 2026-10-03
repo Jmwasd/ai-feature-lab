@@ -1,17 +1,24 @@
 import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { ComponentProps } from "react";
 import { Button } from "@/components/Button";
+import { TopNav } from "@/components/TopNav";
 import { DISCLAIMER } from "@/features/judgment/copy";
 import { expectNoForbiddenPhrases } from "@/test/forbidden-phrases";
 import HomePage from "../page";
 
 vi.mock("@/server/auth", () => ({ auth: vi.fn(async () => null), signIn: vi.fn(), signOut: vi.fn() }));
-// 비동기 Server Component는 jsdom에서 렌더링할 수 없어 비로그인 모습으로 바꾼다. 자체 동작은 AuthNavAction.test.tsx가 검증한다.
-vi.mock("@/features/auth/AuthNavAction", () => ({
-  AuthNavAction: () => (
-    <Button type="submit" variant="secondary">
-      로그인
-    </Button>
+// 비동기 Server Component는 jsdom에서 렌더링할 수 없어 비로그인 모습으로 바꾼다. 자체 동작은 AuthTopNav.test.tsx가 검증한다.
+vi.mock("@/features/auth/AuthTopNav", () => ({
+  AuthTopNav: ({ links }: ComponentProps<typeof TopNav>) => (
+    <TopNav
+      links={links}
+      action={
+        <Button type="submit" variant="secondary">
+          로그인
+        </Button>
+      }
+    />
   ),
 }));
 vi.mock("../_components/LoginNotice", () => ({

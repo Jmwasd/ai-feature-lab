@@ -11,8 +11,8 @@ const { auth, redirect, getForUser } = vi.hoisted(() => ({
 }));
 vi.mock("@/server/auth", () => ({ auth, signIn: vi.fn(), signOut: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect }));
-// 비동기 Server Component는 jsdom에서 렌더링할 수 없어 자리 표시로 바꾼다. 자체 동작은 AuthNavAction.test.tsx가 검증한다.
-vi.mock("@/features/auth/AuthNavAction", () => ({ AuthNavAction: () => <span>auth-nav-action</span> }));
+// 비동기 Server Component는 jsdom에서 렌더링할 수 없어 자리 표시로 바꾼다. 자체 동작은 AuthTopNav.test.tsx가 검증한다.
+vi.mock("@/features/auth/AuthTopNav", () => ({ AuthTopNav: () => <span>auth-top-nav</span> }));
 // 흐름 자체는 CheckFlow.test.tsx가 검증한다. 여기서는 Server Action을 넘기는지만 본다.
 vi.mock("./_actions/run-check", () => ({ runCheckAction: vi.fn() }));
 vi.mock("./_actions/save-result", () => ({ saveResultAction: vi.fn() }));
@@ -49,7 +49,7 @@ describe("/check 페이지", () => {
     expect(screen.getByRole("heading", { level: 1, name: "주소와 보증금을 입력해 주세요" })).toBeInTheDocument();
     expect(screen.getByRole("form", { name: "조회 조건" })).toBeInTheDocument();
     expect(screen.getByText(/홍길동/)).toBeInTheDocument();
-    expect(screen.getByText("auth-nav-action")).toBeInTheDocument();
+    expect(screen.getByText("auth-top-nav")).toBeInTheDocument();
   });
 
   it("?from=저장 id면 그 사용자의 저장 결과 입력으로 폼을 미리 채운다", async () => {

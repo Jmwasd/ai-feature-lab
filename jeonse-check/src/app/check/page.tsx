@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
-import { TopNav } from "@/components/TopNav";
-import { AuthNavAction } from "@/features/auth/AuthNavAction";
+import { AuthTopNav } from "@/features/auth/AuthTopNav";
 import { auth } from "@/server/auth";
 import { createPrismaSavedResultRepository } from "@/server/saved/prisma-repository";
 import { runCheckAction } from "./_actions/run-check";
@@ -31,7 +30,7 @@ export default async function CheckPage({ searchParams }: CheckPageProps) {
 
   return (
     <>
-      <TopNav links={NAV_LINKS} action={<AuthNavAction />} />
+      <AuthTopNav links={NAV_LINKS} />
       <main>
         <p className="mx-auto max-w-editorial px-gutter pt-lg text-caption text-muted">{userName}님으로 로그인했어요</p>
         <CheckFlow searchAddress={searchAddressAction} runCheck={runCheckAction} saveResult={saveResultAction} prefill={prefill} />
