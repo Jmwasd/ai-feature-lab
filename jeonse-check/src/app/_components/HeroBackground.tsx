@@ -8,7 +8,7 @@ const INTRO_MS = 1400;
 // 패럴랙스는 스크롤 600px까지만 따라간다.
 const PARALLAX_MAX_Y = 600;
 
-// 히어로 배경(UI_GUIDE §5): 로드 시 scale 1.06→1(1.4s ease-fill), 그 뒤 스크롤 패럴랙스. 동작 줄이기면 둘 다 끈다.
+// 히어로 배경(랜딩 시안): 로드 시 scale 1.06→1(1.4s ease-fill), 그 뒤 스크롤 패럴랙스. 동작 줄이기면 둘 다 끈다.
 export function HeroBackground() {
   const ref = useRef<HTMLDivElement>(null);
 

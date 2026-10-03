@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 
-// 뷰포트에 이 비율만큼 들어오면 등장시킨다(UI_GUIDE §5 등장). 뷰포트 아래 8%는 진입으로 치지 않는다.
+// 뷰포트에 이 비율만큼 들어오면 등장시킨다(랜딩 등장 모션). 뷰포트 아래 8%는 진입으로 치지 않는다.
 const REVEAL_THRESHOLD = 0.15;
 const REVEAL_ROOT_MARGIN = "0px 0px -8% 0px";
 

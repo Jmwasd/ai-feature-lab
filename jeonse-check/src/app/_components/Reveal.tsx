@@ -3,7 +3,7 @@
 import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
 import { useReveal } from "@/hooks/use-reveal";
 
-// 등장 모션(UI_GUIDE §5): opacity 0→1(1.1s), translateY 16px→0(1.3s), blur 6px→0(1.1s). 지연은 transition-delay로 준다.
+// 랜딩 등장 모션(랜딩 시안): opacity 0→1(1.1s), translateY 16px→0(1.3s), blur 6px→0(1.1s). 지연은 transition-delay로 준다.
 // 면책 문구·데이터 기준일·출처 문구는 이 컴포넌트로 감싸지 않는다.
 function transition(delayMs: number): CSSProperties {
   return {

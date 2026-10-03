@@ -188,7 +188,7 @@
   --shadow-*: initial;
   --shadow-float: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
 
-  /* ── Motion (UI_GUIDE §9) ──────────────────────────── */
+  /* ── Motion (UI_GUIDE §5) ──────────────────────────── */
   --ease-*: initial;
   --ease-fade: cubic-bezier(0.33, 0, 0.2, 1);   /* opacity·blur */
   --ease-rise: cubic-bezier(0.22, 0.61, 0.36, 1); /* transform */

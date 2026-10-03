@@ -26,7 +26,7 @@ export const HEADLINE_LINES: readonly (readonly [Row, Row])[] = [
   ],
 ];
 
-// 헤드라인 롤링 간격(UI_GUIDE §5).
+// 헤드라인 롤링 간격(랜딩 시안).
 export const ROLL_INTERVAL_MS = 3000;
 
 // 들어오는 문장은 첫 줄 350ms, 둘째 줄 650ms 늦게, 나가는 문장은 첫 줄 바로, 둘째 줄 120ms 늦게 움직인다.

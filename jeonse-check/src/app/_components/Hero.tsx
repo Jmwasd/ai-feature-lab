@@ -7,7 +7,7 @@ import { HeroSignalCard } from "./HeroSignalCard";
 import { Reveal } from "./Reveal";
 import { RollingHeadline } from "./RollingHeadline";
 
-// 랜딩 히어로(UI_GUIDE §8). 등장 지연은 시안 값(0·80·160·240·300·400ms)이다.
+// 랜딩 히어로(랜딩 시안). 등장 지연은 시안 값(0·80·160·240·300·400ms)이다.
 export function Hero() {
   return (
     <section id="hero" className="relative flex min-h-[max(640px,calc(100vh-80px))] flex-col overflow-hidden bg-canvas">
