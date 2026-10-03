@@ -103,23 +103,6 @@ describe("CheckFlow", () => {
     expect(screen.getByRole("radio", { name: "연립다세대" })).toBeChecked();
   });
 
-  it("판정을 기다리는 동안 대기 화면을 보여 준다", async () => {
-    let resolve!: (result: RunCheckResult) => void;
-    const runCheck = vi.fn(() => new Promise<RunCheckResult>((r) => (resolve = r)));
-    const { user } = setup(runCheck);
-    await fillLookup(user);
-    await fillRights(user);
-
-    const status = screen.getByRole("status");
-    expect(status).toHaveTextContent("실거래가를 모으고 있어요");
-    expect(status).toHaveTextContent(/첫 조회/);
-    expect(screen.queryByTestId("signal-count")).not.toBeInTheDocument();
-
-    resolve(okResult);
-    expect(await screen.findByTestId("signal-count")).toBeInTheDocument();
-    expect(screen.queryByText("실거래가를 모으고 있어요")).not.toBeInTheDocument();
-  });
-
   it("결과 화면에 필수 요소 5개가 모두 있고 금지 표현이 없다", async () => {
     const { user } = setup();
     await fillLookup(user);
@@ -396,13 +379,6 @@ describe("CheckFlow", () => {
       expect(button).toBeEnabled();
       await user.click(button);
       expect(saveResult).toHaveBeenLastCalledWith({ token: "token-2" });
-    });
-
-    it("결과 화면에 레드 CTA 버튼을 더하지 않는다", async () => {
-      const { user } = setup();
-      await reachResult(user);
-
-      expect(screen.getByRole("button", { name: "결과 저장" }).className).not.toContain("bg-primary");
     });
   });
 

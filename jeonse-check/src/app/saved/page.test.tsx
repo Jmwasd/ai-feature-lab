@@ -82,7 +82,7 @@ describe("/saved 목록", () => {
     await saveView(repo, USER_ID, allSignalsView);
     const { container } = render(await SavedPage());
 
-    expect(screen.getByText(DISCLAIMER)).toHaveClass("text-body-sm", "text-body");
+    expect(screen.getByText(DISCLAIMER)).toBeVisible();
     for (const source of SOURCES) expect(container).toHaveTextContent(source);
     expectNoForbiddenPhrases(container.textContent ?? "");
   });

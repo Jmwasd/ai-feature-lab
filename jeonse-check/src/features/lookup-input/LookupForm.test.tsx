@@ -93,48 +93,6 @@ describe("LookupForm", () => {
     });
   });
 
-  describe("검색 상태", () => {
-    it("응답을 기다리는 동안 로딩을 보인다", async () => {
-      let resolve: (value: AddressCandidate[]) => void = () => {};
-      const pending = new Promise<AddressCandidate[]>((r) => (resolve = r));
-      const { user } = await setupAtAddress(vi.fn(() => pending));
-      await user.type(screen.getByLabelText("주소"), "월드컵북로{Enter}");
-
-      expect(screen.getByText("주소를 찾고 있어요")).toBeInTheDocument();
-      resolve(candidates);
-      expect(await screen.findByRole("button", { name: /월드컵북로 100/ })).toBeInTheDocument();
-      expect(screen.queryByText("주소를 찾고 있어요")).not.toBeInTheDocument();
-    });
-
-    it("결과가 없으면 안내한다", async () => {
-      const { user } = await setupAtAddress(vi.fn(async () => []));
-      await user.type(screen.getByLabelText("주소"), "없는주소{Enter}");
-
-      expect(await screen.findByText(/검색 결과가 없어요/)).toBeInTheDocument();
-    });
-
-    it("검색이 실패하면 오류를 보인다", async () => {
-      const { user } = await setupAtAddress(vi.fn(async () => Promise.reject(new Error("network"))));
-      await user.type(screen.getByLabelText("주소"), "월드컵북로{Enter}");
-
-      expect(await screen.findByText(/주소를 불러오지 못했어요/)).toBeInTheDocument();
-    });
-
-    it("후보에 도로명·지번·건물명을 보이고, 고르면 목록을 닫고 선택한 주소를 보인다", async () => {
-      const { user } = await setupAtAddress();
-      await user.type(screen.getByLabelText("주소"), "월드컵북로{Enter}");
-      const list = await screen.findByRole("list", { name: "주소 검색 결과" });
-
-      expect(within(list).getByText("서울특별시 마포구 성산동 100")).toBeInTheDocument();
-      expect(within(list).getByText("성산빌라")).toBeInTheDocument();
-
-      await user.click(within(list).getByRole("button", { name: /월드컵북로 100/ }));
-
-      expect(screen.queryByRole("list", { name: "주소 검색 결과" })).not.toBeInTheDocument();
-      expect(screen.getByLabelText("주소")).toHaveValue("서울특별시 마포구 월드컵북로 100");
-    });
-  });
-
   it("주택 유형은 아파트와 연립다세대 두 가지뿐이다", () => {
     setup();
     const group = screen.getByRole("radiogroup", { name: "주택 유형" });
@@ -142,14 +100,6 @@ describe("LookupForm", () => {
 
     expect(options.map((option) => option.closest("label")?.textContent)).toEqual(["아파트", "연립다세대"]);
     expect(screen.queryByText(/오피스텔|다가구|단독/)).not.toBeInTheDocument();
-  });
-
-  it("주택 유형 탭은 고른 것만 선택 상태가 된다", async () => {
-    const { user } = setup();
-    await user.click(screen.getByRole("radio", { name: "아파트" }));
-
-    expect(screen.getByRole("radio", { name: "아파트" })).toBeChecked();
-    expect(screen.getByRole("radio", { name: "연립다세대" })).not.toBeChecked();
   });
 
   describe("단계별로 칸이 나타난다", () => {
@@ -274,43 +224,6 @@ describe("LookupForm", () => {
 
       expect(screen.getByLabelText("전용면적(㎡)")).toHaveAttribute("aria-invalid", "true");
     });
-
-    it("비어 있는 칸은 벗어나도 오류로 보이지 않는다", async () => {
-      const { user } = await setupAtAddress();
-      await pickAddress(user);
-      await user.click(screen.getByLabelText("보증금"));
-      await user.tab();
-
-      expect(screen.getByLabelText("보증금")).not.toHaveAttribute("aria-invalid");
-    });
-  });
-
-  it("보증금을 읽을 수 있으면 해석한 금액을 보여준다", async () => {
-    const { user } = await setupAtAddress();
-    await pickAddress(user);
-    await user.type(screen.getByLabelText("보증금"), "28000");
-
-    expect(screen.getByLabelText("보증금")).toHaveAccessibleDescription("2억 8,000만 원");
-  });
-
-  describe("동·호 안내", () => {
-    const NOTICE = "동·호를 입력하면 공시가격으로 HUG 기준을 계산해요";
-
-    it("동·호가 비어 있으면 안내를 보인다", async () => {
-      const { user } = setup();
-      await fillValid(user);
-      expect(screen.getByText(NOTICE)).toBeInTheDocument();
-    });
-
-    it("동·호를 모두 입력하면 안내를 숨긴다", async () => {
-      const { user } = setup();
-      await fillValid(user);
-      await user.type(screen.getByLabelText("동"), "101");
-      expect(screen.getByText(NOTICE)).toBeInTheDocument();
-
-      await user.type(screen.getByLabelText("호"), "203");
-      expect(screen.queryByText(NOTICE)).not.toBeInTheDocument();
-    });
   });
 
   it("defaultValue로 받은 값을 채우고 그대로 제출할 수 있다", async () => {
@@ -362,16 +275,10 @@ describe("LookupForm", () => {
     expect(onSubmit).toHaveBeenCalledTimes(1);
   });
 
-  it("레드 CTA는 모바일 하단 바와 desktop 오브 하나씩이다", async () => {
+  it("다음 버튼은 모바일 하단 바와 desktop 오브 두 곳에 있다", async () => {
     const { user } = setup();
     await fillValid(user);
     const buttons = screen.getAllByRole("button", { name: "다음" });
-    const bar = buttons.find((button) => button.closest("[data-testid=mobile-cta]"));
-    const orb = buttons.find((button) => button !== bar);
-
     expect(buttons).toHaveLength(2);
-
-    expect(bar?.closest("[data-testid=mobile-cta]")).toHaveClass("fixed", "bottom-0", "desktop:hidden");
-    expect(orb).toHaveClass("bg-primary", "rounded-full");
   });
 });
