@@ -16,7 +16,7 @@ const ADDRESS_ERROR = "주소를 검색해서 목록에서 골라 주세요";
 // 후보 안쪽 필드 오류도 사용자에게는 같은 문구로 보인다.
 const addressError = { error: ADDRESS_ERROR };
 
-export const addressCandidateSchema = z.object(
+const addressCandidateSchema = z.object(
   {
     id: z.string(addressError).min(1, addressError),
     roadAddress: z.string(addressError).min(1, addressError),

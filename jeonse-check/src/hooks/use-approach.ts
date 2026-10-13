@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { prefersReducedMotion } from "./use-reveal";
 
 // 프레임마다 남은 거리의 이 비율만큼 다가간다(랜딩 시안의 숫자 트윈).
-export const APPROACH_RATE = 0.07;
+const APPROACH_RATE = 0.07;
 // 남은 거리가 이보다 작으면 목표값에 붙인다. 퍼센트 값(0~120)을 다루는 기준이다.
 const SNAP_DISTANCE = 0.4;
 

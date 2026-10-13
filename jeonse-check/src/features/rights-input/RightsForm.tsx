@@ -7,6 +7,7 @@ import { Button } from "@/components/Button";
 import { IconButtonCircle } from "@/components/IconButtonCircle";
 import { Reveal } from "@/components/Reveal";
 import { TextInput } from "@/components/TextInput";
+import { useProgressiveStages } from "@/hooks/use-progressive-stages";
 import { formatIsoDate, formatWon } from "@/utils/format";
 import { parseWonInput, wonToInputText } from "@/utils/parse-won-input";
 import { rightsInputSchema, validateRightsInput } from "./schema";
@@ -42,8 +43,6 @@ const MORTGAGE_ZERO_ERROR = "0원인 건은 지우거나 '근저당 없음'을 �
 
 // 칸이 나타나는 순서. 앞 칸이 유효해야 다음 칸이 열리고, 모두 유효하면 확인 버튼이 나타난다.
 const STAGES = ["mortgage", "seniorDeposits", "trust", "ownership", "submit"] as const;
-type Stage = (typeof STAGES)[number];
-const ALL_STAGES = STAGES.length - 1;
 
 // 예/아니오 선택(UI_GUIDE §4). 선택된 쪽만 2px 잉크 테두리. 칸 폭은 grid가 정해 테두리 두께가 바뀌어도 크기가 같다.
 const CHOICE =
@@ -70,22 +69,18 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
   // 고르는 동작으로 새 칸이 열리면 그 칸의 입력으로 포커스를 옮긴다. 타이핑 중에는 옮기지 않는다.
   const pendingFocus = useRef<"firstEntry" | "seniorDeposits" | "ownership" | null>(null);
 
-  // 미리 채운 값이 있으면(다시 조회) 처음부터 모든 칸을 보인다.
-  const [initialStage] = useState(() => (Object.values(defaultValue ?? {}).some((value) => value !== undefined) ? ALL_STAGES : 0));
   const seniorAmount = parseWonInput(seniorText);
-  const reachable = countValid([
-    mortgageMode === "none" || (mortgageMode === "some" && entries.every((entry) => (parseWonInput(entry.text) ?? 0) > 0)),
-    seniorText.trim() !== "" && seniorAmount !== null,
-    isTrust !== null,
-    ownershipError(noOwnershipChange, dateText, asOf) === null,
-  ]);
-  // 한 번 열린 칸은 앞 칸을 고쳐도 닫지 않는다. 확인 버튼은 지금 값이 모두 유효할 때만 보인다.
-  const [openedStage, setOpenedStage] = useState(initialStage);
-  if (reachable > openedStage) setOpenedStage(reachable);
-  const visibleStage = Math.max(openedStage, reachable);
-  const complete = reachable === ALL_STAGES;
-  const isOpen = (stage: Stage) => STAGES.indexOf(stage) <= visibleStage;
-  const appears = (stage: Stage) => STAGES.indexOf(stage) > initialStage;
+  const { complete, isOpen, appears } = useProgressiveStages(
+    STAGES,
+    [
+      mortgageMode === "none" || (mortgageMode === "some" && entries.every((entry) => (parseWonInput(entry.text) ?? 0) > 0)),
+      seniorText.trim() !== "" && seniorAmount !== null,
+      isTrust !== null,
+      ownershipError(noOwnershipChange, dateText, asOf) === null,
+    ],
+    // 미리 채운 값이 있으면(다시 조회) 처음부터 모든 칸을 보인다.
+    Object.values(defaultValue ?? {}).some((value) => value !== undefined),
+  );
 
   useEffect(() => {
     const targets = { firstEntry: firstEntryRef, seniorDeposits: seniorRef, ownership: dateRef };
@@ -411,11 +406,6 @@ function ChoiceGroup<T extends string>({ name, labelledBy, helpId, error, value,
       ) : null}
     </div>
   );
-}
-
-function countValid(steps: boolean[]): number {
-  const firstInvalid = steps.indexOf(false);
-  return firstInvalid === -1 ? steps.length : firstInvalid;
 }
 
 // 소유권 이전 칸의 오류 문구. 유효하면 null이다. 날짜 판단은 제출 검증(validateRightsInput)과 같은 기준을 쓴다.

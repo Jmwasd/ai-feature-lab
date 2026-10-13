@@ -6,6 +6,7 @@ import { Button } from "@/components/Button";
 import { Reveal } from "@/components/Reveal";
 import { SearchBarPill } from "@/components/SearchBarPill";
 import { TextInput } from "@/components/TextInput";
+import { useProgressiveStages } from "@/hooks/use-progressive-stages";
 import { formatWon } from "@/utils/format";
 import { parseWonInput, wonToInputText } from "@/utils/parse-won-input";
 import { HOUSE_TYPE_LABEL, HOUSE_TYPES, lookupInputSchema, type AddressCandidate, type HouseType, type LookupInput } from "./schema";
@@ -31,8 +32,6 @@ const UNIT_NOTICE = "동·호를 입력하면 공시가격으로 HUG 기준을 �
 
 // 칸이 나타나는 순서. 앞 칸이 유효해야 다음 칸이 열린다. 마지막(units)은 선택 입력인 동·호와 다음 버튼이다.
 const STAGES = ["houseType", "address", "deposit", "exclusiveArea", "units"] as const;
-type Stage = (typeof STAGES)[number];
-const ALL_STAGES = STAGES.length - 1;
 
 // 칸을 벗어날 때 바로 확인하는 필드. 스키마 문구를 그대로 쓴다.
 const BLUR_CHECK = {
@@ -60,22 +59,18 @@ export function LookupForm({ searchAddress, onSubmit, defaultValue, defaultKeywo
   // 고르는 동작(주택 유형·주소 후보)으로 새 칸이 열리면 그 칸으로 포커스를 옮긴다. 타이핑 중에는 옮기지 않는다.
   const pendingFocus = useRef<"address" | "deposit" | null>(null);
 
-  // 미리 채운 값이 있으면(다시 조회·조건 바꿔 다시 보기) 처음부터 모든 칸을 보인다.
-  const [initialStage] = useState(() => (hasAnyValue(defaultValue, defaultKeyword) ? ALL_STAGES : 0));
   const parsedDeposit = parseWonInput(depositText);
-  const reachable = countValid([
-    houseType !== null,
-    selected !== null,
-    parsedDeposit !== null && parsedDeposit > 0,
-    parseAreaInput(areaText) > 0,
-  ]);
-  // 한 번 열린 칸은 앞 칸을 고쳐도 닫지 않는다(입력이 사라지지 않게). 다음 버튼은 지금 값이 모두 유효할 때만 보인다.
-  const [openedStage, setOpenedStage] = useState(initialStage);
-  if (reachable > openedStage) setOpenedStage(reachable);
-  const visibleStage = Math.max(openedStage, reachable);
-  const complete = reachable === ALL_STAGES;
-  const isOpen = (stage: Stage) => STAGES.indexOf(stage) <= visibleStage;
-  const appears = (stage: Stage) => STAGES.indexOf(stage) > initialStage;
+  const { complete, isOpen, appears } = useProgressiveStages(
+    STAGES,
+    [
+      houseType !== null,
+      selected !== null,
+      parsedDeposit !== null && parsedDeposit > 0,
+      parseAreaInput(areaText) > 0,
+    ],
+    // 미리 채운 값이 있으면(다시 조회·조건 바꿔 다시 보기) 처음부터 모든 칸을 보인다.
+    hasAnyValue(defaultValue, defaultKeyword),
+  );
 
   useEffect(() => {
     const target = pendingFocus.current === "address" ? addressRef.current : pendingFocus.current === "deposit" ? depositRef.current : null;
@@ -356,11 +351,6 @@ function AddressResults({ state, onSelect }: { state: SearchState; onSelect: (ca
 
 // SearchBarPill 세그먼트 자리를 그대로 차지하도록 TextInput segment의 desktop 배치를 감싸는 쪽에도 준다.
 const SEGMENT_REVEAL = "flex min-w-0 flex-col desktop:h-full desktop:flex-1";
-
-function countValid(steps: boolean[]): number {
-  const firstInvalid = steps.indexOf(false);
-  return firstInvalid === -1 ? steps.length : firstInvalid;
-}
 
 function hasAnyValue(defaultValue: Partial<LookupInput> | undefined, defaultKeyword: string | undefined): boolean {
   return (defaultKeyword ?? "") !== "" || Object.values(defaultValue ?? {}).some((value) => value !== undefined);

@@ -3,9 +3,9 @@ import "server-only";
 import { RESIDENTIAL_MAIN_PURPOSES } from "@/consts/policy";
 
 import { requireEnv } from "../env";
-import { getText, type HttpOptions, PublicDataError } from "./http";
+import { fetchAllItems, readField, utcDate } from "./data-go-kr";
+import { type HttpOptions } from "./http";
 import { normalizeDong } from "./official-price";
-import { parseXml, toArray } from "./xml";
 
 // 국토교통부 건축HUB 건축물대장정보 서비스(apis.data.go.kr/1613000/BldRgstHubService) 어댑터.
 // 표제부(getBrTitleInfo)로 동별 주용도·사용승인일을 받는다. 원본 필드명(mainPurpsCdNm 등)은 이 파일 밖으로 내보내지 않는다.
@@ -20,10 +20,6 @@ const ENDPOINT = "https://apis.data.go.kr/1613000/BldRgstHubService/getBrTitleIn
 // 한 페이지 크기. 이 서비스는 numOfRows를 100보다 크게 줘도 100건만 돌려준다.
 const PAGE_SIZE = 100;
 
-// 정상 resultCode.
-const OK_RESULT_CODES = new Set(["00", "000"]);
-// 게이트웨이 오류(OpenAPI_ServiceResponse)의 한도 초과 코드(LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR).
-const QUOTA_REASON_CODE = "22";
 // 대지구분코드. 명세: 0 대지, 1 산, 2 블록.
 const PLAT_GB_LAND = "0";
 const PLAT_GB_MOUNTAIN = "1";
@@ -81,16 +77,10 @@ export async function fetchBuildingRecords(
     return url;
   };
 
-  const first = await fetchPage(pageUrl(1), options);
-  const items = [...first.items];
-  const totalPages = Math.ceil(first.totalCount / PAGE_SIZE);
-  for (let pageNo = 2; pageNo <= totalPages; pageNo += 1) {
-    const page = await fetchPage(pageUrl(pageNo), options);
-    items.push(...page.items);
-  }
-
+  const items = await fetchAllItems(pageUrl, PAGE_SIZE, "building", options);
   return items
-    .filter((item) => read(item, "mainAtchGbCd") !== ATTACHED_BUILDING)
+    .map(({ item }) => item)
+    .filter((item) => readField(item, "mainAtchGbCd") !== ATTACHED_BUILDING)
     .map(toRecord);
 }
 
@@ -139,71 +129,16 @@ export function summarizeBuilding(records: BuildingRecord[], dong: string | null
   return { mainPurpose, isViolation, useApprovalDate };
 }
 
-interface Page {
-  totalCount: number;
-  items: Record<string, unknown>[];
-}
-
-async function fetchPage(url: URL, options: HttpOptions): Promise<Page> {
-  const text = await getText(url, { ...options, source: "building" });
-  const root = asRecord(parseXml(text, "building"));
-
-  // 게이트웨이 오류(키 미등록·한도 초과 등)는 다른 루트 요소로 온다.
-  const gateway = asRecord(asRecord(root.OpenAPI_ServiceResponse).cmmMsgHeader);
-  if (Object.keys(gateway).length > 0) {
-    const code = String(gateway.returnReasonCode ?? "");
-    const detail = [code, gateway.errMsg, gateway.returnAuthMsg].filter(Boolean).join(" ");
-    throw new PublicDataError(code === QUOTA_REASON_CODE ? "quota" : "api", "building", detail, {
-      url,
-    });
-  }
-
-  const response = asRecord(root.response);
-  const header = asRecord(response.header);
-  if (typeof header.resultCode !== "string") {
-    throw new PublicDataError("parse", "building", "응답에 response.header가 없다", { url });
-  }
-  if (!OK_RESULT_CODES.has(header.resultCode)) {
-    const kind = header.resultCode === QUOTA_REASON_CODE ? "quota" : "api";
-    throw new PublicDataError(kind, "building", `${header.resultCode} ${String(header.resultMsg ?? "")}`, {
-      url,
-    });
-  }
-
-  const body = asRecord(response.body);
-  const totalCount = String(body.totalCount ?? "");
-  if (!/^\d+$/.test(totalCount)) {
-    throw new PublicDataError("parse", "building", `totalCount 형식 오류: ${totalCount}`, { url });
-  }
-  // 결과가 없으면 <items/>(빈 문자열), 하나면 객체로 온다.
-  const rawItems = toArray(asRecord(body.items).item as unknown);
-  return {
-    totalCount: Number(totalCount),
-    items: rawItems.map((item) => {
-      if (!isRecord(item)) {
-        throw new PublicDataError("parse", "building", "표제부 항목이 객체가 아니다", { url });
-      }
-      return item;
-    }),
-  };
-}
-
 function toRecord(item: Record<string, unknown>): BuildingRecord {
-  const purpose = read(item, "mainPurpsCdNm");
-  const dong = read(item, "dongNm");
+  const purpose = readField(item, "mainPurpsCdNm");
+  const dong = readField(item, "dongNm");
   return {
     mainPurpose: purpose === "" ? null : purpose,
     isViolation: null,
     // 오래된 대장에는 일자가 "00"인 값 같은 불완전한 날짜가 있다. 한 동 때문에 필지 전체 조회를 실패시키지 않고 모르는 값(null)으로 둔다.
-    useApprovalDate: parseDay(read(item, "useAprDay")),
+    useApprovalDate: parseDay(readField(item, "useAprDay")),
     dongName: dong === "" ? null : dong,
   };
-}
-
-// 빈 값은 " "(공백 한 칸)으로 온다. 앞뒤 공백을 지워 빈 문자열로 맞춘다.
-function read(item: Record<string, unknown>, field: string): string {
-  const value = item[field];
-  return typeof value === "string" ? value.trim() : "";
 }
 
 // "20210315" → UTC 자정. 빈 값, 형식이 틀리거나 없는 날짜(2월 30일 등)는 null.
@@ -211,10 +146,7 @@ function parseDay(text: string): Date | null {
   const match = /^(\d{4})(\d{2})(\d{2})$/.exec(text);
   if (!match) return null;
   const [year, month, day] = match.slice(1).map(Number) as [number, number, number];
-  const date = new Date(Date.UTC(year, month - 1, day));
-  const valid =
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-  return valid ? date : null;
+  return utcDate(year, month, day);
 }
 
 function pad4(value: number, label: string, min: number): string {
@@ -222,12 +154,4 @@ function pad4(value: number, label: string, min: number): string {
     throw new RangeError(`${label}은 ${min}~9999 정수여야 한다: ${value}`);
   }
   return String(value).padStart(4, "0");
-}
-
-function asRecord(value: unknown): Record<string, unknown> {
-  return isRecord(value) ? value : {};
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
