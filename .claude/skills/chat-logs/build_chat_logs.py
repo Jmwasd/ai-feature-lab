@@ -12,10 +12,10 @@
     ~/.claude/projects/  Claude Code 트랜스크립트
     ~/.codex/sessions/   Codex CLI 트랜스크립트
 
-Codex 세션은 cwd가 프로젝트 폴더와 일치하면 포함한다. 모노레포 루트에서 돈
-세션은 질문이 그 프로젝트를 가리킬 때만 포함한다 — 루트 cwd 하나에 여러
-프로젝트의 작업이 섞이기 때문이다. harness가 돌린 비대화형 세션은 사람 발화가
-없어 자동으로 걸러진다.
+세션은 cwd가 프로젝트 폴더와 일치하면 포함한다. 모노레포 루트에서 돈 세션은
+질문이나 답변이 그 프로젝트 이름을 가리킬 때만 포함한다 — 루트 cwd 하나에 여러
+프로젝트의 작업이 섞이기 때문이다. 두 소스 모두 같은 규칙을 따른다. harness가
+돌린 비대화형 Codex 세션은 사람 발화가 없어 자동으로 걸러진다.
 
 원칙: 질문·답변 문장은 손대지 않는다. 도구 호출, thinking, 시스템 메시지,
 슬래시 커맨드, 서브에이전트 대화 같은 노이즈만 걷어낸다.
@@ -65,6 +65,10 @@ CODEX_INJECTED_RE = re.compile(
     r"|당신은 .{1,80}? 프로젝트의 개발자입니다\."      # harness execute.py 프리앰블
     r")"
 )
+
+# harness가 Claude Code로 돌린 step 세션의 첫 질문이다. 사람이 나눈 대화와 섞이지
+# 않게 이런 세션은 `<프로젝트명>-qa-harness.html` 로 따로 묶는다.
+HARNESS_PREAMBLE_RE = re.compile(r"^\s*당신은 .{1,80}? 프로젝트의 개발자입니다\.")
 
 
 # ---------------------------------------------------------------- 세션 찾기
@@ -236,14 +240,30 @@ def mentions_project(text: str, name: str) -> bool:
     return re.search(rf"(?<![\w-]){re.escape(name)}(?![\w-])", text) is not None
 
 
+def belongs_to(cwd: str | None, pairs: list[dict], project_name: str, project_path: str) -> bool:
+    """세션이 이 프로젝트 것인지 판정한다.
+
+    cwd가 프로젝트 폴더면 그대로 포함한다. 상위 경로(모노레포 루트)에서 돈 세션은
+    질문이나 답변이 프로젝트 이름을 가리킬 때만 포함한다. 설계 초기에는 폴더를
+    만들기 전이라 질문에 이름이 없고 답변에만 나오는 경우가 있다.
+    """
+    if not cwd:
+        return False
+    if Path(cwd).name == project_name:
+        return True
+    if not project_path or Path(cwd) not in Path(project_path).parents:
+        return False
+    return any(
+        mentions_project(pair["question"], project_name) or mentions_project(pair["answer"], project_name)
+        for pair in pairs
+    )
+
+
 def codex_sessions_for(project_name: str, project_path: str) -> list[dict]:
     """이 프로젝트에 속하는 Codex 세션을 모은다.
 
-    cwd가 프로젝트 폴더면 그대로 포함한다. 모노레포 루트에서 돈 세션은 질문이
-    프로젝트 이름을 가리킬 때만 포함한다 — 루트 cwd에는 여러 프로젝트의 작업이
-    섞이므로 전부 가져오면 남의 대화가 딸려온다.
+    포함 규칙은 `belongs_to` 를 따른다.
     """
-    target = Path(project_path) if project_path else None
     sessions: list[dict] = []
 
     for transcript in codex_transcripts():
@@ -251,14 +271,7 @@ def codex_sessions_for(project_name: str, project_path: str) -> list[dict]:
         if not pairs:
             continue  # harness가 돌린 비대화형 세션은 사람 발화가 없다
 
-        cwd = meta.get("cwd")
-        if not cwd:
-            continue
-
-        owned = Path(cwd).name == project_name
-        if not owned and target is not None and Path(cwd) in target.parents:
-            owned = any(mentions_project(pair["question"], project_name) for pair in pairs)
-        if not owned:
+        if not belongs_to(meta.get("cwd"), pairs, project_name, project_path):
             continue
 
         sid = str(meta.get("session_id") or transcript.stem)[:8]
@@ -315,6 +328,8 @@ def parse_session(transcript: Path) -> tuple[list[dict], dict]:
             text = clean_user_text(raw)
             if not text:
                 continue
+            if not turns and HARNESS_PREAMBLE_RE.match(text):
+                meta["harness"] = True
 
             if turns and turns[-1]["role"] == "user":
                 # 인터럽트로 같은 질문이 두 번 찍히면 하나로 본다.
@@ -639,7 +654,7 @@ main > .lead { margin: 0 0 44px; color: var(--fg-3); font-size: 13.5px; font-var
 """
 
 
-def render(project: str, sessions: list[dict]) -> str:
+def render(project: str, sessions: list[dict], title: str = "대화 기록") -> str:
     total = sum(len(s["pairs"]) for s in sessions)
     generated = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
 
@@ -704,7 +719,7 @@ def render(project: str, sessions: list[dict]) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{name} 대화 기록</title>
+<title>{name} {title}</title>
 <style>{CSS}</style>
 </head>
 <body>
@@ -715,7 +730,7 @@ def render(project: str, sessions: list[dict]) -> str:
   <nav>{"".join(toc)}</nav>
 </aside>
 <main>
-  <h1>{name} 대화 기록</h1>
+  <h1>{name} {title}</h1>
   <p class="lead">세션 {len(sessions)}개 · 질문 {total}개 · {generated} 생성</p>
   {"".join(body)}
 </main>
@@ -745,7 +760,7 @@ def print_projects() -> None:
         print("\nCodex (사람 질문이 있는 세션만):")
         for cwd, count in sorted(counts.items()):
             print(f"  {Path(cwd).name:<28} 세션 {count:>2}개  {cwd}")
-        print("  ※ 모노레포 루트 cwd 세션은 질문이 프로젝트를 가리킬 때만 포함된다")
+    print("\n※ 모노레포 루트 cwd 세션은 질문·답변이 프로젝트 이름을 가리킬 때만 포함된다")
 
 
 def main() -> int:
@@ -758,7 +773,7 @@ def main() -> int:
         action="append",
         default=[],
         metavar="ID",
-        help="다른 cwd(예: 모노레포 루트)에서 진행한 Claude Code 세션을 ID(앞부분 가능)로 지정해 포함한다. 여러 번 쓸 수 있다",
+        help="자동으로 잡히지 않는 Claude Code 세션(다른 cwd에서 진행했고 프로젝트 이름도 나오지 않는 세션)을 ID(앞부분 가능)로 지정해 포함한다. 여러 번 쓸 수 있다",
     )
     args = parser.parse_args()
 
@@ -785,9 +800,22 @@ def main() -> int:
             meta.setdefault("source", "Claude Code")
             sessions.append({"sid": transcript.stem[:8], "pairs": pairs, "meta": meta})
 
-    sessions.extend(codex_sessions_for(args.project, project_path))
-
     included = {s["meta"].get("session") for s in sessions}
+
+    # 모노레포 루트처럼 상위 경로에서 연 Claude Code 세션 중 이 프로젝트를 다룬 것
+    for other in session_dirs():
+        if other == directory:
+            continue
+        for transcript in other.glob("*.jsonl"):
+            if transcript.stem in included:
+                continue
+            pairs, meta = parse_session(transcript)
+            if pairs and belongs_to(meta.get("cwd"), pairs, args.project, project_path):
+                meta.setdefault("source", "Claude Code")
+                sessions.append({"sid": transcript.stem[:8], "pairs": pairs, "meta": meta})
+                included.add(transcript.stem)
+
+    sessions.extend(codex_sessions_for(args.project, project_path))
     for prefix in args.session:
         found = find_transcripts(prefix)
         if len(found) != 1:
@@ -814,15 +842,23 @@ def main() -> int:
     else:
         base = Path(project_path) if project_path else Path.cwd()
         out_path = base / "docs" / "logs" / f"{args.project}-qa.html"
+    harness_path = out_path.with_name(f"{out_path.stem}-harness{out_path.suffix}")
+
+    talks = [s for s in sessions if not s["meta"].get("harness")]
+    runs = [s for s in sessions if s["meta"].get("harness")]
+    outputs = [(out_path, talks, "대화 기록"), (harness_path, runs, "harness 실행 기록")]
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(render(args.project, sessions), encoding="utf-8")
+    for path, group, title in outputs:
+        if not group:
+            continue
+        path.write_text(render(args.project, group, title), encoding="utf-8")
 
-    total = sum(len(s["pairs"]) for s in sessions)
-    breakdown = Counter(s["meta"].get("source") or "Claude Code" for s in sessions)
-    detail = " · ".join(f"{src} {n}" for src, n in sorted(breakdown.items()))
-    print(f"생성: {out_path}")
-    print(f"세션 {len(sessions)}개 · 질문 {total}개  ({detail})")
+        total = sum(len(s["pairs"]) for s in group)
+        breakdown = Counter(s["meta"].get("source") or "Claude Code" for s in group)
+        detail = " · ".join(f"{src} {n}" for src, n in sorted(breakdown.items()))
+        print(f"생성: {path}")
+        print(f"세션 {len(group)}개 · 질문 {total}개  ({detail})")
     return 0
 
 
