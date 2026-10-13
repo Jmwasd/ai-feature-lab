@@ -5,6 +5,7 @@
     python3 build_chat_logs.py peerlens          # 프로젝트명으로 세션을 찾아 HTML 생성
     python3 build_chat_logs.py --list            # 변환 가능한 프로젝트 목록
     python3 build_chat_logs.py peerlens --out /경로/파일.html
+    python3 build_chat_logs.py peerlens --json /경로/chat-log.json   # 앱에서 렌더링할 데이터도 함께 출력
 
 출력: <프로젝트 경로>/docs/logs/<프로젝트명>-qa.html (다시 실행하면 덮어쓴다)
 
@@ -418,10 +419,18 @@ def inline(text: str) -> str:
         return f"\x00{len(stash) - 1}\x00"
 
     escaped = INLINE_CODE_RE.sub(keep, escaped)
-    escaped = LINK_RE.sub(r'<a href="\2" rel="noreferrer">\1</a>', escaped)
+    escaped = LINK_RE.sub(link, escaped)
     escaped = BOLD_RE.sub(r"<strong>\1</strong>", escaped)
     escaped = ITALIC_RE.sub(r"<em>\1</em>", escaped)
     return re.sub(r"\x00(\d+)\x00", lambda m: f"<code>{stash[int(m.group(1))]}</code>", escaped)
+
+
+def link(match: re.Match[str]) -> str:
+    """http(s)·앵커 링크만 a 태그로 만든다. 그 밖의 스킴(javascript: 등)은 글자만 남긴다."""
+    label, href = match.group(1), match.group(2)
+    if not re.match(r"^(?:https?://|#)", href):
+        return label
+    return f'<a href="{href}" rel="noreferrer">{label}</a>'
 
 
 def split_row(line: str) -> list[str]:
@@ -740,6 +749,37 @@ def render(project: str, sessions: list[dict], title: str = "대화 기록") -> 
 """
 
 
+def to_json(project: str, sessions: list[dict]) -> str:
+    """앱 페이지가 렌더링할 데이터. 본문은 HTML 출력과 같은 변환기(md_to_html)를 거친 HTML 조각이다."""
+    data = {
+        "project": project,
+        "generatedAt": datetime.now(KST).strftime("%Y-%m-%d %H:%M"),
+        "questionCount": sum(len(s["pairs"]) for s in sessions),
+        "sessions": [
+            {
+                "id": session["sid"],
+                "date": fmt_date(session["meta"].get("started")),
+                "startedAt": fmt_time(session["meta"].get("started")),
+                "endedAt": fmt_time(session["meta"].get("ended")),
+                "branch": session["meta"].get("branch"),
+                "model": session["meta"].get("model"),
+                "source": session["meta"].get("source") or "Claude Code",
+                "pairs": [
+                    {
+                        "askedAt": fmt_time(pair.get("asked")),
+                        "summary": summarize(pair["question"]),
+                        "questionHtml": md_to_html(pair["question"]),
+                        "answerHtml": md_to_html(pair["answer"]),
+                    }
+                    for pair in session["pairs"]
+                ],
+            }
+            for session in sessions
+        ],
+    }
+    return json.dumps(data, ensure_ascii=False, indent=1) + "\n"
+
+
 # ---------------------------------------------------------------- 진입점
 
 
@@ -768,6 +808,7 @@ def main() -> int:
     parser.add_argument("project", nargs="?", help="프로젝트 폴더명 (예: peerlens)")
     parser.add_argument("--out", type=Path, help="출력 HTML 경로")
     parser.add_argument("--list", action="store_true", help="변환 가능한 프로젝트 목록")
+    parser.add_argument("--json", type=Path, help="사람이 나눈 대화를 앱에서 렌더링할 JSON으로도 출력할 경로")
     parser.add_argument(
         "--session",
         action="append",
@@ -859,6 +900,12 @@ def main() -> int:
         detail = " · ".join(f"{src} {n}" for src, n in sorted(breakdown.items()))
         print(f"생성: {path}")
         print(f"세션 {len(group)}개 · 질문 {total}개  ({detail})")
+
+    if args.json and talks:
+        args.json.parent.mkdir(parents=True, exist_ok=True)
+        args.json.write_text(to_json(args.project, talks), encoding="utf-8")
+        print(f"생성: {args.json}")
+        print(f"세션 {len(talks)}개 · 질문 {sum(len(s['pairs']) for s in talks)}개  (JSON)")
     return 0
 
 
