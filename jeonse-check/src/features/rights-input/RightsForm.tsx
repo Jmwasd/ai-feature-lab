@@ -117,38 +117,22 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const nextEntryErrors: Record<number, string> = {};
-    if (mortgageMode === "some") {
-      for (const entry of entries) {
-        const amount = parseWonInput(entry.text);
-        if (amount === null) nextEntryErrors[entry.id] = AMOUNT_PARSE_ERROR;
-        else if (amount === 0) nextEntryErrors[entry.id] = MORTGAGE_ZERO_ERROR;
-      }
-    }
+    const nextEntryErrors = mortgageMode === "some" ? entryErrorsOf(entries) : {};
     const entriesValid = Object.keys(nextEntryErrors).length === 0;
     const seniorDeposits = seniorText.trim() === "" ? undefined : (parseWonInput(seniorText) ?? Number.NaN);
 
     const result = validateRightsInput(
       {
-        maxClaimAmount: mortgageMode === "none" ? 0 : mortgageMode === "some" && entriesValid ? sumEntries(entries) : undefined,
+        maxClaimAmount: mortgageTotal(mortgageMode, entries, entriesValid),
         seniorDeposits,
         isTrust: isTrust ?? undefined,
-        lastOwnershipChangeDate: noOwnershipChange ? null : dateText === "" ? undefined : parseDateInput(dateText),
+        lastOwnershipChangeDate: noOwnershipChange ? null : optionalDate(dateText),
       },
       asOf,
     );
 
     if (!result.success || !entriesValid) {
-      const next: FieldErrors = {};
-      for (const issue of result.error?.issues ?? []) {
-        const field = issue.path[0] as keyof RightsFormValue;
-        next[field] ??= issue.message;
-      }
-      // 근저당은 건별 오류가 따로 보이므로, 그룹 오류는 고르지 않았을 때와 합계 자체의 오류만 둔다.
-      if (mortgageMode === null) next.maxClaimAmount = MORTGAGE_UNSET_ERROR;
-      else if (!entriesValid) delete next.maxClaimAmount;
-      if (Number.isNaN(seniorDeposits)) next.seniorDeposits = AMOUNT_PARSE_ERROR;
-      setErrors(next);
+      setErrors(fieldErrorsOf(result.error?.issues ?? [], mortgageMode, entriesValid, seniorDeposits));
       setEntryErrors(nextEntryErrors);
       return;
     }
@@ -160,8 +144,7 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
   // 칸을 벗어날 때 읽을 수 없는 금액을 바로 알린다. 비어 있으면 아직 입력 중으로 본다.
   function checkEntryOnBlur(id: number, text: string) {
     if (text.trim() === "") return;
-    const amount = parseWonInput(text);
-    const message = amount === null ? AMOUNT_PARSE_ERROR : amount === 0 ? MORTGAGE_ZERO_ERROR : null;
+    const message = entryAmountError(text);
     if (message) setEntryErrors((prev) => ({ ...prev, [id]: message }));
   }
 
@@ -412,7 +395,7 @@ function ChoiceGroup<T extends string>({ name, labelledBy, helpId, error, value,
 function ownershipError(noOwnershipChange: boolean, dateText: string, asOf: Date): string | null {
   if (noOwnershipChange) return null;
   const result = validateRightsInput(
-    { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: dateText === "" ? undefined : parseDateInput(dateText) },
+    { maxClaimAmount: 0, seniorDeposits: 0, isTrust: false, lastOwnershipChangeDate: optionalDate(dateText) },
     asOf,
   );
   return result.success ? null : (result.error.issues[0]?.message ?? null);
@@ -428,6 +411,44 @@ function sumEntries(entries: MortgageEntry[]): number {
   return entries.reduce((sum, entry) => sum + (parseWonInput(entry.text) ?? 0), 0);
 }
 
+// 근저당 한 건의 금액 오류 문구. 유효하면 null이다.
+function entryAmountError(text: string): string | null {
+  const amount = parseWonInput(text);
+  return amount === null ? AMOUNT_PARSE_ERROR : amount === 0 ? MORTGAGE_ZERO_ERROR : null;
+}
+
+function entryErrorsOf(entries: MortgageEntry[]): Record<number, string> {
+  return Object.fromEntries(
+    entries.flatMap((entry) => {
+      const message = entryAmountError(entry.text);
+      return message ? [[entry.id, message]] : [];
+    }),
+  );
+}
+
+// 제출할 채권최고액. 고르지 않았거나 건별 오류가 있으면 undefined로 두어 스키마가 오류를 낸다.
+function mortgageTotal(mode: MortgageMode, entries: MortgageEntry[], entriesValid: boolean): number | undefined {
+  if (mode === "none") return 0;
+  return mode === "some" && entriesValid ? sumEntries(entries) : undefined;
+}
+
+function fieldErrorsOf(
+  issues: readonly { path: readonly PropertyKey[]; message: string }[],
+  mortgageMode: MortgageMode,
+  entriesValid: boolean,
+  seniorDeposits: number | undefined,
+): FieldErrors {
+  // 필드마다 첫 번째 문구만 보인다.
+  const firstIssues = issues.filter((issue, i) => issues.findIndex((other) => other.path[0] === issue.path[0]) === i);
+  const schemaErrors: FieldErrors = Object.fromEntries(firstIssues.map((issue) => [issue.path[0], issue.message]));
+  return {
+    ...schemaErrors,
+    // 근저당은 건별 오류가 따로 보이므로, 그룹 오류는 고르지 않았을 때와 합계 자체의 오류만 둔다.
+    maxClaimAmount: mortgageMode === null ? MORTGAGE_UNSET_ERROR : entriesValid ? schemaErrors.maxClaimAmount : undefined,
+    seniorDeposits: Number.isNaN(seniorDeposits) ? AMOUNT_PARSE_ERROR : schemaErrors.seniorDeposits,
+  };
+}
+
 function wonText(amount: number): string {
   return amount === 0 ? "0원" : `${formatWon(amount)} 원`;
 }
@@ -435,6 +456,11 @@ function wonText(amount: number): string {
 // <input type="date">의 "YYYY-MM-DD"를 UTC 자정 Date로 읽는다(formatIsoDate와 같은 기준). 형식이 다르면 Invalid Date.
 function parseDateInput(text: string): Date {
   return /^\d{4}-\d{2}-\d{2}$/.test(text) ? new Date(`${text}T00:00:00Z`) : new Date(Number.NaN);
+}
+
+// 비어 있으면 아직 입력하지 않은 값(undefined)이다.
+function optionalDate(text: string): Date | undefined {
+  return text === "" ? undefined : parseDateInput(text);
 }
 
 // 사용자가 보는 로컬 날짜의 "YYYY-MM-DD". 날짜 입력의 max로 쓴다.
