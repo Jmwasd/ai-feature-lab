@@ -2,7 +2,7 @@
 
 import { Ban, Building2, CircleSlash, Database, FileLock, Landmark, Pencil, PencilLine, RefreshCw, type LucideIcon } from "lucide-react";
 import Image from "next/image";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { HUG_GUARANTEE } from "@/consts/policy";
 import { useContentSwap } from "@/hooks/use-content-swap";
 import { formatPercent } from "@/utils/format";
@@ -62,12 +62,9 @@ const SWAP_LIST = { fadeMs: 380, riseMs: 560, shiftPx: 8, blurPx: 5 };
 const SWAP_ROW = { fadeMs: 480, riseMs: 680, shiftPx: 8, blurPx: 5 };
 
 export function SourcesSection() {
-  const baseId = useId();
   const [selected, setSelected] = useState(0);
   const { shown, hidden } = useContentSwap(selected);
-  const { tabRef, onKeyDown } = useRovingTabs(GROUPS.length, setSelected);
-  const tabId = (i: number) => `${baseId}-tab-${i}`;
-  const panelId = `${baseId}-panel`;
+  const { tabProps, panelProps } = useRovingTabs(GROUPS.length, selected, setSelected);
   const group = GROUPS[shown];
   const RowIcon = group.rowIcon;
 
@@ -101,15 +98,7 @@ export function SourcesSection() {
               return (
                 <button
                   key={item.label}
-                  ref={tabRef(i)}
-                  id={tabId(i)}
-                  type="button"
-                  role="tab"
-                  aria-selected={current}
-                  aria-controls={panelId}
-                  tabIndex={current ? 0 : -1}
-                  onClick={() => setSelected(i)}
-                  onKeyDown={(e) => onKeyDown(e, i)}
+                  {...tabProps(i)}
                   className={`flex items-center gap-1.5 rounded-full px-3.5 py-sm text-caption transition-colors duration-320 ${
                     current ? "bg-ink text-canvas" : "bg-transparent text-ink"
                   }`}
@@ -123,10 +112,7 @@ export function SourcesSection() {
         </Reveal>
       </div>
       <ul
-        id={panelId}
-        role="tabpanel"
-        aria-labelledby={tabId(shown)}
-        tabIndex={0}
+        {...panelProps(shown)}
         className="grid"
         style={swapStyle(hidden, SWAP_LIST)}
       >

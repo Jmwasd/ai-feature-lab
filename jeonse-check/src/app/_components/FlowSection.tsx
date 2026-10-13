@@ -15,7 +15,7 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DEBT_RATIO_THRESHOLD, JEONSE_RATIO_THRESHOLD } from "@/consts/policy";
 import { ratioStatusText } from "@/features/judgment/copy";
 import { debtRatio, jeonseRatio } from "@/features/judgment/ratios";
@@ -29,7 +29,7 @@ import { TRY_EXAMPLE, TRY_INITIAL } from "./try-examples";
 import { useRovingTabs } from "./use-roving-tabs";
 
 // 단계 진행 탭 자동 진행 간격(랜딩 시안)과 진행 막대 갱신 간격.
-export const FLOW_AUTO_ADVANCE_MS = 4500;
+const FLOW_AUTO_ADVANCE_MS = 4500;
 const TICK_MS = 100;
 
 const FLOW_STEPS: { title: string; body: string; icon: LucideIcon }[] = [
@@ -40,7 +40,6 @@ const FLOW_STEPS: { title: string; body: string; icon: LucideIcon }[] = [
 
 
 export function FlowSection() {
-  const baseId = useId();
   const [selected, setSelected] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const elapsedRef = useRef(0);
@@ -50,9 +49,7 @@ export function FlowSection() {
     setElapsed(0);
     setSelected(index);
   };
-  const { tabRef, onKeyDown } = useRovingTabs(FLOW_STEPS.length, choose);
-  const tabId = (i: number) => `${baseId}-tab-${i}`;
-  const panelId = `${baseId}-panel`;
+  const { tabProps, panelProps } = useRovingTabs(FLOW_STEPS.length, selected, choose);
   const swapping = selected !== shown;
 
   // 진행 막대를 100ms마다 채우고 다 차면 다음 단계로 간다. 탭을 고르면 그 단계부터 다시 센다.
@@ -92,15 +89,7 @@ export function FlowSection() {
             return (
               <button
                 key={step.title}
-                ref={tabRef(i)}
-                id={tabId(i)}
-                type="button"
-                role="tab"
-                aria-selected={current}
-                aria-controls={panelId}
-                tabIndex={current ? 0 : -1}
-                onClick={() => choose(i)}
-                onKeyDown={(e) => onKeyDown(e, i)}
+                {...tabProps(i)}
                 className="grid gap-2.5 text-left"
               >
                 <span className="block h-[3px] overflow-hidden rounded-full bg-surface-strong">
@@ -130,10 +119,7 @@ export function FlowSection() {
       </Reveal>
       <Reveal delayMs={400} className="grid min-h-[360px] place-items-center rounded-card bg-surface-soft p-[clamp(16px,4vw,48px)]">
         <div
-          id={panelId}
-          role="tabpanel"
-          aria-labelledby={tabId(shown)}
-          tabIndex={0}
+          {...panelProps(shown)}
           className="grid w-full max-w-[520px] gap-base rounded-card bg-canvas p-lg shadow-float"
           style={swapStyle(hidden, { fadeMs: 480, riseMs: 720 })}
         >

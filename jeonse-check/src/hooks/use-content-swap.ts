@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { prefersReducedMotion } from "./use-reveal";
 
 // 내용 교체(랜딩 시안): 이전 내용을 이 시간 동안 페이드아웃한 뒤 교체한다.
-export const CONTENT_SWAP_OUT_MS = 340;
+const CONTENT_SWAP_OUT_MS = 340;
 
 // value가 바뀌면 이전 내용(shown)을 hidden으로 숨기고, 숨긴 뒤 shown을 새 값으로 바꾼다.
 // 새 내용은 숨긴 채로 한 프레임 그린 뒤 보여 등장 전환이 걸리게 한다. 동작 줄이기에서는 바로 바꾼다.

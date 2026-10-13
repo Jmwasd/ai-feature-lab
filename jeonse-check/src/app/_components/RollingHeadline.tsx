@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "@/hooks/use-reveal";
 type Row = readonly [lead: string, emphasis: string, tail: string];
 
 // 랜딩 시안의 두 줄짜리 문장 네 개. 문장은 해요체, §6 금지 표현을 쓰지 않는다.
-export const HEADLINE_LINES: readonly (readonly [Row, Row])[] = [
+const HEADLINE_LINES: readonly (readonly [Row, Row])[] = [
   [
     ["", "내가 살 집", "이니까,"],
     ["더 신중해야 하니까.", "", ""],
@@ -27,7 +27,7 @@ export const HEADLINE_LINES: readonly (readonly [Row, Row])[] = [
 ];
 
 // 헤드라인 롤링 간격(랜딩 시안).
-export const ROLL_INTERVAL_MS = 3000;
+const ROLL_INTERVAL_MS = 3000;
 
 // 들어오는 문장은 첫 줄 350ms, 둘째 줄 650ms 늦게, 나가는 문장은 첫 줄 바로, 둘째 줄 120ms 늦게 움직인다.
 const ROW_DELAY_MS = { in: [350, 650], out: [0, 120] } as const;

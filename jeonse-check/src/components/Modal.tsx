@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 /** 열고 닫는 전환 시간. 닫을 때는 이 시간이 지난 뒤 내린다. */
-export const MODAL_TRANSITION_MS = 300;
+const MODAL_TRANSITION_MS = 300;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 

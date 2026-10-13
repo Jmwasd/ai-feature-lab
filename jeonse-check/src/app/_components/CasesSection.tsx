@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2, CircleAlert, CircleCheck, CircleX, FileLock, House, Landmark, ReceiptText, Store, TrendingDown, TriangleAlert } from "lucide-react";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { DEBT_RATIO_THRESHOLD, JEONSE_RATIO_THRESHOLD } from "@/consts/policy";
 import { HUG_STATUS } from "@/features/judgment/copy";
 import { useApproach } from "@/hooks/use-approach";
@@ -24,13 +24,10 @@ const EVALUATED = LANDING_CASES.map((c) => ({ case: c, ...evaluateCase(c) }));
 
 
 export function CasesSection() {
-  const baseId = useId();
   const [selected, setSelected] = useState(INITIAL_CASE);
   const { shown, hidden } = useContentSwap(selected);
-  const { tabRef, onKeyDown } = useRovingTabs(EVALUATED.length, setSelected);
+  const { tabProps, panelProps } = useRovingTabs(EVALUATED.length, selected, setSelected);
   const { ref, visible } = useReveal<HTMLDivElement>();
-  const tabId = (i: number) => `${baseId}-tab-${i}`;
-  const panelId = `${baseId}-panel`;
   const { case: c, jr, dr, hugOk, signals } = EVALUATED[shown];
   const jrShown = useApproach(jr.ratio * 100, visible);
   const drShown = useApproach(dr.ratio * 100, visible);
@@ -53,15 +50,7 @@ export function CasesSection() {
             return (
               <button
                 key={item.id}
-                ref={tabRef(i)}
-                id={tabId(i)}
-                type="button"
-                role="tab"
-                aria-selected={current}
-                aria-controls={panelId}
-                tabIndex={current ? 0 : -1}
-                onClick={() => setSelected(i)}
-                onKeyDown={(e) => onKeyDown(e, i)}
+                {...tabProps(i)}
                 className={`flex min-h-11 shrink-0 items-center gap-sm rounded-full border px-4.5 text-button-sm transition-colors duration-320 ${
                   current ? "border-ink bg-ink text-canvas" : "border-hairline bg-canvas text-ink"
                 }`}
@@ -74,10 +63,7 @@ export function CasesSection() {
         </div>
       </Reveal>
       <div
-        id={panelId}
-        role="tabpanel"
-        aria-labelledby={tabId(shown)}
-        tabIndex={0}
+        {...panelProps(shown)}
         className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,360px),1fr))] items-start gap-xxl"
         style={swapStyle(hidden, { fadeMs: 420, riseMs: 640 })}
       >

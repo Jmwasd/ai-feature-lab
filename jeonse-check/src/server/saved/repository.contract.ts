@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_SAVED_PER_USER, SavedLimitExceededError, type SavedResultRepository } from "./repository";
 
 // 테스트마다 1분씩 흐르는 시계. 생성 순서가 곧 createdAt 순서가 되게 한다.
-export function makeTickingClock(start = Date.UTC(2026, 8, 1, 0, 0, 0)): () => Date {
+function makeTickingClock(start = Date.UTC(2026, 8, 1, 0, 0, 0)): () => Date {
   let current = start;
   return () => {
     const now = new Date(current);
@@ -15,7 +15,7 @@ export function makeTickingClock(start = Date.UTC(2026, 8, 1, 0, 0, 0)): () => D
 }
 
 // 호출할 때마다 같은 시각을 돌려주는 시계. createdAt이 같을 때 커서가 빠짐없이 넘기는지 본다.
-export function makeFrozenClock(at = Date.UTC(2026, 8, 1, 0, 0, 0)): () => Date {
+function makeFrozenClock(at = Date.UTC(2026, 8, 1, 0, 0, 0)): () => Date {
   return () => new Date(at);
 }
 
