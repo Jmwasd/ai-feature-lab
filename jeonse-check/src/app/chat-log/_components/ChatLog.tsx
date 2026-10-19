@@ -89,19 +89,17 @@ function Toc({ sessions, questionCount }: { sessions: ChatLogSession[]; question
   );
 }
 
-// 요약 수치 줄(UI_GUIDE §4 SignalSummary의 값 + 라벨 조합)을 2열 격자로 둔다.
+// 요약 수치 줄(UI_GUIDE §4 SignalSummary의 값 + 라벨 조합)을 3열 격자로 둔다.
+// 작업 기간은 첫날~마지막 날 달력 일수가 아니라 세션이 있던 날짜 수다. 쉰 날을 기간에 넣지 않는다.
 function Summary({ sessionCount, questionCount, dates }: { sessionCount: number; questionCount: number; dates: string[] }) {
-  const first = dates[0] ?? "";
-  const last = dates.at(-1) ?? "";
   const metrics = [
     { value: String(sessionCount), label: "세션" },
     { value: String(questionCount), label: "질문" },
-    { value: String(dates.length), label: "작업일" },
-    { value: `${daysBetween(first, last)}일`, label: "기간", title: `${first} ~ ${last}` },
+    { value: `${dates.length}일`, label: "작업 기간", title: `${dates[0] ?? ""} ~ ${dates.at(-1) ?? ""} 중 실제 작업한 날` },
   ];
 
   return (
-    <ul aria-label="요약 지표" className="grid shrink-0 grid-cols-2 gap-px overflow-hidden rounded-card border border-hairline bg-hairline-soft">
+    <ul aria-label="요약 지표" className="grid shrink-0 grid-cols-3 gap-px overflow-hidden rounded-card border border-hairline bg-hairline-soft">
       {metrics.map((metric) => (
         <li key={metric.label} title={metric.title} className="flex flex-col gap-xxs bg-canvas p-md">
           <span className="text-title-md text-ink tabular-nums">{metric.value}</span>
@@ -137,12 +135,6 @@ function TocSession({ session }: { session: ChatLogSession }) {
       </ol>
     </div>
   );
-}
-
-// "YYYY-MM-DD" 두 날짜를 양 끝 포함 일수로 센다.
-function daysBetween(first: string, last: string): number {
-  const toDay = (date: string) => Date.parse(`${date}T00:00:00Z`) / 86_400_000;
-  return first === "" ? 0 : toDay(last) - toDay(first) + 1;
 }
 
 function Session({ session }: { session: ChatLogSession }) {
