@@ -61,13 +61,21 @@ describe("ChatLog", () => {
     expect(within(toc).getByRole("link", { name: "bbbb2222 23:00–23:30" })).toHaveAttribute("href", "#bbbb2222");
   });
 
-  it("좌측 패널 상단에 세션·질문·작업일·기간 요약 지표를 보여 준다", () => {
+  it("좌측 패널 상단에 세션·질문·작업 기간 요약 지표를 보여 준다", () => {
     render(<ChatLog data={DATA} />);
 
     const summary = screen.getByRole("list", { name: "요약 지표" });
     const items = within(summary).getAllByRole("listitem").map((item) => item.textContent);
-    expect(items).toEqual(["2세션", "3질문", "2작업일", "17일기간"]);
-    expect(within(summary).getByText("17일").closest("li")).toHaveAttribute("title", "2026-09-27 ~ 2026-10-13");
+    expect(items).toEqual(["2세션", "3질문", "2일작업 기간"]);
+    expect(within(summary).getByText("2일").closest("li")).toHaveAttribute("title", "2026-09-27 ~ 2026-10-13 중 실제 작업한 날");
+  });
+
+  it("작업 기간은 첫날부터 마지막 날까지가 아니라 세션이 있던 날짜만 센다", () => {
+    const sameDay = { ...DATA.sessions[0], id: "cccc3333" };
+    render(<ChatLog data={{ ...DATA, sessions: [DATA.sessions[0], sameDay, DATA.sessions[1]] }} />);
+
+    const summary = screen.getByRole("list", { name: "요약 지표" });
+    expect(within(summary).getAllByRole("listitem").at(-1)).toHaveTextContent("2일작업 기간");
   });
 
   it("세션 머리에 시간·브랜치·모델·출처를 있는 것만 보여 준다", () => {
