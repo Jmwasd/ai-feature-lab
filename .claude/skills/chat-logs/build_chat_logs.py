@@ -822,6 +822,13 @@ def main() -> int:
         metavar="ID",
         help="자동으로 잡히지 않는 Claude Code 세션(다른 cwd에서 진행했고 프로젝트 이름도 나오지 않는 세션)을 ID(앞부분 가능)로 지정해 포함한다. 여러 번 쓸 수 있다",
     )
+    parser.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="TEXT",
+        help="질문이 이 문자열로 시작하는 질문·답변 쌍을 뺀다. 프로젝트와 무관한 대화를 공개 기록에서 덜어 낼 때 쓴다. 여러 번 쓸 수 있다",
+    )
     args = parser.parse_args()
 
     if args.list or not args.project:
@@ -877,6 +884,13 @@ def main() -> int:
             meta.setdefault("source", "Claude Code")
             sessions.append({"sid": transcript.stem[:8], "pairs": pairs, "meta": meta})
             included.add(transcript.stem)
+
+    excluded = [text.strip() for text in args.exclude]
+    sessions = [
+        {**s, "pairs": [p for p in s["pairs"] if not p["question"].strip().startswith(tuple(excluded))]}
+        for s in sessions
+    ] if excluded else sessions
+    sessions = [s for s in sessions if s["pairs"]]
 
     if not sessions:
         print(f"'{args.project}'에서 질문·답변을 찾지 못했다.", file=sys.stderr)

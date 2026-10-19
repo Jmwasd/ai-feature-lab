@@ -27,6 +27,12 @@ python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py --list
 python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py $ARGUMENTS --session <세션ID>
 ```
 
+프로젝트와 무관한 대화(개인 정보가 담긴 작업 등)는 질문 앞부분으로 뺀다. 여러 번 쓸 수 있다.
+
+```bash
+python3 ${CLAUDE_SKILL_DIR}/build_chat_logs.py $ARGUMENTS --exclude "<질문 앞부분>"
+```
+
 ## 규칙
 
 - **HTML을 직접 작성하지 마라.** 생성기는 이 스크립트 하나다. 결과가 마음에 안 들면 스크립트를 고치고 다시 실행하라. 손으로 HTML을 쓰면 다음 실행에서 덮어써진다.
