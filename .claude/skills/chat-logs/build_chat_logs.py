@@ -31,6 +31,7 @@ import re
 import sys
 from collections import Counter
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from pathlib import Path
 
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
@@ -58,6 +59,14 @@ HARNESS_BLOCK_RE = re.compile(
     r"<(" + "|".join(HARNESS_TAGS) + r")\b[^>]*>.*?</\1>\s*", re.DOTALL
 )
 HARNESS_OPEN_RE = re.compile(r"^<(" + "|".join(HARNESS_TAGS) + r")\b")
+# 스킬 실행(/grill-me 인자 …)은 command-name·command-args 블록으로 기록된다.
+# 블록을 지우기 전에 "/이름 인자" 한 줄로 바꿔 질문으로 남긴다. /clear·/model 같은 내장 명령은
+# 대화가 아니므로 스킬·커맨드 파일이 실제로 있는 이름만 살린다.
+COMMAND_RE = re.compile(
+    r"<command-name>/?([^<\s]+)</command-name>\s*(?:<command-message>.*?</command-message>\s*)?"
+    r"(?:<command-args>(.*?)</command-args>)?",
+    re.DOTALL,
+)
 NOISE_LINE_RE = re.compile(r"^\s*(?:\[Request interrupted[^\n]*|API Error[^\n]*)$", re.MULTILINE)
 
 # Codex는 주입 지시문도 user 롤로 기록한다. 사람이 친 질문과 구분해야 한다.
@@ -286,8 +295,29 @@ def codex_sessions_for(project_name: str, project_path: str) -> list[dict]:
 # ---------------------------------------------------------------- 파싱
 
 
-def clean_user_text(raw: str) -> str | None:
-    text = HARNESS_BLOCK_RE.sub("", raw)
+@lru_cache(maxsize=None)
+def user_commands(cwd: str | None) -> frozenset[str]:
+    """cwd와 그 상위 경로, 홈의 .claude/skills·.claude/commands에 있는 스킬·커맨드 이름."""
+    bases = [Path.home()] + ([Path(cwd), *Path(cwd).parents] if cwd else [])
+    names: set[str] = set()
+    for base in bases:
+        names.update(d.name for d in (base / ".claude" / "skills").glob("*/") if d.is_dir())
+        names.update(f.stem for f in (base / ".claude" / "commands").glob("*.md"))
+    return frozenset(names)
+
+
+def keep_command(raw: str, cwd: str | None) -> str:
+    def replace(match: re.Match[str]) -> str:
+        name, args = match.group(1), (match.group(2) or "").strip()
+        if name not in user_commands(cwd):
+            return match.group(0)
+        return f"/{name} {args}".rstrip() + "\n\n"
+
+    return COMMAND_RE.sub(replace, raw)
+
+
+def clean_user_text(raw: str, cwd: str | None = None) -> str | None:
+    text = HARNESS_BLOCK_RE.sub("", keep_command(raw, cwd))
     text = NOISE_LINE_RE.sub("", text).strip()
     if not text:
         return None
@@ -328,7 +358,7 @@ def parse_session(transcript: Path) -> tuple[list[dict], dict]:
             else:
                 continue
 
-            text = clean_user_text(raw)
+            text = clean_user_text(raw, row.get("cwd"))
             if not text:
                 continue
             if not turns and HARNESS_PREAMBLE_RE.match(text):
