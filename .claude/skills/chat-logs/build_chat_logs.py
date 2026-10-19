@@ -36,6 +36,8 @@ from pathlib import Path
 PROJECTS_DIR = Path.home() / ".claude" / "projects"
 CODEX_SESSIONS_DIR = Path.home() / ".codex" / "sessions"
 KST = timezone(timedelta(hours=9))
+# 출력은 공개 페이지에도 실리므로 홈 디렉터리 절대 경로(OS 사용자명)를 ~로 바꾼다.
+HOME_PREFIX = str(Path.home())
 
 # 사용자 입력처럼 보이지만 실제로는 하네스가 끼워 넣은 블록이다.
 # 블록만 도려내고 나머지는 남긴다. 슬래시 커맨드 뒤에 진짜 질문이 이어붙는 경우가
@@ -377,15 +379,15 @@ def pair_turns(turns: list[dict]) -> list[dict]:
         if pairs and pairs[-1]["question"].strip() == pending["text"].strip():
             # 인터럽트 뒤 같은 질문을 다시 보낸 경우다. 질문은 하나로 두되
             # 중간에 나온 답변은 버리지 않고 이어 붙인다.
-            pairs[-1]["answer"] += "\n\n" + answer
+            pairs[-1]["answer"] += "\n\n" + redact_home(answer)
             pairs[-1]["answered"] = turn.get("ts")
             pending = None
             continue
 
         pairs.append(
             {
-                "question": pending["text"],
-                "answer": answer,
+                "question": redact_home(pending["text"]),
+                "answer": redact_home(answer),
                 "asked": pending.get("ts"),
                 "answered": turn.get("ts"),
             }
@@ -393,6 +395,10 @@ def pair_turns(turns: list[dict]) -> list[dict]:
         pending = None
 
     return pairs
+
+
+def redact_home(text: str) -> str:
+    return text.replace(HOME_PREFIX, "~")
 
 
 # ---------------------------------------------------------------- 마크다운
