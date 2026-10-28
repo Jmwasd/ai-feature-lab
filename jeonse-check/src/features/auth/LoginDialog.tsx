@@ -1,9 +1,9 @@
 "use client";
 
-import { House } from "lucide-react";
 import Image from "next/image";
 import { useId, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { BrandMark } from "@/components/BrandMark";
 import { Button } from "@/components/Button";
 import { Modal } from "@/components/Modal";
 
@@ -27,7 +27,7 @@ export function LoginDialog({ signIn }: LoginDialogProps) {
         <div className="flex flex-col items-center gap-lg pt-sm text-center">
           <div className="flex flex-col items-center gap-sm">
             <span className="inline-flex items-center gap-sm text-display-lg leading-none text-primary">
-              <House aria-hidden="true" size={24} />
+              <BrandMark />
               jeonse-check
             </span>
             <h2 id={titleId} className="text-display-sm text-ink">

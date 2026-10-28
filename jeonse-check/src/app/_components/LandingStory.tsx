@@ -4,13 +4,13 @@ import { TriangleAlert } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/Button";
 import { JEONSE_RATIO_THRESHOLD } from "@/consts/policy";
-import { DISCLAIMER, SOURCES, ratioStatusText } from "@/features/judgment/copy";
+import { ratioStatusText } from "@/features/judgment/copy";
 import { jeonseRatio, type RatioLevel } from "@/features/judgment/ratios";
 import { formatWholePercent, formatWon } from "@/utils/format";
 import { DATA_CARDS, RISK_MARKERS, SCAN_SOURCES, type DataCard } from "./landing-data";
 import { DEMO_DEPOSIT, DEMO_HOUSE, demoMetrics } from "./landing-demo";
 import type { LandingScene } from "./landing-scene";
-import { CHAPTER_COUNT, CHAPTER_HEIGHTS, chapterOpacity, dataAppear, progressFromScroll, riskAppear, storyFactors } from "./landing-timeline";
+import { CHAPTER_COUNT, CHAPTER_HEIGHTS, chapterOpacity, sectionHeight, dataAppear, progressFromScroll, riskAppear, stageLift, storyFactors } from "./landing-timeline";
 
 // 3D를 띄울 수 없으면(WebGL 없음, 동작 줄이기) 글 장면만 스크롤에 맞춰 바꾼다.
 type Mode = "loading" | "3d" | "flat";
@@ -47,6 +47,7 @@ export function LandingStory({ nav, notice }: { nav?: ReactNode; notice?: ReactN
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   // 애니메이션 루프가 최신 보증금을 읽도록 ref로 건넨다.
   const depositRef = useRef(deposit);
   const metrics = demoMetrics(deposit);
@@ -59,7 +60,8 @@ export function LandingStory({ nav, notice }: { nav?: ReactNode; notice?: ReactN
     const root = rootRef.current;
     const stage = stageRef.current;
     const canvasHost = canvasRef.current;
-    if (!root || !stage || !canvasHost) return;
+    const backdrop = backdropRef.current;
+    if (!root || !stage || !canvasHost || !backdrop) return;
     const q = <E extends HTMLElement>(sel: string) => [...root.querySelectorAll<E>(sel)];
     const el = {
       sections: q("[data-sec]"),
@@ -137,6 +139,11 @@ export function LandingStory({ nav, notice }: { nav?: ReactNode; notice?: ReactN
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       if (document.hidden) return;
+      // 고정 무대는 스크롤을 따라가지 않으므로, 푸터가 올라온 만큼 직접 올린다.
+      // 올리지 않을 때는 transform을 비워 무대 안 로그인 모달(fixed)이 화면 기준으로 자리 잡게 한다.
+      const liftPx = stageLift(storyEnd, window.scrollY, window.innerHeight);
+      const lift = liftPx > 0 ? `translate3d(0,${-liftPx}px,0)` : "";
+      if (stage.style.transform !== lift) stage.style.transform = backdrop.style.transform = lift;
       const t = (now - t0) / 1000;
       const target = progressFromScroll(tops, window.scrollY);
       smoothF = reducedMotion ? target : smoothF + (target - smoothF) * (1 - Math.exp(-dt * 6));
@@ -240,9 +247,9 @@ export function LandingStory({ nav, notice }: { nav?: ReactNode; notice?: ReactN
 
   return (
     <>
-      {/* 캔버스와 무대(글·GNB)는 모두 화면에 고정하고 움직이지 않는다. 장면이 끝나면 뒤 콘텐츠(불투명)가 위를 덮는다.
+      {/* 캔버스와 무대(글·GNB)는 모두 화면에 고정한다. 장면이 끝나면 안내·푸터가 올라온 만큼 둘을 transform으로 함께 올린다.
           sticky 무대가 고정↔스크롤로 바뀌는 순간 Chrome이 레이어를 다시 짜며 WebGL 캔버스가 한두 프레임 빠져 검게 깜빡였다. */}
-      <div aria-hidden="true" className="fixed inset-x-0 top-0 -z-10 h-lvh will-change-transform">
+      <div ref={backdropRef} aria-hidden="true" className="fixed inset-x-0 top-0 -z-10 h-lvh will-change-transform">
         <div
           ref={canvasRef}
           className="absolute inset-0"
@@ -494,19 +501,11 @@ export function LandingStory({ nav, notice }: { nav?: ReactNode; notice?: ReactN
 
         {/* 스크롤 길이를 만드는 빈 섹션. 고정 무대 뒤에 있다 */}
         <div aria-hidden="true">
-          {CHAPTER_HEIGHTS.map((h, i) => (
-            <div key={i} data-sec={i} style={{ height: `${h}svh` }} />
+          {CHAPTER_HEIGHTS.map((_, i) => (
+            <div key={i} data-sec={i} style={{ height: `${sectionHeight(i)}svh` }} />
           ))}
         </div>
       </div>
-
-      {/* 면책 문구와 출처는 등장 모션 없이 처음부터 문서에 둔다(UI_GUIDE §5) */}
-      <section aria-label="안내" className="relative border-t border-hairline-soft bg-canvas px-gutter py-section">
-        <div className="mx-auto flex max-w-editorial flex-col gap-md">
-          <p className="text-body-sm text-body">{DISCLAIMER}</p>
-          <p className="text-caption-sm text-muted">출처: {SOURCES.join(" · ")}</p>
-        </div>
-      </section>
     </>
   );
 }

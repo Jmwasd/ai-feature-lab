@@ -3,8 +3,14 @@
 
 export const CHAPTER_COUNT = 5;
 
-// 각 장면이 차지하는 스크롤 높이(svh). 마지막 장면은 화면 한 장이다.
-export const CHAPTER_HEIGHTS = [170, 170, 170, 170, 100] as const;
+// 각 장면이 차지하는 스크롤 높이(svh). 마지막 장면은 CTA를 읽고 머무를 시간을 준다.
+export const CHAPTER_HEIGHTS = [170, 170, 170, 170, 200] as const;
+
+// 섹션 앞머리에서 장면이 다 보인 채 머무는 스크롤 길이(svh). 섹션 높이에 더해진다.
+// 두 번째 장면(01 숨은 위험)은 머무는 구간이 없으면 빠르게 스크롤할 때 보이지 않고 지나간다.
+export const CHAPTER_HOLDS = [0, 220, 0, 0, 0] as const;
+
+export const sectionHeight = (i: number) => CHAPTER_HOLDS[i] + CHAPTER_HEIGHTS[i];
 
 export const clamp = (x: number, min = 0, max = 1) => Math.min(max, Math.max(min, x));
 export const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -60,5 +66,12 @@ export function progressFromScroll(tops: number[], scrollY: number): number {
   const last = CHAPTER_COUNT - 1;
   if (scrollY >= tops[last]) return last;
   const i = tops.findIndex((top, k) => k < last && scrollY < tops[k + 1]);
-  return i < 0 ? 0 : i + clamp((scrollY - tops[i]) / (tops[i + 1] - tops[i]));
+  if (i < 0) return 0;
+  const hold = CHAPTER_HOLDS[i] / sectionHeight(i);
+  return i + clamp(((scrollY - tops[i]) / (tops[i + 1] - tops[i]) - hold) / (1 - hold));
+}
+
+// 장면이 끝난 뒤 안내·푸터가 아래에서 올라온 길이(px). 고정 무대를 이만큼 올려 마지막 장면이 덮이지 않고 푸터 위에 남게 한다.
+export function stageLift(storyEnd: number, scrollY: number, viewportHeight: number): number {
+  return Math.max(0, scrollY + viewportHeight - storyEnd);
 }

@@ -3,6 +3,7 @@
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { BrandMark } from "./BrandMark";
 
 type NavLink = { href: string; label: string; icon?: ReactNode };
 
@@ -122,9 +123,7 @@ export function TopNav({ links, action, accountLinks = [], accountAction, brand,
 function Wordmark() {
   return (
     <Link href="/" className="inline-flex shrink-0 items-center gap-2.5 text-title-md font-bold leading-none text-ink hover:no-underline">
-      <span aria-hidden="true" className="grid size-5.5 rotate-45 place-items-center rounded-sm border-2 border-ink">
-        <span className="size-1.5 rounded-full bg-primary" />
-      </span>
+      <BrandMark />
       jeonse-check
     </Link>
   );

@@ -229,11 +229,12 @@
   }
 }
 
-/* 랜딩 3D 장면 전용 색 — 건물 윤곽선·창문 불빛. 화면 UI에는 쓰지 않는다.
+/* 랜딩 3D 장면 전용 색 — 건물 윤곽선·창문 불빛·마지막 장면의 방패. 화면 UI에는 쓰지 않는다.
  * 위 @theme의 --color-*: initial 뒤에 둬야 지워지지 않는다. 클래스에서 쓰지 않아도 three.js가 CSS 변수로 읽을 수 있게 static으로 항상 내보낸다. */
 @theme static {
   --color-scene-amber: #ffa53d;
   --color-scene-window: #ffb469;
+  --color-scene-shield: #35e3a5;
 }
 
 @layer base {

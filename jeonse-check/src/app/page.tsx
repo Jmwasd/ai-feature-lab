@@ -1,5 +1,6 @@
 import { FooterLight } from "@/components/FooterLight";
 import { AuthTopNav } from "@/features/auth/AuthTopNav";
+import { DISCLAIMER, SOURCES } from "@/features/judgment/copy";
 import { LandingStory } from "./_components/LandingStory";
 import { LoginNotice } from "./_components/LoginNotice";
 
@@ -28,7 +29,16 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           notice={callbackUrl !== undefined ? <LoginNotice callbackUrl={typeof callbackUrl === "string" ? callbackUrl : ""} /> : undefined}
         />
       </main>
-      <FooterLight columns={FOOTER_COLUMNS} legal="© 2026 jeonse-check" />
+      <FooterLight
+        columns={FOOTER_COLUMNS}
+        legal="© 2026 jeonse-check"
+        intro={
+          <>
+            <p className="text-body-sm text-body">{DISCLAIMER}</p>
+            <p className="text-caption-sm text-muted">출처: {SOURCES.join(" · ")}</p>
+          </>
+        }
+      />
     </>
   );
 }

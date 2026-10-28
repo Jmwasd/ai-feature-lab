@@ -30,7 +30,7 @@ export type SceneFrame = {
 
 export type ScreenPoint = { x: number; y: number; visible: boolean; distance: number };
 
-type Palette = Record<"danger" | "data" | "ink" | "canvas" | "surface" | "surfaceStrong" | "hairline" | "muted" | "amber" | "window", string>;
+type Palette = Record<"danger" | "data" | "ink" | "canvas" | "surface" | "surfaceStrong" | "hairline" | "muted" | "amber" | "window" | "shield", string>;
 
 function readPalette(): Palette {
   const css = getComputedStyle(document.documentElement);
@@ -46,6 +46,7 @@ function readPalette(): Palette {
     muted: v("muted"),
     amber: v("scene-amber"),
     window: v("scene-window"),
+    shield: v("scene-shield"),
   };
 }
 
@@ -96,6 +97,7 @@ export class LandingScene {
   private ticks!: Three.InstancedMesh;
   private needle!: Three.Group;
   private gaugeLabel!: Three.Object3D;
+  private shield!: Three.Group;
   private dome!: Three.Mesh;
   private domeMat!: Three.ShaderMaterial;
   private redLight!: Three.PointLight;
@@ -477,6 +479,41 @@ export class LandingScene {
     this.gaugeLabel = add(this.gaugeGroup, new T.Object3D());
     this.gaugeLabel.position.set(0, -0.62, 0);
 
+    // 04 마지막 장면: 시안의 방패 체크. 판정 결과가 아닌 장면 장식이다.
+    const shieldColor = new T.Color(palette.shield);
+    const shieldShape = new T.Shape();
+    shieldShape.moveTo(0, 1);
+    shieldShape.bezierCurveTo(0.35, 0.85, 0.7, 0.8, 0.85, 0.8);
+    shieldShape.lineTo(0.85, 0.1);
+    shieldShape.bezierCurveTo(0.85, -0.55, 0.4, -0.85, 0, -1.05);
+    shieldShape.bezierCurveTo(-0.4, -0.85, -0.85, -0.55, -0.85, 0.1);
+    shieldShape.lineTo(-0.85, 0.8);
+    shieldShape.bezierCurveTo(-0.7, 0.8, -0.35, 0.85, 0, 1);
+    const shieldGeo = new T.ExtrudeGeometry(shieldShape, { depth: 0.16, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3, curveSegments: 24 });
+    shieldGeo.center();
+    this.shield = add(scene, new T.Group());
+    add(this.shield, new T.Mesh(shieldGeo, new T.MeshBasicMaterial({
+      color: shieldColor.clone().lerp(new T.Color(palette.ink), 0.4),
+      transparent: true,
+      opacity: 0.38,
+      depthWrite: false,
+      side: T.DoubleSide,
+      toneMapped: false,
+    })));
+    const shieldOutline = new T.BufferGeometry().setFromPoints(shieldShape.getPoints(48).map((p) => new T.Vector3(p.x * 1.14, (p.y + 0.025) * 1.14, 0.15)));
+    add(this.shield, new T.LineLoop(shieldOutline, new T.LineBasicMaterial({ color: shieldColor, toneMapped: false })));
+    const checkMat = new T.MeshBasicMaterial({ color: shieldColor.clone().lerp(new T.Color(palette.ink), 0.85), toneMapped: false });
+    const checkLeft = add(this.shield, new T.Mesh(new T.BoxGeometry(0.42, 0.11, 0.05), checkMat));
+    checkLeft.position.set(-0.25, -0.1, 0.19);
+    checkLeft.rotation.z = -Math.PI / 4;
+    const checkRight = add(this.shield, new T.Mesh(new T.BoxGeometry(0.77, 0.11, 0.05), checkMat));
+    checkRight.position.set(0.16, 0.035, 0.19);
+    checkRight.rotation.z = 0.83;
+    const shieldGlow = add(this.shield, new T.Sprite(new T.SpriteMaterial({ map: dot, color: shieldColor, transparent: true, opacity: 0.28, blending: T.AdditiveBlending, depthWrite: false })));
+    shieldGlow.position.z = -0.4;
+    shieldGlow.scale.set(3.8, 3.8, 1);
+    this.shield.visible = false;
+
     // 04 마지막 장면: 집을 감싸는 데이터 돔
     this.domeMat = new T.ShaderMaterial({
       // 돔 위에 마지막 장면 글이 올라가므로 밝기를 낮춘다.
@@ -684,10 +721,20 @@ export class LandingScene {
     if (this.ticks.instanceColor) this.ticks.instanceColor.needsUpdate = true;
     this.needle.rotation.z = LandingScene.ARC_START - frac * LandingScene.ARC_SWEEP - Math.PI / 2;
 
+    this.shield.visible = fx.fin > 0.01;
+    this.shield.position.set(0, 6.4 + Math.sin(t * 1.2) * 0.1, 0);
+    this.shield.scale.setScalar(Math.max(0.001, fx.fin * 1.15));
+    this.shield.rotation.y = Math.sin(t * 0.9) * 0.2;
+
     this.dome.visible = fx.fin > 0.01;
     this.domeMat.uniforms.uOp.value = fx.fin;
     this.domeMat.uniforms.uT.value = t;
-    if (this.bloom) this.bloom.strength = 0.7 + risk * 0.35 - fx.fin * 0.2;
+    if (this.bloom) {
+      // 마지막 장면에서 Bloom 렌더 타깃이 간헐적으로 검게 합성된다.
+      // 돔이 나타나기 전에 강도를 낮추고 패스를 끈다.
+      this.bloom.strength = (0.7 + risk * 0.35) * (1 - smoothstep(3.0, 3.5, F));
+      this.bloom.enabled = F < 3.5;
+    }
 
     if (this.composer) this.composer.render();
     else this.renderer.render(this.scene, this.camera);
