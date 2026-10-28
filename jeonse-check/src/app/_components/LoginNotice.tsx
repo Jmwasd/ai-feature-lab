@@ -11,7 +11,7 @@ export async function LoginNotice({ callbackUrl }: LoginNoticeProps) {
   if (await auth()) return null;
 
   return (
-    <div role="status" className="border-b border-hairline-soft px-gutter py-lg">
+    <div role="status" className="relative border-b border-hairline-soft bg-canvas px-gutter py-lg">
       <div className="mx-auto flex max-w-editorial flex-wrap items-center justify-between gap-md">
         <div className="flex flex-col gap-xs">
           <p className="text-title-md text-ink">로그인이 필요해요</p>

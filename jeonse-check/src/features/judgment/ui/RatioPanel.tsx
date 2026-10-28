@@ -1,4 +1,5 @@
 import { CircleCheck, TriangleAlert } from "lucide-react";
+import { Panel } from "@/components/Panel";
 import { RatioBar } from "@/components/RatioBar";
 import { DEBT_RATIO_THRESHOLD, HUG_GUARANTEE, JEONSE_RATIO_THRESHOLD } from "@/consts/policy";
 import { formatPercent, formatWon } from "@/utils/format";
@@ -13,7 +14,7 @@ export function RatioPanel({ view }: { view: JudgmentView }) {
   const priceText = price === null ? null : formatWon(price);
 
   return (
-    <div data-testid="ratio-panel" className="flex flex-col gap-xl rounded-card border border-hairline p-lg">
+    <Panel data-testid="ratio-panel" className="flex flex-col gap-xl">
       <RatioBar
         label="전세가율"
         ratio={jeonseRatio?.ratio ?? null}
@@ -63,6 +64,6 @@ export function RatioPanel({ view }: { view: JudgmentView }) {
         <span className="text-title-md text-ink">최우선변제</span>
         <p className="text-body-sm tabular-nums text-body">{priorityRepaymentText(view.priorityRepayment)}</p>
       </div>
-    </div>
+    </Panel>
   );
 }

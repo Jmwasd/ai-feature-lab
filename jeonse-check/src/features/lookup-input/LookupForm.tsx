@@ -1,10 +1,10 @@
 "use client";
 
-import { ArrowRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Button } from "@/components/Button";
+import { Panel } from "@/components/Panel";
 import { Reveal } from "@/components/Reveal";
-import { SearchBarPill } from "@/components/SearchBarPill";
 import { TextInput } from "@/components/TextInput";
 import { useProgressiveStages } from "@/hooks/use-progressive-stages";
 import { formatWon } from "@/utils/format";
@@ -39,7 +39,7 @@ const BLUR_CHECK = {
   exclusiveArea: (text: string) => lookupInputSchema.shape.exclusiveArea.safeParse(parseAreaInput(text)),
 } as const;
 
-// 조회 조건 입력 폼. 모바일은 세로 입력 스택 + 하단 고정 CTA, desktop은 SearchBarPill + 오브(UI_GUIDE §3·§4).
+// 조회 조건 입력 폼. 입력 칸을 Panel 하나에 쌓고, 모두 유효하면 아래 오른쪽에 "다음"을 보인다(Prototype 3D 시안).
 export function LookupForm({ searchAddress, onSubmit, defaultValue, defaultKeyword }: LookupFormProps) {
   const [keyword, setKeyword] = useState(defaultValue?.address?.roadAddress ?? defaultKeyword ?? "");
   const [selected, setSelected] = useState<AddressCandidate | null>(defaultValue?.address ?? null);
@@ -145,70 +145,53 @@ export function LookupForm({ searchAddress, onSubmit, defaultValue, defaultKeywo
   const depositHint = parsedDeposit !== null && parsedDeposit > 0 ? `${formatWon(parsedDeposit)} 원` : undefined;
 
   return (
-    <form noValidate aria-label="조회 조건" onSubmit={handleSubmit} className="flex flex-col gap-lg pb-section tablet:pb-0">
-      <div className="flex flex-col gap-sm">
-        <span id={houseTypeLabelId} className="text-caption text-muted">
-          주택 유형
-        </span>
-        <div
-          role="radiogroup"
-          aria-labelledby={houseTypeLabelId}
-          aria-describedby={errors.houseType ? houseTypeErrorId : undefined}
-          className="flex gap-sm overflow-x-auto"
-        >
-          {HOUSE_TYPES.map((type) => (
-            <label
-              key={type}
-              className="inline-flex h-11 shrink-0 cursor-pointer items-center rounded-full border border-hairline bg-canvas px-lg text-button-sm text-ink transition-colors hover:bg-surface-soft has-checked:border-ink has-checked:bg-ink has-checked:text-canvas has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink"
-            >
-              <input
-                type="radio"
-                name="houseType"
-                value={type}
-                checked={houseType === type}
-                onChange={() => {
-                  if (!isOpen("address")) pendingFocus.current = "address";
-                  setHouseType(type);
-                  clearError("houseType");
-                }}
-                className="sr-only"
-              />
-              {HOUSE_TYPE_LABEL[type]}
-            </label>
-          ))}
+    <form noValidate aria-label="조회 조건" onSubmit={handleSubmit} className="flex flex-col gap-xl">
+      <Panel className="flex flex-col gap-lg">
+        <div className="flex flex-col gap-sm">
+          <span id={houseTypeLabelId} className={FIELD_LABEL}>
+            주택 유형
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby={houseTypeLabelId}
+            aria-describedby={errors.houseType ? houseTypeErrorId : undefined}
+            className="flex gap-sm overflow-x-auto"
+          >
+            {HOUSE_TYPES.map((type) => (
+              <label key={type} className={CHOICE_PILL}>
+                <input
+                  type="radio"
+                  name="houseType"
+                  value={type}
+                  checked={houseType === type}
+                  onChange={() => {
+                    if (!isOpen("address")) pendingFocus.current = "address";
+                    setHouseType(type);
+                    clearError("houseType");
+                  }}
+                  className="sr-only"
+                />
+                {HOUSE_TYPE_LABEL[type]}
+              </label>
+            ))}
+          </div>
+          {errors.houseType ? (
+            <p id={houseTypeErrorId} className="text-caption-sm text-error-text">
+              {errors.houseType}
+            </p>
+          ) : null}
         </div>
-        {errors.houseType ? (
-          <p id={houseTypeErrorId} className="px-xs text-caption-sm text-error-text">
-            {errors.houseType}
-          </p>
-        ) : null}
-      </div>
 
-      {isOpen("address") ? (
-        <SearchBarPill
-          orb={
-            complete ? (
-              <Reveal appear>
-                <button
-                  type="submit"
-                  aria-label="다음"
-                  className="flex size-control items-center justify-center rounded-full bg-primary text-on-primary transition-colors active:bg-primary-active"
-                >
-                  <ArrowRight aria-hidden="true" className="size-5" />
-                </button>
-              </Reveal>
-            ) : undefined
-          }
-        >
-          <Reveal appear={appears("address")} className={SEGMENT_REVEAL}>
+        {isOpen("address") ? (
+          <Reveal appear={appears("address")} className="flex flex-col gap-sm">
             <TextInput
               ref={addressRef}
-              segment
               label="주소"
-              placeholder="도로명 또는 지번 주소"
+              placeholder="도로명, 지번, 건물명으로 검색"
               autoComplete="off"
               value={keyword}
               error={errors.address}
+              hint={selected ? <SelectedAddress candidate={selected} /> : undefined}
               onChange={(event) => {
                 setKeyword(event.target.value);
                 setSelected(null);
@@ -220,97 +203,102 @@ export function LookupForm({ searchAddress, onSubmit, defaultValue, defaultKeywo
                   type="button"
                   aria-label="주소 검색"
                   onClick={() => void runSearch()}
-                  className="inline-flex h-xl items-center gap-xs rounded-full border border-hairline bg-canvas px-md text-button-sm text-ink transition-colors hover:bg-surface-soft"
+                  className="inline-flex h-xl items-center gap-xs rounded-full border border-hairline bg-ink/5 px-md text-button-sm text-ink transition-colors hover:bg-ink/10"
                 >
                   <Search aria-hidden="true" className="size-4" />
                   검색
                 </button>
               }
             />
+            <AddressResults state={search} onSelect={selectCandidate} />
           </Reveal>
-          {isOpen("deposit") ? (
-            <Reveal appear={appears("deposit")} className={SEGMENT_REVEAL}>
+        ) : null}
+
+        {isOpen("deposit") ? (
+          <div className="grid gap-base tablet:grid-cols-2">
+            <Reveal appear={appears("deposit")}>
               <TextInput
                 ref={depositRef}
-                segment
                 label="보증금"
                 placeholder="2억 8000만"
                 value={depositText}
                 error={errors.deposit}
-                hint={depositHint}
+                hint={depositHint ?? "2억 8천만 원이면 2억 8000만"}
                 onChange={(event) => {
                   setDepositText(event.target.value);
                   clearError("deposit");
                 }}
                 onBlur={(event) => checkOnBlur("deposit", event.target.value)}
-                className="tabular-nums"
+                className="font-mono tabular-nums"
               />
             </Reveal>
-          ) : null}
-          {isOpen("exclusiveArea") ? (
-            <Reveal appear={appears("exclusiveArea")} className={SEGMENT_REVEAL}>
-              <TextInput
-                segment
-                label="전용면적(㎡)"
-                placeholder="59.8"
-                inputMode="decimal"
-                value={areaText}
-                error={errors.exclusiveArea}
-                onChange={(event) => {
-                  setAreaText(event.target.value);
-                  clearError("exclusiveArea");
-                }}
-                onBlur={(event) => checkOnBlur("exclusiveArea", event.target.value)}
-                className="tabular-nums"
-              />
-            </Reveal>
-          ) : null}
-        </SearchBarPill>
-      ) : null}
-
-      <AddressResults state={search} onSelect={selectCandidate} />
-
-      {isOpen("units") ? (
-        <Reveal appear={appears("units")} className="flex flex-col gap-sm desktop:mt-lg">
-          <div className="grid grid-cols-2 gap-md">
-            <TextInput
-              label="동"
-              placeholder="101동"
-              value={dong}
-              error={errors.dong}
-              onChange={(event) => {
-                setDong(event.target.value);
-                clearError("dong");
-              }}
-            />
-            <TextInput
-              label="호"
-              placeholder="203호"
-              value={ho}
-              error={errors.ho}
-              onChange={(event) => {
-                setHo(event.target.value);
-                clearError("ho");
-              }}
-            />
+            {isOpen("exclusiveArea") ? (
+              <Reveal appear={appears("exclusiveArea")}>
+                <TextInput
+                  label="전용면적(㎡)"
+                  placeholder="59.8"
+                  inputMode="decimal"
+                  value={areaText}
+                  error={errors.exclusiveArea}
+                  hint="건축물대장 또는 계약서의 전용면적"
+                  onChange={(event) => {
+                    setAreaText(event.target.value);
+                    clearError("exclusiveArea");
+                  }}
+                  onBlur={(event) => checkOnBlur("exclusiveArea", event.target.value)}
+                  className="font-mono tabular-nums"
+                />
+              </Reveal>
+            ) : null}
           </div>
-          {dong.trim() === "" || ho.trim() === "" ? <p className="px-xs text-body-sm text-muted">{UNIT_NOTICE}</p> : null}
-        </Reveal>
-      ) : null}
+        ) : null}
+
+        {isOpen("units") ? (
+          <Reveal appear={appears("units")} className="flex flex-col gap-sm border-t border-hairline-soft pt-lg">
+            <div className="grid grid-cols-2 gap-base">
+              <TextInput
+                label="동"
+                placeholder="101동"
+                value={dong}
+                error={errors.dong}
+                onChange={(event) => {
+                  setDong(event.target.value);
+                  clearError("dong");
+                }}
+              />
+              <TextInput
+                label="호"
+                placeholder="203호"
+                value={ho}
+                error={errors.ho}
+                onChange={(event) => {
+                  setHo(event.target.value);
+                  clearError("ho");
+                }}
+              />
+            </div>
+            {dong.trim() === "" || ho.trim() === "" ? <p className="text-caption-sm text-muted">{UNIT_NOTICE}</p> : null}
+          </Reveal>
+        ) : null}
+      </Panel>
 
       {complete ? (
-        <div
-          data-testid="mobile-cta"
-          className="fixed inset-x-0 bottom-0 z-10 border-t border-hairline bg-canvas px-gutter py-sm tablet:static tablet:border-0 tablet:bg-transparent tablet:p-0 desktop:hidden"
-        >
-          <Reveal appear>
-            <Button type="submit" className="w-full tablet:w-auto">
-              다음
-            </Button>
-          </Reveal>
-        </div>
+        <Reveal appear className="flex justify-end">
+          <Button type="submit" className="min-h-13.5 px-8">
+            다음
+          </Button>
+        </Reveal>
       ) : null}
     </form>
+  );
+}
+
+function SelectedAddress({ candidate }: { candidate: AddressCandidate }) {
+  return (
+    <span className="flex items-center gap-sm text-data-soft">
+      <span aria-hidden="true" className="size-1.5 rounded-full bg-data" />
+      {[candidate.jibunAddress, candidate.buildingName].filter(Boolean).join(" · ")}
+    </span>
   );
 }
 
@@ -318,28 +306,32 @@ function AddressResults({ state, onSelect }: { state: SearchState; onSelect: (ca
   const results = state.status === "done" ? state.results : [];
 
   return (
-    <div className="flex flex-col gap-sm desktop:mt-lg">
-      <p role="status" className="px-xs text-body-sm empty:hidden">
+    <div className="flex flex-col gap-sm empty:hidden">
+      <p role="status" className="text-caption-sm empty:hidden">
         {state.status === "loading" ? <span className="text-muted">주소를 찾고 있어요</span> : null}
         {state.status === "done" && results.length === 0 ? (
-          <span className="text-muted">검색 결과가 없어요. 도로명이나 지번을 다시 확인해 주세요</span>
+          <span className="text-muted">일치하는 주소가 없어요. 동 이름이나 건물명으로 검색해 보세요</span>
         ) : null}
         {state.status === "error" ? (
           <span className="text-error-text">주소를 불러오지 못했어요. 잠시 뒤 다시 검색해 주세요</span>
         ) : null}
       </p>
       {results.length > 0 ? (
-        <ul aria-label="주소 검색 결과" className="overflow-hidden rounded-card border border-hairline bg-canvas">
+        <ul aria-label="주소 검색 결과" className="overflow-hidden rounded-md border border-hairline bg-canvas shadow-float">
           {results.map((candidate) => (
             <li key={candidate.id} className="border-t border-hairline-soft first:border-t-0">
               <button
                 type="button"
                 onClick={() => onSelect(candidate)}
-                className="flex w-full flex-col items-start gap-xxs px-base py-md text-left transition-colors hover:bg-surface-soft"
+                className="flex w-full items-center gap-md px-base py-md text-left transition-colors hover:bg-ink/5"
               >
-                <span className="text-body-md text-ink">{candidate.roadAddress}</span>
-                <span className="text-body-sm text-muted">{candidate.jibunAddress}</span>
-                {candidate.buildingName ? <span className="text-caption text-body">{candidate.buildingName}</span> : null}
+                <span aria-hidden="true" className="size-2 flex-none rounded-full bg-data" />
+                <span className="flex min-w-0 flex-col gap-xxs">
+                  <span className="text-body-sm font-semibold text-ink">{candidate.roadAddress}</span>
+                  <span className="text-caption-sm text-muted">
+                    {[candidate.jibunAddress, candidate.buildingName].filter(Boolean).join(" · ")}
+                  </span>
+                </span>
               </button>
             </li>
           ))}
@@ -349,8 +341,11 @@ function AddressResults({ state, onSelect }: { state: SearchState; onSelect: (ca
   );
 }
 
-// SearchBarPill 세그먼트 자리를 그대로 차지하도록 TextInput segment의 desktop 배치를 감싸는 쪽에도 준다.
-const SEGMENT_REVEAL = "flex min-w-0 flex-col desktop:h-full desktop:flex-1";
+const FIELD_LABEL = "font-mono text-badge tracking-wider text-data-soft";
+
+// 선택 탭(UI_GUIDE §4): 선택된 알약만 잉크 바탕.
+const CHOICE_PILL =
+  "inline-flex h-11 shrink-0 cursor-pointer items-center rounded-full border border-hairline bg-ink/5 px-lg text-button-sm text-ink transition-colors hover:bg-ink/10 has-checked:border-ink has-checked:bg-ink has-checked:text-canvas has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink";
 
 function hasAnyValue(defaultValue: Partial<LookupInput> | undefined, defaultKeyword: string | undefined): boolean {
   return (defaultKeyword ?? "") !== "" || Object.values(defaultValue ?? {}).some((value) => value !== undefined);

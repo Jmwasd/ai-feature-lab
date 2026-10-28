@@ -1,6 +1,6 @@
 "use client";
 
-import { House, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 
@@ -14,8 +14,10 @@ type TopNavProps = {
   // tablet 이상은 오른쪽 바에, 미만은 바가 넘치지 않도록 햄버거 메뉴 아래쪽에 둔다.
   accountLinks?: NavLink[];
   accountAction?: ReactNode;
-  // 기본은 워드마크(house 아이콘 + "jeonse-check")다.
+  // 기본은 워드마크(마름모 마크 + "jeonse-check")다.
   brand?: ReactNode;
+  // 랜딩 3D 장면 위에 띄운다. 바탕·테두리 없이 장면 무대 위쪽에 두고, 모바일 메뉴를 열 때만 바탕을 깐다.
+  overlay?: boolean;
 };
 
 // 이 값을 넘게 스크롤하면 그림자를 붙인다(UI_GUIDE §4 TopNav).
@@ -24,7 +26,7 @@ const SHADOW_SCROLL_Y = 8;
 const LINK_CLASS =
   "items-center gap-1.5 rounded-full px-3.5 py-2.5 text-button-md leading-none text-body transition-colors ease-linear hover:bg-surface-soft hover:no-underline";
 
-export function TopNav({ links, action, accountLinks = [], accountAction, brand }: TopNavProps) {
+export function TopNav({ links, action, accountLinks = [], accountAction, brand, overlay = false }: TopNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
   const menuId = useId();
@@ -51,7 +53,11 @@ export function TopNav({ links, action, accountLinks = [], accountAction, brand 
 
   return (
     <header
-      className={`sticky top-0 z-10 border-b border-hairline bg-canvas transition-shadow duration-200 ease-linear ${scrolled ? "shadow-float" : ""}`}
+      className={
+        overlay
+          ? `absolute inset-x-0 top-0 z-10 border-b border-transparent ${open ? "bg-canvas" : "bg-transparent"}`
+          : `sticky top-0 z-10 border-b border-hairline-soft bg-canvas/80 backdrop-blur-md transition-shadow duration-200 ease-linear ${scrolled ? "shadow-float" : ""}`
+      }
     >
       <div className="flex h-nav items-center justify-between gap-base px-gutter">
         {brand ?? <Wordmark />}
@@ -115,8 +121,10 @@ export function TopNav({ links, action, accountLinks = [], accountAction, brand 
 
 function Wordmark() {
   return (
-    <Link href="/" className="inline-flex shrink-0 items-center gap-sm text-display-lg leading-none text-primary hover:no-underline">
-      <House aria-hidden="true" size={24} />
+    <Link href="/" className="inline-flex shrink-0 items-center gap-2.5 text-title-md font-bold leading-none text-ink hover:no-underline">
+      <span aria-hidden="true" className="grid size-5.5 rotate-45 place-items-center rounded-sm border-2 border-ink">
+        <span className="size-1.5 rounded-full bg-primary" />
+      </span>
       jeonse-check
     </Link>
   );
