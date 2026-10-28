@@ -17,39 +17,45 @@
 @theme inline {
   --font-*: initial;
   --font-sans: var(--font-pretendard), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  /* 장면 번호·데이터 라벨·랜딩 수치 */
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @theme {
   /* ── Color ─────────────────────────────────────────── */
   --color-*: initial;
 
-  /* Brand — one voltage only */
-  --color-primary: #ff385c;
-  --color-primary-active: #e00b41;
-  --color-primary-disabled: #ffd1da;
+  /* Brand — 레드는 강조·위험 신호, 블루(data)는 공공데이터·분석 장면에만 쓴다 */
+  --color-primary: #ff5a45;
+  --color-primary-active: #e8432f;
+  --color-primary-disabled: #4a2320;
   --color-on-primary: #ffffff;
 
   /* Surface */
-  --color-canvas: #ffffff;
-  --color-surface-soft: #f7f7f7;
-  --color-surface-strong: #f2f2f2;
+  --color-canvas: #06080c;
+  --color-surface-soft: #0d1119;
+  --color-surface-strong: #161b24;
 
   /* Hairlines & borders */
-  --color-hairline: #dddddd;
-  --color-hairline-soft: #ebebeb;
-  --color-border-strong: #c1c1c1;
+  --color-hairline: #262c36;
+  --color-hairline-soft: #161b22;
+  --color-border-strong: #3b4250;
 
   /* Text */
-  --color-ink: #222222;
-  --color-body: #3f3f3f;
-  --color-muted: #6a6a6a;
-  --color-muted-soft: #929292;
+  --color-ink: #f4f6fa;
+  --color-body: #b8bdc5;
+  --color-muted: #878c95;
+  --color-muted-soft: #5a5f68;
+
+  /* Data — 공공데이터·분석 강조 */
+  --color-data: #5bc8ff;
+  --color-data-soft: #8fd6ff;
 
   /* Semantic */
-  --color-error-text: #c13515;
-  --color-error-text-hover: #b32505;
-  --color-legal-link: #428bff;
-  --color-scrim: rgb(0 0 0 / 0.5);
+  --color-error-text: #ff6b5a;
+  --color-error-text-hover: #ff8a6d;
+  --color-legal-link: #7fd3ff;
+  --color-scrim: rgb(0 0 0 / 0.6);
   --color-transparent: transparent;
   --color-current: currentColor;
 
@@ -59,17 +65,30 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
 
   --text-*: initial;
 
   /* 랜딩 히어로 h1 전용 */
-  --text-hero: clamp(28px, 4vw, 48px);
-  --text-hero--line-height: 1.25;
-  --text-hero--letter-spacing: -1.2px;
-  --text-hero--font-weight: 700;
+  --text-hero: clamp(44px, 7.4vw, 116px);
+  --text-hero--line-height: 1.02;
+  --text-hero--letter-spacing: -0.045em;
+  --text-hero--font-weight: 800;
+
+  /* 랜딩 장면 제목, 조회 흐름 단계 제목 */
+  --text-chapter: clamp(32px, 4.4vw, 64px);
+  --text-chapter--line-height: 1.08;
+  --text-chapter--letter-spacing: -0.04em;
+  --text-chapter--font-weight: 800;
+
+  /* 장면 번호 라벨(예: "01 — 숨은 위험"). font-mono와 함께 쓴다 */
+  --text-eyebrow: 12px;
+  --text-eyebrow--line-height: 1.3;
+  --text-eyebrow--letter-spacing: 0.2em;
+  --text-eyebrow--font-weight: 600;
 
   /* 랜딩 히어로 리드 문단 */
-  --text-lead: 18px;
+  --text-lead: clamp(16px, 1.35vw, 19px);
   --text-lead--line-height: 1.6;
   --text-lead--font-weight: 400;
 
@@ -180,13 +199,13 @@
   --radius-md: 14px;
   --radius-xl: 32px;
   --radius-full: 9999px;
-  --radius-button: 8px;
-  --radius-input: 8px;
-  --radius-card: 14px;
+  --radius-button: 9999px;
+  --radius-input: 12px;
+  --radius-card: 20px;
 
   /* ── Shadow — the single tier ──────────────────────── */
   --shadow-*: initial;
-  --shadow-float: rgba(0, 0, 0, 0.02) 0 0 0 1px, rgba(0, 0, 0, 0.04) 0 2px 6px 0, rgba(0, 0, 0, 0.1) 0 4px 8px 0;
+  --shadow-float: rgba(255, 255, 255, 0.06) 0 0 0 1px, rgba(0, 0, 0, 0.5) 0 20px 50px 0;
 
   /* ── Motion (UI_GUIDE §5) ──────────────────────────── */
   --ease-*: initial;
@@ -210,8 +229,16 @@
   }
 }
 
+/* 랜딩 3D 장면 전용 색 — 건물 윤곽선·창문 불빛. 화면 UI에는 쓰지 않는다.
+ * 위 @theme의 --color-*: initial 뒤에 둬야 지워지지 않는다. 클래스에서 쓰지 않아도 three.js가 CSS 변수로 읽을 수 있게 static으로 항상 내보낸다. */
+@theme static {
+  --color-scene-amber: #ffa53d;
+  --color-scene-window: #ffb469;
+}
+
 @layer base {
   html {
+    color-scheme: dark;
     -webkit-font-smoothing: antialiased;
   }
   body {
@@ -230,6 +257,9 @@
   }
   a:hover {
     text-decoration: underline;
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--color-primary) 40%, transparent);
   }
   /* 클릭할 수 있는 요소는 손가락 커서를 쓴다. Tailwind v4 preflight가 버튼 커서를 default로 되돌리기 때문이다. */
   :where(button, [role="button"], [role="tab"], select, summary):not(:disabled) {

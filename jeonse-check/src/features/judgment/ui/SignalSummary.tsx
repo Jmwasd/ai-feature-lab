@@ -1,5 +1,6 @@
 import { DATA_LIMITED_NOTE, ESTIMATE_METHOD_LABEL, RECHECK_REGISTRY_NOTE } from "../copy";
 import type { RiskReport } from "../risk-report";
+import { Panel } from "@/components/Panel";
 import { formatWon } from "@/utils/format";
 import type { JudgmentView } from "./types";
 
@@ -9,12 +10,12 @@ export function SignalSummary({ report, view }: { report: RiskReport; view: Judg
   const unit = [address.dong, address.ho].filter(Boolean).join(" ");
 
   return (
-    <section aria-label="결과 요약" className="flex flex-col items-center gap-sm text-center">
-      <p className="text-display-lg text-ink">
+    <Panel tone={report.signalCount > 0 ? "danger" : "data"} role="region" aria-label="결과 요약" className="flex flex-col items-center gap-sm text-center">
+      <p className="text-body-sm text-muted">
         {address.display}
         {unit ? ` ${unit}` : null}
       </p>
-      <p data-testid="signal-count" className="mt-lg text-rating-display tabular-nums text-ink">
+      <p data-testid="signal-count" className={`mt-base font-mono text-rating-display tabular-nums ${report.signalCount > 0 ? "text-primary" : "text-ink"}`}>
         {report.signalCount}
       </p>
       <h2 className="text-display-sm text-ink">{report.headline}</h2>
@@ -24,7 +25,7 @@ export function SignalSummary({ report, view }: { report: RiskReport; view: Judg
         </p>
       ) : null}
       <p className="max-w-detail text-body-sm text-muted">{RECHECK_REGISTRY_NOTE}</p>
-      <dl className="mt-lg flex flex-wrap justify-center gap-x-xl gap-y-base">
+      <dl className="mt-lg grid w-full grid-cols-1 gap-sm tablet:grid-cols-3">
         <SummaryFigure label="보증금" value={formatWon(view.deposit)} />
         <SummaryFigure label="전용면적" value={`${view.exclusiveArea}㎡`} />
         <SummaryFigure
@@ -32,7 +33,7 @@ export function SignalSummary({ report, view }: { report: RiskReport; view: Judg
           value={priceEstimate.price === null ? ESTIMATE_METHOD_LABEL.none : formatWon(priceEstimate.price)}
         />
       </dl>
-    </section>
+    </Panel>
   );
 }
 
@@ -44,9 +45,9 @@ function isDataLimited(view: JudgmentView): boolean {
 
 function SummaryFigure({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col-reverse items-center gap-xxs">
-      <dt className="text-caption-sm text-muted">{label}</dt>
-      <dd className="text-title-md tabular-nums text-ink">{value}</dd>
+    <div className="flex flex-col gap-1 rounded-md border border-hairline bg-ink/5 p-md text-left">
+      <dt className="font-mono text-badge tracking-wider text-data-soft">{label}</dt>
+      <dd className="font-mono text-display-sm font-bold tabular-nums text-ink">{value}</dd>
     </div>
   );
 }

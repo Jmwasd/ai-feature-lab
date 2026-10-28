@@ -16,6 +16,8 @@ const eslintConfig = defineConfig([
     "scripts/**",
     // Prisma 생성 클라이언트
     "src/server/generated/**",
+    // Claude Design에서 내보낸 시안(번들된 런타임 포함)
+    "design/**",
   ]),
 ]);
 

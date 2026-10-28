@@ -1,3 +1,4 @@
+import { Panel } from "@/components/Panel";
 import { rightsLines } from "../copy";
 import { PriceEvidence } from "./PriceEvidence";
 import { RatioPanel } from "./RatioPanel";
@@ -12,11 +13,11 @@ export function ResultView({ view }: { view: JudgmentView }) {
   const { report } = view;
 
   return (
-    <article className="mx-auto flex max-w-editorial flex-col gap-xxl px-gutter py-section">
+    <article className="mx-auto flex max-w-editorial flex-col gap-xl px-gutter pt-xl pb-xxl">
       <SignalSummary report={report} view={view} />
       <div className="grid grid-cols-1 gap-xl desktop:grid-cols-3">
-        <div className="flex flex-col gap-xxl desktop:col-span-2">
-          <section aria-labelledby="signals-title" className="flex flex-col gap-base">
+        <div className="flex flex-col gap-xl desktop:col-span-2">
+          <section aria-labelledby="signals-title" className="flex flex-col gap-md">
             <h3 id="signals-title" className="text-display-md text-ink">
               위험 신호
             </h3>
@@ -29,18 +30,18 @@ export function ResultView({ view }: { view: JudgmentView }) {
               ))}
             </ul>
           </section>
-          <section aria-labelledby="rights-title" className="flex flex-col gap-base">
+          <Panel aria-labelledby="rights-title" role="region" className="flex flex-col gap-base">
             <h3 id="rights-title" className="text-display-md text-ink">
               권리관계
             </h3>
             <ul className="flex flex-col gap-xs">
               {rightsLines(view.rights).map((line) => (
-                <li key={line} className="border-t border-hairline-soft pt-xs text-body-sm tabular-nums text-body">
+                <li key={line} className="border-t border-hairline-soft pt-xs text-body-sm tabular-nums text-body first:border-t-0 first:pt-0">
                   {line}
                 </li>
               ))}
             </ul>
-          </section>
+          </Panel>
           <PriceEvidence estimate={view.priceEstimate} />
         </div>
         <aside aria-label="비율과 보증 기준" className="desktop:sticky desktop:top-[calc(var(--spacing-nav)+var(--spacing-lg))] desktop:self-start">

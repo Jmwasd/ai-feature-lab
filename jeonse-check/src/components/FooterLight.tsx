@@ -6,7 +6,7 @@ type FooterColumn = { title: string; links: { href: string; label: string }[] };
 // 열 수만큼 같은 폭으로 나눈다. 좁은 폭에서도 행 순서를 바꾸지 않는다(UI_GUIDE §3).
 export function FooterLight({ columns, legal }: { columns: FooterColumn[]; legal: ReactNode }) {
   return (
-    <footer className="border-t border-hairline bg-canvas px-section py-xxl">
+    <footer className="relative border-t border-hairline bg-canvas px-section py-xxl">
       <div className="mx-auto max-w-editorial">
         <div
           className="grid gap-lg pb-xxl"

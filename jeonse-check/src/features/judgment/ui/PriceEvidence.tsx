@@ -1,3 +1,4 @@
+import { Panel } from "@/components/Panel";
 import { formatIsoDate, formatWon } from "@/utils/format";
 import { CONFIDENCE_LABEL, ESTIMATE_METHOD_LABEL } from "../copy";
 import type { PriceEstimate } from "../price-estimate";
@@ -6,7 +7,7 @@ import type { PriceEstimate } from "../price-estimate";
 // 해제 거래는 추정 단계에서 이미 빠져 있다.
 export function PriceEvidence({ estimate }: { estimate: PriceEstimate }) {
   return (
-    <section data-testid="price-evidence" aria-labelledby="price-evidence-title" className="flex flex-col gap-base">
+    <Panel data-testid="price-evidence" role="region" aria-labelledby="price-evidence-title" className="flex flex-col gap-base">
       <h3 id="price-evidence-title" className="text-display-md text-ink">
         시세 추정 근거
       </h3>
@@ -50,7 +51,7 @@ export function PriceEvidence({ estimate }: { estimate: PriceEstimate }) {
           </div>
         )}
       </div>
-    </section>
+    </Panel>
   );
 }
 

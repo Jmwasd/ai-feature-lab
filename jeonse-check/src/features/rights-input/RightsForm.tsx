@@ -5,6 +5,7 @@ import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } fr
 import type { z } from "zod";
 import { Button } from "@/components/Button";
 import { IconButtonCircle } from "@/components/IconButtonCircle";
+import { Panel } from "@/components/Panel";
 import { Reveal } from "@/components/Reveal";
 import { TextInput } from "@/components/TextInput";
 import { useProgressiveStages } from "@/hooks/use-progressive-stages";
@@ -44,9 +45,9 @@ const MORTGAGE_ZERO_ERROR = "0원인 건은 지우거나 '근저당 없음'을 �
 // 칸이 나타나는 순서. 앞 칸이 유효해야 다음 칸이 열리고, 모두 유효하면 확인 버튼이 나타난다.
 const STAGES = ["mortgage", "seniorDeposits", "trust", "ownership", "submit"] as const;
 
-// 예/아니오 선택(UI_GUIDE §4). 선택된 쪽만 2px 잉크 테두리. 칸 폭은 grid가 정해 테두리 두께가 바뀌어도 크기가 같다.
+// 예/아니오 선택(UI_GUIDE §4). 알약이고 선택된 쪽만 잉크 바탕이다.
 const CHOICE =
-  "inline-flex h-11 cursor-pointer items-center justify-center rounded-sm border bg-canvas px-md text-button-sm text-ink transition-colors hover:bg-surface-soft has-checked:border-2 has-checked:border-ink has-disabled:cursor-not-allowed has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink";
+  "inline-flex h-11 cursor-pointer items-center justify-center rounded-full border bg-ink/5 px-6 text-button-sm font-semibold text-ink transition-colors hover:bg-ink/10 has-checked:border-ink has-checked:bg-ink has-checked:text-canvas has-disabled:cursor-not-allowed has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ink";
 
 // 등기부 권리관계 입력 폼. 입력하지 않은 값은 0·false·null로 채우지 않고 오류로 둔다.
 export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormProps) {
@@ -149,168 +150,171 @@ export function RightsForm({ onSubmit, onBack, asOf, defaultValue }: RightsFormP
   }
 
   return (
-    <form noValidate aria-label="권리관계 입력" onSubmit={handleSubmit} className="flex flex-col gap-xl pb-section tablet:pb-0">
-      <header className="flex flex-col gap-sm">
-        <p className="text-caption text-muted">사용자 입력(등기부 기준)</p>
-        <h2 className="text-display-md text-ink">등기부 권리관계</h2>
-        <p className="rounded-card bg-surface-soft p-base text-body-sm text-body">{NOTICE}</p>
-      </header>
+    <form noValidate aria-label="권리관계 입력" onSubmit={handleSubmit} className="flex flex-col gap-xl">
+      <p className="flex flex-wrap items-center gap-sm text-caption-sm text-muted">
+        <span className="font-mono text-badge tracking-wider text-data-soft">사용자 입력(등기부 기준)</span>
+        {NOTICE}
+      </p>
 
-      <Field title="근저당" help={HELP.mortgage}>
-        {(titleId, helpId) => (
-          <>
-            <ChoiceGroup
-              name="mortgage"
-              labelledBy={titleId}
-              helpId={helpId}
-              error={errors.maxClaimAmount}
-              value={mortgageMode}
-              options={[
-                { value: "some", label: "근저당 있음" },
-                { value: "none", label: "근저당 없음" },
-              ]}
-              onChange={chooseMortgage}
-            />
-            {mortgageMode === "some" ? (
-              <div className="flex flex-col gap-md">
-                {entries.map((entry, index) => {
-                  const amount = parseWonInput(entry.text);
-                  return (
-                    <TextInput
-                      key={entry.id}
-                      ref={index === 0 ? firstEntryRef : undefined}
-                      label={`근저당 ${index + 1} 채권최고액`}
-                      placeholder="1억 2000만"
-                      value={entry.text}
-                      error={entryErrors[entry.id] || undefined}
-                      hint={amount !== null && amount > 0 ? wonText(amount) : undefined}
-                      onChange={(event) => updateEntry(entry.id, event.target.value)}
-                      onBlur={(event) => checkEntryOnBlur(entry.id, event.target.value)}
-                      className="tabular-nums"
-                      trailing={
-                        entries.length > 1 ? (
-                          <IconButtonCircle label={`근저당 ${index + 1} 삭제`} icon={<X className="size-4" />} onClick={() => removeEntry(entry.id)} />
-                        ) : undefined
-                      }
-                    />
-                  );
-                })}
-                <div className="flex flex-wrap items-center justify-between gap-md">
-                  <button
-                    type="button"
-                    onClick={addEntry}
-                    className="inline-flex h-xl items-center gap-xs rounded-full border border-hairline bg-canvas px-md text-button-sm text-ink transition-colors hover:bg-surface-soft"
-                  >
-                    <Plus aria-hidden="true" className="size-4" />
-                    근저당 추가
-                  </button>
-                  <p aria-live="polite" className="text-title-md text-ink tabular-nums">
-                    합계 {wonText(sumEntries(entries))}
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </>
-        )}
-      </Field>
-
-      {isOpen("seniorDeposits") ? (
-        <Field title="선순위 임차보증금" help={HELP.seniorDeposits} appear={appears("seniorDeposits")}>
-          {() => (
-            <TextInput
-              ref={seniorRef}
-              label="선순위 임차보증금 합계"
-              placeholder="0"
-              value={seniorText}
-              error={errors.seniorDeposits}
-              hint={seniorAmount !== null ? wonText(seniorAmount) : undefined}
-              onChange={(event) => {
-                setSeniorText(event.target.value);
-                clearError("seniorDeposits");
-              }}
-              onBlur={(event) => {
-                if (event.target.value.trim() !== "" && parseWonInput(event.target.value) === null) {
-                  setErrors((prev) => ({ ...prev, seniorDeposits: AMOUNT_PARSE_ERROR }));
-                }
-              }}
-              className="tabular-nums"
-            />
-          )}
-        </Field>
-      ) : null}
-
-      {isOpen("trust") ? (
-        <Field title="신탁 등기" help={HELP.trust} appear={appears("trust")}>
+      <Panel className="flex flex-col">
+        <Field title="근저당" help={HELP.mortgage}>
           {(titleId, helpId) => (
-            <ChoiceGroup
-              name="isTrust"
-              labelledBy={titleId}
-              helpId={helpId}
-              error={errors.isTrust}
-              value={isTrust === null ? null : isTrust ? "yes" : "no"}
-              options={[
-                { value: "yes", label: "예" },
-                { value: "no", label: "아니오" },
-              ]}
-              onChange={(value) => {
-                if (!isOpen("ownership")) pendingFocus.current = "ownership";
-                setIsTrust(value === "yes");
-                clearError("isTrust");
-              }}
-            />
+            <>
+              <ChoiceGroup
+                name="mortgage"
+                labelledBy={titleId}
+                helpId={helpId}
+                error={errors.maxClaimAmount}
+                value={mortgageMode}
+                options={[
+                  { value: "some", label: "근저당 있음" },
+                  { value: "none", label: "근저당 없음" },
+                ]}
+                onChange={chooseMortgage}
+              />
+              {mortgageMode === "some" ? (
+                <div className="flex flex-col gap-md">
+                  {entries.map((entry, index) => {
+                    const amount = parseWonInput(entry.text);
+                    return (
+                      <TextInput
+                        key={entry.id}
+                        ref={index === 0 ? firstEntryRef : undefined}
+                        label={`근저당 ${index + 1} 채권최고액`}
+                        placeholder="1억 2000만"
+                        value={entry.text}
+                        error={entryErrors[entry.id] || undefined}
+                        hint={amount !== null && amount > 0 ? wonText(amount) : undefined}
+                        onChange={(event) => updateEntry(entry.id, event.target.value)}
+                        onBlur={(event) => checkEntryOnBlur(entry.id, event.target.value)}
+                        className="font-mono tabular-nums"
+                        trailing={
+                          entries.length > 1 ? (
+                            <IconButtonCircle label={`근저당 ${index + 1} 삭제`} icon={<X className="size-4" />} onClick={() => removeEntry(entry.id)} />
+                          ) : undefined
+                        }
+                      />
+                    );
+                  })}
+                  <div className="flex flex-wrap items-center justify-between gap-md">
+                    <button
+                      type="button"
+                      onClick={addEntry}
+                      className="inline-flex h-xl items-center gap-xs rounded-full border border-hairline bg-ink/5 px-md text-button-sm text-ink transition-colors hover:bg-ink/10"
+                    >
+                      <Plus aria-hidden="true" className="size-4" />
+                      근저당 추가
+                    </button>
+                    <p aria-live="polite" className="font-mono text-title-md text-ink tabular-nums">
+                      합계 {wonText(sumEntries(entries))}
+                    </p>
+                  </div>
+                </div>
+              ) : null}
+            </>
           )}
         </Field>
-      ) : null}
 
-      {isOpen("ownership") ? (
-        <Field title="최근 소유권 이전" help={HELP.ownership} appear={appears("ownership")}>
-          {() => (
-            <div className="flex flex-col gap-sm">
+        {isOpen("seniorDeposits") ? (
+          <Field title="선순위 임차보증금" help={HELP.seniorDeposits} appear={appears("seniorDeposits")}>
+            {() => (
               <TextInput
-                ref={dateRef}
-                type="date"
-                label="최근 소유권 이전 등기일"
-                max={localIsoDate(asOf)}
-                value={noOwnershipChange ? "" : dateText}
-                disabled={noOwnershipChange}
-                error={errors.lastOwnershipChangeDate}
+                ref={seniorRef}
+                label="선순위 임차보증금 합계"
+                placeholder="0"
+                value={seniorText}
+                error={errors.seniorDeposits}
+                hint={seniorAmount !== null ? wonText(seniorAmount) : undefined}
                 onChange={(event) => {
-                  setDateText(event.target.value);
-                  clearError("lastOwnershipChangeDate");
+                  setSeniorText(event.target.value);
+                  clearError("seniorDeposits");
                 }}
                 onBlur={(event) => {
-                  if (event.target.value === "") return;
-                  const message = ownershipError(false, event.target.value, asOf);
-                  if (message) setErrors((prev) => ({ ...prev, lastOwnershipChangeDate: message }));
+                  if (event.target.value.trim() !== "" && parseWonInput(event.target.value) === null) {
+                    setErrors((prev) => ({ ...prev, seniorDeposits: AMOUNT_PARSE_ERROR }));
+                  }
                 }}
                 className="tabular-nums"
               />
-              <label className={`${CHOICE} self-start border-hairline`}>
-                <input
-                  type="checkbox"
-                  checked={noOwnershipChange}
+            )}
+          </Field>
+        ) : null}
+
+        {isOpen("trust") ? (
+          <Field title="신탁 등기" help={HELP.trust} appear={appears("trust")}>
+            {(titleId, helpId) => (
+              <ChoiceGroup
+                name="isTrust"
+                labelledBy={titleId}
+                helpId={helpId}
+                error={errors.isTrust}
+                value={isTrust === null ? null : isTrust ? "yes" : "no"}
+                options={[
+                  { value: "yes", label: "예" },
+                  { value: "no", label: "아니오" },
+                ]}
+                onChange={(value) => {
+                  if (!isOpen("ownership")) pendingFocus.current = "ownership";
+                  setIsTrust(value === "yes");
+                  clearError("isTrust");
+                }}
+              />
+            )}
+          </Field>
+        ) : null}
+
+        {isOpen("ownership") ? (
+          <Field title="최근 소유권 이전" help={HELP.ownership} appear={appears("ownership")}>
+            {() => (
+              <div className="flex flex-col gap-sm">
+                <TextInput
+                  ref={dateRef}
+                  type="date"
+                  label="최근 소유권 이전 등기일"
+                  max={localIsoDate(asOf)}
+                  value={noOwnershipChange ? "" : dateText}
+                  disabled={noOwnershipChange}
+                  error={errors.lastOwnershipChangeDate}
                   onChange={(event) => {
-                    setNoOwnershipChange(event.target.checked);
+                    setDateText(event.target.value);
                     clearError("lastOwnershipChangeDate");
                   }}
-                  className="sr-only"
+                  onBlur={(event) => {
+                    if (event.target.value === "") return;
+                    const message = ownershipError(false, event.target.value, asOf);
+                    if (message) setErrors((prev) => ({ ...prev, lastOwnershipChangeDate: message }));
+                  }}
+                  className="tabular-nums"
                 />
-                소유권 이전 없음(보존등기만 있음)
-              </label>
-            </div>
-          )}
-        </Field>
-      ) : null}
+                <label className={`${CHOICE} self-start border-hairline`}>
+                  <input
+                    type="checkbox"
+                    checked={noOwnershipChange}
+                    onChange={(event) => {
+                      setNoOwnershipChange(event.target.checked);
+                      clearError("lastOwnershipChangeDate");
+                    }}
+                    className="sr-only"
+                  />
+                  소유권 이전 없음(보존등기만 있음)
+                </label>
+              </div>
+            )}
+          </Field>
+        ) : null}
+      </Panel>
 
-      <div className="fixed inset-x-0 bottom-0 z-10 flex gap-sm border-t border-hairline bg-canvas px-gutter py-sm tablet:static tablet:justify-end tablet:border-0 tablet:bg-transparent tablet:p-0">
+      <div className="flex items-center justify-between gap-md">
         {onBack ? (
-          <Button variant="secondary" onClick={onBack}>
+          <Button variant="ghost" onClick={onBack} className="min-h-13.5">
             이전
           </Button>
-        ) : null}
+        ) : (
+          <span />
+        )}
         {complete ? (
-          <Reveal appear className="flex flex-1 tablet:flex-none">
-            <Button type="submit" className="flex-1 tablet:flex-none">
+          <Reveal appear>
+            <Button type="submit" className="min-h-13.5 px-8">
               위험 신호 확인하기
             </Button>
           </Reveal>
@@ -333,12 +337,12 @@ function Field({ title, help, appear = false, children }: FieldProps) {
   const titleId = useId();
   const helpId = useId();
   return (
-    <Reveal appear={appear} className="flex flex-col gap-md border-t border-hairline-soft pt-lg">
+    <Reveal appear={appear} className="flex flex-col gap-md border-t border-hairline-soft py-lg first:border-t-0 first:pt-0 last:pb-0">
       <div className="flex flex-col gap-xs">
         <h3 id={titleId} className="text-title-md text-ink">
           {title}
         </h3>
-        <p id={helpId} className="text-body-sm text-muted">
+        <p id={helpId} className="text-caption-sm text-muted">
           {help}
         </p>
       </div>
@@ -366,7 +370,7 @@ function ChoiceGroup<T extends string>({ name, labelledBy, helpId, error, value,
         aria-labelledby={labelledBy}
         aria-describedby={error ? `${helpId} ${errorId}` : helpId}
         aria-invalid={error ? true : undefined}
-        className="grid grid-cols-2 gap-sm"
+        className="flex flex-wrap gap-sm"
       >
         {options.map((option) => (
           <label key={option.value} className={`${CHOICE} ${error ? "border-error-text" : "border-hairline"}`}>
@@ -383,7 +387,7 @@ function ChoiceGroup<T extends string>({ name, labelledBy, helpId, error, value,
         ))}
       </div>
       {error ? (
-        <p id={errorId} className="px-xs text-caption-sm text-error-text">
+        <p id={errorId} className="text-caption-sm text-error-text">
           {error}
         </p>
       ) : null}

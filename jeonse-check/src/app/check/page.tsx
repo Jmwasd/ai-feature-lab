@@ -8,13 +8,6 @@ import { searchAddressAction } from "./_actions/search-address";
 import { CheckFlow } from "./_components/CheckFlow";
 import { type CheckPrefill, readSavedPrefill } from "./_lib/saved-prefill";
 
-const NAV_LINKS = [
-  { href: "/#try", label: "계산해 보기" },
-  { href: "/#cases", label: "사례" },
-  { href: "/#flow", label: "이용 방법" },
-  { href: "/#sources", label: "데이터 출처" },
-];
-
 type CheckPageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
 // 조회 화면. 흐름은 CheckFlow(Client Component)가 맡고, 서버 호출은 Server Action을 props로 넘겨서만 한다.
@@ -30,7 +23,7 @@ export default async function CheckPage({ searchParams }: CheckPageProps) {
 
   return (
     <>
-      <AuthTopNav links={NAV_LINKS} />
+      <AuthTopNav links={[]} />
       <main>
         <p className="mx-auto max-w-editorial px-gutter pt-lg text-caption text-muted">{userName}님으로 로그인했어요</p>
         <CheckFlow searchAddress={searchAddressAction} runCheck={runCheckAction} saveResult={saveResultAction} prefill={prefill} />
