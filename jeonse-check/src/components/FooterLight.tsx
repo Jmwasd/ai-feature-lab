@@ -4,10 +4,11 @@ import type { ReactNode } from "react";
 type FooterColumn = { title: string; links: { href: string; label: string }[] };
 
 // 열 수만큼 같은 폭으로 나눈다. 좁은 폭에서도 행 순서를 바꾸지 않는다(UI_GUIDE §3).
-export function FooterLight({ columns, legal }: { columns: FooterColumn[]; legal: ReactNode }) {
+export function FooterLight({ columns, legal, intro }: { columns: FooterColumn[]; legal: ReactNode; intro?: ReactNode }) {
   return (
     <footer className="relative border-t border-hairline bg-canvas px-section py-xxl">
       <div className="mx-auto max-w-editorial">
+        {intro ? <div className="mb-xxl flex flex-col gap-md border-b border-hairline pb-xxl">{intro}</div> : null}
         <div
           className="grid gap-lg pb-xxl"
           style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
